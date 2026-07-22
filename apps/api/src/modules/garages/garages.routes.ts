@@ -31,6 +31,23 @@ function mapGarageDbRow(g: any) {
 
 garagesRouter.get('/search', async (req, res) => {
   try {
+    const { rating, specialization, price_range, lat, lng, distance } = req.query;
+
+    const conditions: string[] = ["g.approval_status IN ('approved', 'pending')"];
+    const params: any[] = [];
+
+    if (rating) {
+      params.push(Number(rating));
+      conditions.push(`g.rating_avg >= $${params.length}`);
+    }
+
+    if (specialization) {
+      params.push(specialization);
+      conditions.push(`$${params.length} = ANY(g.specializations)`);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
     const result = await query(
       `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
               g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
@@ -38,7 +55,8 @@ garagesRouter.get('/search', async (req, res) => {
               g.image, g.response_mins as "responseMins",
               (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
        FROM garages g
-       WHERE g.approval_status IN ('approved', 'pending')`
+       ${whereClause}`,
+      params
     );
 
     const mapped = result.rows.map(mapGarageDbRow);
