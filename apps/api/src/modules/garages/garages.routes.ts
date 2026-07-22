@@ -87,7 +87,13 @@ garagesRouter.get('/:id', async (req, res) => {
       return error(res, 'Garage not found', 'NOT_FOUND', 404);
     }
     const mapped = mapGarageDbRow(result.rows[0]);
-    return success(res, mapped);
+    
+    const servicesResult = await query(
+      `SELECT * FROM services WHERE garage_id = $1`,
+      [req.params.id]
+    );
+    
+    return success(res, { ...mapped, services: servicesResult.rows });
   } catch (err) {
     return error(
       res,

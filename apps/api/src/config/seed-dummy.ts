@@ -51,6 +51,12 @@ async function seed() {
       },
     ];
 
+    const dummyServices = [
+      { name: 'Basic Oil Change', description: 'Engine oil and filter replacement', price: 1500.00, duration_mins: 45, category: 'Maintenance', is_active: true },
+      { name: 'Brake Pad Replacement', description: 'Front and rear brake pad replacement', price: 2500.00, duration_mins: 90, category: 'Repairs', is_active: true },
+      { name: 'Comprehensive Checkup', description: 'Full 50-point vehicle inspection', price: 999.00, duration_mins: 60, category: 'Inspection', is_active: true }
+    ];
+
     for (const g of garagesToSeed) {
       await query(
         `INSERT INTO garages (id, owner_user_id, name, address, specializations, approval_status, rating_avg, rating_count, response_mins)
@@ -60,6 +66,16 @@ async function seed() {
         [g.id, ownerId, g.name, g.address, g.specializations, g.rating_avg, g.rating_count, g.response_mins]
       );
       console.log(`Seeded garage: ${g.name}`);
+
+      await query(`DELETE FROM services WHERE garage_id = $1`, [g.id]);
+
+      for (const s of dummyServices) {
+        await query(
+          `INSERT INTO services (garage_id, name, description, price, duration_mins, category, is_active)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [g.id, s.name, s.description, s.price, s.duration_mins, s.category, s.is_active]
+        );
+      }
     }
 
     console.log('Seeding completed successfully.');
