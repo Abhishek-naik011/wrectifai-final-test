@@ -21,35 +21,6 @@ async function seed() {
       console.log(`Created new owner user: ${ownerId}`);
     }
 
-    const garagesToSeed = [
-      {
-        id: '00000000-0000-0000-0000-000000000003',
-        name: 'SpeedFix Auto Care',
-        address: 'Kondapur, Hyderabad',
-        specializations: ['Engine', 'Brakes'],
-        rating_avg: 4.6,
-        rating_count: 128,
-        response_mins: 30,
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000004',
-        name: 'QuickPit Service Center',
-        address: 'Madhapur, Hyderabad',
-        specializations: ['Maintenance', 'Tyres'],
-        rating_avg: 4.5,
-        rating_count: 96,
-        response_mins: 40,
-      },
-      {
-        id: '00000000-0000-0000-0000-000000000005',
-        name: 'AutoWorks Garage',
-        address: 'Gachibowli, Hyderabad',
-        specializations: ['Brakes', 'Suspension'],
-        rating_avg: 4.4,
-        rating_count: 110,
-        response_mins: 45,
-      },
-    ];
 
     const dummyServices = [
       { name: 'Basic Oil Change', description: 'Engine oil and filter replacement', price: 1500.00, duration_mins: 45, category: 'Maintenance', is_active: true },
@@ -57,18 +28,9 @@ async function seed() {
       { name: 'Comprehensive Checkup', description: 'Full 50-point vehicle inspection', price: 999.00, duration_mins: 60, category: 'Inspection', is_active: true }
     ];
 
-    for (const g of garagesToSeed) {
-      await query(
-        `INSERT INTO garages (id, owner_user_id, name, address, specializations, approval_status, rating_avg, rating_count, response_mins)
-         VALUES ($1, $2, $3, $4, $5, 'approved', $6, $7, $8)
-         ON CONFLICT (id) DO UPDATE 
-         SET name = EXCLUDED.name, address = EXCLUDED.address, specializations = EXCLUDED.specializations, rating_avg = EXCLUDED.rating_avg, rating_count = EXCLUDED.rating_count, response_mins = EXCLUDED.response_mins`,
-        [g.id, ownerId, g.name, g.address, g.specializations, g.rating_avg, g.rating_count, g.response_mins]
-      );
-      console.log(`Seeded garage: ${g.name}`);
-
+    const allGaragesResult = await query('SELECT id, name FROM garages');
+    for (const g of allGaragesResult.rows) {
       await query(`DELETE FROM services WHERE garage_id = $1`, [g.id]);
-
       for (const s of dummyServices) {
         await query(
           `INSERT INTO services (garage_id, name, description, price, duration_mins, category, is_active)
@@ -76,6 +38,7 @@ async function seed() {
           [g.id, s.name, s.description, s.price, s.duration_mins, s.category, s.is_active]
         );
       }
+      console.log(`Seeded services for garage: ${g.name}`);
     }
 
     console.log('Seeding completed successfully.');

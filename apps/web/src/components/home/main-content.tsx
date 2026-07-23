@@ -23,6 +23,10 @@ import {
   CloudRain,
   Settings as SettingsIcon,
 } from 'lucide-react';
+
+import { fetchGarages, fetchPromos } from '@/lib/garages-api';
+import { Promo } from '@/lib/garages-api';
+import { useFavorites } from '@/lib/favorites-context';
 import { Badge } from '@/components/common/badge';
 import { Button } from '@/components/common/button';
 import { Card } from '@/components/common/card';
@@ -33,7 +37,7 @@ import {
   maintenanceItems,
   type Garage,
 } from '@/components/home/data';
-import { apiClient } from '@/lib/api-client';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
@@ -542,6 +546,8 @@ function GarageCard({
   };
 
   const { tone, artwork } = getBadgeStyle(badge || '');
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(name);
 
   return (
     <Card className="overflow-hidden rounded-[16px] shadow-[0_12px_26px_rgba(20,44,112,0.08)]">
@@ -550,9 +556,16 @@ function GarageCard({
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(5,8,17,0.3))]" />
         <div className="absolute inset-x-3 top-3 flex items-start justify-between">
           {badge ? <Badge tone={tone}>{badge}</Badge> : <div />}
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md">
-            <Heart className="h-4 w-4" />
-          </span>
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(name);
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md transition-transform hover:scale-110 active:scale-95"
+          >
+            <Heart className={cn("h-4 w-4", favorite ? "fill-[#1a56db]" : "")} />
+          </button>
         </div>
         <div className="absolute bottom-3 left-4 right-4 flex gap-2 opacity-85">
           <div className="h-8 flex-1 rounded bg-white/10" />
@@ -671,9 +684,9 @@ function FeaturedGarages({
           className="flex gap-4 overflow-x-auto pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {garagesList.map(({ href: _href, ...garage }) => (
-            <div key={garage.name} className="w-[270px] shrink-0">
+            <Link key={garage.name} href={`/garages?garage=${encodeURIComponent(garage.name)}`} className="w-[270px] shrink-0 block hover:opacity-95 transition-opacity">
               <GarageCard {...garage} />
-            </div>
+            </Link>
           ))}
         </div>
         {showLeft && (
@@ -978,10 +991,10 @@ export function MainContent() {
 
   useEffect(() => {
     let active = true;
-    apiClient.get<Garage[]>('/garages/search')
+    fetchGarages()
       .then((data) => {
         if (active && data && data.length > 0) {
-          setGaragesList(data);
+          setGaragesList(data as unknown as Garage[]);
         }
       })
       .catch((err) => {
@@ -994,7 +1007,7 @@ export function MainContent() {
 
   useEffect(() => {
     let active = true;
-    apiClient.get<PromoItem[]>('/promos')
+    fetchPromos()
       .then((data) => {
         if (active && data && data.length > 0) {
           const getIconComponent = (iconName: string) => {
@@ -1009,19 +1022,48 @@ export function MainContent() {
           };
 
           const comboDeals = data
-            .filter((p: PromoItem) => p.isCombo)
-            .map((p: PromoItem) => ({
-              title: p.badge || p.title,
-              subtitle: p.title,
-              price: p.displayPrice,
-              strikePrice: p.strikePrice,
-              discount: p.discountLabel,
-              icon: getIconComponent(p.icon),
-              textColor: p.accent || 'text-[#1a56db]',
-              bgColor: p.bgColor || '#eff6ff',
-              fadeColor: p.cardTint || 'from-[#eff6ff]',
-              image: p.image,
-            }));
+            .filter((p) => p.isCombo)
+            .map((p) => {
+              const displayPrice = `$${Number(p.numericPrice).toLocaleString('en-US')}`;
+              const strikePriceStr = p.strikePrice ? `$${Number(p.strikePrice).toLocaleString('en-US')}` : '';
+              const discountStr = p.discountPercent ? `${p.discountPercent}% OFF` : '';
+              
+              // We'll map theme colors explicitly based on the backend theme preset
+              let textColor = 'text-[#1a56db]';
+              let bgColor = '#eff6ff';
+              let fadeColor = 'from-[#eff6ff]';
+              
+              if (p.themePreset === 'summer') {
+                textColor = 'text-[#ea580c]';
+                bgColor = '#fff7ed';
+                fadeColor = 'from-[#fff7ed]';
+              } else if (p.themePreset === 'monsoon') {
+                textColor = 'text-[#0284c7]';
+                bgColor = '#f0f9ff';
+                fadeColor = 'from-[#f0f9ff]';
+              } else if (p.themePreset === 'winter') {
+                textColor = 'text-[#0d9488]';
+                bgColor = '#f0fdfa';
+                fadeColor = 'from-[#f0fdfa]';
+              } else if (p.themePreset === 'festive') {
+                textColor = 'text-[#e11d48]';
+                bgColor = '#fff1f2';
+                fadeColor = 'from-[#fff1f2]';
+              }
+              
+              return {
+                title: p.badge || p.title,
+                subtitle: p.title,
+                price: displayPrice,
+                strikePrice: strikePriceStr,
+                discount: discountStr,
+                icon: getIconComponent(p.icon),
+                textColor,
+                bgColor,
+                fadeColor,
+                image: p.image,
+              };
+            });
           if (comboDeals.length > 0) {
             setDealsList(comboDeals);
           }

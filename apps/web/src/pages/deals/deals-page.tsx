@@ -33,6 +33,7 @@ import { Card } from '@/components/common/card';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 import { apiClient } from '@/lib/api-client';
+import { fetchPromos } from '@/lib/garages-api';
 import { cn } from '@/utils/cn';
 import { getPromoTheme } from '@/utils/promo-theme';
 
@@ -809,7 +810,7 @@ function DealsPageContent() {
 
   useEffect(() => {
     let active = true;
-    apiClient.get<any[]>('/promos')
+    fetchPromos()
       .then((data) => {
         if (active && data && data.length > 0) {
           const mapped: DealItem[] = data.map((p: any) => {

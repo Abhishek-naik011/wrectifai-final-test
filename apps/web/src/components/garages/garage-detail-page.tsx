@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
@@ -34,6 +34,7 @@ import { BookingConfirmed } from '@/components/garages/booking-confirmed';
 import type { QuoteItem } from '@/components/quotes/quotes-shared';
 import type { DiagnoseIssue } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { createBooking } from '@/lib/bookings-api';
+import { apiClient } from '@/lib/api-client';
 
 interface GarageDetailPageProps {
   garage: Garage;
@@ -74,16 +75,47 @@ const servicesOffered = [
   { name: 'More Services', icon: SlidersHorizontal },
 ];
 
+import { useFavorites } from '@/lib/favorites-context';
+
 export function GarageDetailPage({
-  garage,
+  garage: initialGarage,
   onBack,
   backLabel = 'Back to Garages',
   mode = 'default',
   quoteContext,
 }: GarageDetailPageProps) {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(initialGarage.name);
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Track garage and services separately to prevent prop-reference cycles
+  const [garage, setGarage] = useState<Garage>(initialGarage);
+  const [services, setServices] = useState<any[]>(initialGarage.services || []);
+
+  useEffect(() => {
+    setGarage(initialGarage);
+    
+    if (initialGarage.services && initialGarage.services.length > 0) {
+      setServices(initialGarage.services);
+      return;
+    }
+
+    let active = true;
+    if (initialGarage.id) {
+      apiClient.get<Garage>(`/garages/${initialGarage.id}`)
+        .then((data) => {
+          if (active && data && data.services) {
+            setServices(data.services);
+          }
+        })
+        .catch(console.error);
+    }
+    
+    return () => { 
+      active = false; 
+    };
+  }, [initialGarage.id, initialGarage.services]);
 
   const appointmentDates = useMemo(() => {
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -264,13 +296,13 @@ export function GarageDetailPage({
                 </span>
               )}
               <button
-                onClick={() => setIsFavorite(!isFavorite)}
+                onClick={() => toggleFavorite(garage.name)}
                 className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_8px_20px_rgba(30,58,138,0.15)] transition-transform hover:scale-105 active:scale-95"
               >
                 <Heart
                   className={cn(
                     'h-5 w-5 transition-colors',
-                    isFavorite
+                    favorite
                       ? 'fill-[#e53e3e] text-[#e53e3e]'
                       : 'text-[#1a56db]'
                   )}
@@ -543,6 +575,47 @@ export function GarageDetailPage({
                     ))}
                   </div>
                 </section>
+
+                {/* Service Catalog */}
+                {services && services.length > 0 && (
+                  <section className="space-y-3.5">
+                    <h2 className="text-[14.5px] font-bold text-[#17307a]">
+                      Service Catalog
+                    </h2>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {services.map((svc) => (
+                        <div key={svc.id} className="rounded-[16px] border border-[#e2eefc] bg-white p-4 shadow-[0_4px_12px_rgba(22,48,112,0.02)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_8px_20px_rgba(26,86,219,0.05)]">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-[13px] font-bold text-[#17307a]">
+                                {svc.name}
+                              </div>
+                              <div className="mt-1 flex items-center gap-2 text-[11px] font-medium text-[#62749f]">
+                                <span className="rounded-full bg-[#f0f4ff] px-2 py-0.5 text-[10px] text-[#1a56db]">
+                                  {svc.category}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {svc.duration_mins} mins
+                                </span>
+                              </div>
+                              {svc.description && (
+                                <p className="mt-2.5 text-[11px] leading-relaxed text-[#536891]">
+                                  {svc.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[14px] font-extrabold text-[#159a5d]">
+                                ₹{svc.price}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {/* Why Choose Us */}
                 <section className="space-y-3.5">

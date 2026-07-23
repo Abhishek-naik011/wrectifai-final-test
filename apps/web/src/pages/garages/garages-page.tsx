@@ -18,6 +18,7 @@ import {
   Tag,
   Wrench,
   X,
+  Search,
 } from 'lucide-react';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
@@ -33,6 +34,7 @@ import {
 import { resultIssues } from '@/components/ai-diagnose/diagnose-flow-shared';
 
 import { GarageDetailPage } from '@/components/garages/garage-detail-page';
+import { fetchGarages, type Garage as ApiGarage } from '@/lib/garages-api';
 
 type FilterKey =
   | 'rating'
@@ -59,6 +61,14 @@ export type Garage = {
   tone: string;
   verified: boolean;
   image?: string;
+  services?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    duration_mins: number;
+    category: string;
+  }>;
 };
 
 const filterPills = [
@@ -397,7 +407,7 @@ function mapBackendGarageToFrontend(g: any): Garage {
 function GaragesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedGarage, setSelectedGarage] = useState<Garage | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortBy, setSortBy] = useState<SortOption>('best');
   const [page, setPage] = useState(1);
@@ -417,7 +427,7 @@ function GaragesContent() {
 
   useEffect(() => {
     let active = true;
-    apiClient.get<any[]>('/garages/search')
+    fetchGarages()
       .then((data) => {
         if (active && data && data.length > 0) {
           const merged = data.map(mapBackendGarageToFrontend);
@@ -440,6 +450,24 @@ function GaragesContent() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const handleSearch = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      const newQuery = customEvent.detail ?? '';
+      setSearchQuery(newQuery);
+      setPage(1);
+    };
+
+    window.addEventListener('dashboard-search', handleSearch);
+    
+    const initialSearch = searchParams?.get('search');
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
+
+    return () => window.removeEventListener('dashboard-search', handleSearch);
+  }, [searchParams]);
 
   const filteredGarages = useMemo(() => {
     const filtered = garagesList.filter((garage) => {
@@ -510,6 +538,12 @@ function GaragesContent() {
       ) {
         return false;
       }
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!garage.name.toLowerCase().includes(query)) {
+          return false;
+        }
+      }
       return true;
     });
 
@@ -527,7 +561,7 @@ function GaragesContent() {
         b.rating * 10 + b.reviews / 100 - (a.rating * 10 + a.reviews / 100)
       );
     });
-  }, [filters, sortBy, garagesList]);
+  }, [filters, sortBy, garagesList, searchQuery]);
 
   const itemsPerPage = viewMode === 'map' ? 6 : 8;
   const totalPages = Math.max(
@@ -577,6 +611,7 @@ function GaragesContent() {
       offers: 'all',
       moreFilters: 'all',
     });
+    setSearchQuery('');
     setPage(1);
     setOpenFilter(null);
     setSortOpen(false);
@@ -694,26 +729,19 @@ function GaragesContent() {
     );
   }
 
-  if (selectedGarage) {
-    return (
-      <GarageDetailPage
-        garage={selectedGarage}
-        onBack={() => setSelectedGarage(null)}
-      />
-    );
-  }
-
   return (
     <div className="space-y-6 pb-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a]">
-            View All Garages
-          </h1>
-          <p className="mt-1.5 text-[12.5px] font-medium text-[#4f67a2]">
-            Showing {filteredGarages.length} garages near{' '}
-            <span className="font-bold text-[#1a56db]">Hyderabad</span>
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div>
+            <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a]">
+              View All Garages
+            </h1>
+            <p className="mt-1.5 text-[12.5px] font-medium text-[#4f67a2]">
+              Showing {filteredGarages.length} garages near{' '}
+              <span className="font-bold text-[#1a56db]">Hyderabad</span>
+            </p>
+        </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 lg:justify-end">
@@ -838,7 +866,7 @@ function GaragesContent() {
                 key={garage.name}
                 {...garage}
                 compact
-                onClick={() => setSelectedGarage(garage)}
+                onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
               />
             ))}
           </div>
@@ -863,7 +891,7 @@ function GaragesContent() {
                     }%`,
                     top: `${14 + (index % 3) * 22}%`,
                   }}
-                  onClick={() => setSelectedGarage(garage)}
+                  onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
                 >
                   <MapPin className="h-5 w-5 fill-white" />
                 </div>
@@ -871,13 +899,21 @@ function GaragesContent() {
             </div>
           </Card>
         </div>
+      ) : filteredGarages.length === 0 ? (
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7ff] text-[#6173a1]">
+            <Search className="h-6 w-6" />
+          </div>
+          <h3 className="text-[16px] font-bold text-[#17307a]">No garages found</h3>
+          <p className="mt-1 text-[13px] text-[#6173a1]">Try adjusting your search or filters.</p>
+        </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {paginatedGarages.map((garage) => (
             <GarageCard
               key={garage.name}
               {...garage}
-              onClick={() => setSelectedGarage(garage)}
+              onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
             />
           ))}
         </div>

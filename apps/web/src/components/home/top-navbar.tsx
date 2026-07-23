@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/common/input';
 import { topNavIcons } from '@/components/home/data';
 import { cn } from '@/utils/cn';
@@ -43,8 +44,15 @@ export function TopNavbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const router = useRouter();
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (query.trim()) {
+      router.push(`/garages?search=${encodeURIComponent(query.trim())}`);
+    } else {
+      router.push('/garages');
+    }
   };
 
   const filteredCities = CITIES.filter(city =>
