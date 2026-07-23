@@ -114,7 +114,7 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
   const estimatedCost = `$${priceRange.min} - $${priceRange.max}`;
   const id = `llm_issue_${index}`;
   const title = llmIssue.name;
-  
+
   const { badge, badgeClass } = getBadgeForIssue(title, overallRisk, index);
 
   return {
@@ -132,29 +132,29 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
 
 type ChatEntry =
   | {
-      id: string;
-      sender: 'assistant';
-      time: string;
-      kind: 'message';
-      text: string;
-      highlighted?: boolean;
-    }
+    id: string;
+    sender: 'assistant';
+    time: string;
+    kind: 'message';
+    text: string;
+    highlighted?: boolean;
+  }
   | {
-      id: string;
-      sender: 'assistant';
-      time: string;
-      kind: 'question';
-      question: string;
-      options: string[];
-      selected: string;
-    }
+    id: string;
+    sender: 'assistant';
+    time: string;
+    kind: 'question';
+    question: string;
+    options: string[];
+    selected: string;
+  }
   | {
-      id: string;
-      sender: 'user';
-      time: string;
-      kind: 'reply';
-      text: string;
-    };
+    id: string;
+    sender: 'user';
+    time: string;
+    kind: 'reply';
+    text: string;
+  };
 
 
 
@@ -559,9 +559,8 @@ function getResultSummaryItems(
         ? secondaryIssues.map((issue) => issue.title).join(', ')
         : 'No strong secondary match',
       body: secondaryIssues.length
-        ? `These ${
-            activeCategory?.label.toLowerCase() ?? 'related'
-          } issues can also produce similar symptoms.`
+        ? `These ${activeCategory?.label.toLowerCase() ?? 'related'
+        } issues can also produce similar symptoms.`
         : 'Your answers point more strongly to one primary issue than multiple competing matches.',
       pill: 'Medium Priority',
       pillClass: 'bg-[#fff1de] text-[#f39b20]',
@@ -762,8 +761,8 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
                       isComplete
                         ? 'border-[#1ea84a] bg-[#1ea84a] text-white shadow-[0_8px_20px_rgba(30,168,74,0.15)]'
                         : isActive
-                        ? 'border-[#2350f6] bg-[#2350f6] text-white shadow-[0_8px_20px_rgba(35,80,246,0.25)] scale-110'
-                        : 'border-[#dce7ff] bg-white text-[#7d8bb0]'
+                          ? 'border-[#2350f6] bg-[#2350f6] text-white shadow-[0_8px_20px_rgba(35,80,246,0.25)] scale-110'
+                          : 'border-[#dce7ff] bg-white text-[#7d8bb0]'
                     )}
                   >
                     {isComplete ? (
@@ -783,8 +782,8 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
                       isActive
                         ? 'text-[#1a56db]'
                         : isComplete
-                        ? 'text-[#1ea84a]'
-                        : 'text-[#17307a]'
+                          ? 'text-[#1ea84a]'
+                          : 'text-[#17307a]'
                     )}
                   >
                     {title}
@@ -887,6 +886,323 @@ type DiagnoseResultsScreenProps = {
   confidenceScore?: number;
 };
 
+interface DiagnosisSummaryData {
+  primaryIssue: string;
+  symptoms: string[];
+  severity: string;
+  confidence: string;
+  additionalNotes?: string;
+}
+
+type Evidence = {
+  symptoms: string[];
+  rawNotes: string;
+  hasRecentTireService: boolean;
+  hasRecentBrakeService: boolean;
+  hasRecentBatteryService: boolean;
+  hasRecentAcRecharge: boolean;
+  hasTransmissionFluidService: boolean;
+  hasOverheating: boolean;
+  hasSteeringIssues: boolean;
+  hasBrakeIssues: boolean;
+  hasStartingIssues: boolean;
+  hasAcIssues: boolean;
+  hasTransmissionIssues: boolean;
+  hasEnginePerformanceIssues: boolean;
+};
+
+type DiagnosticCause = {
+  id: string;
+  name: string;
+  severity: string;
+  baseScore: number;
+  finalScore: number;
+  supportedBy: string[];
+  weakenedBy: string[];
+};
+
+type ReasoningResult = {
+  primaryDiagnosis: DiagnosticCause;
+  alternativeDiagnosis: DiagnosticCause | null;
+  keyEvidence: string;
+  supportReason: string;
+  rejectionReason: string;
+};
+
+type Observation = {
+  type: 'symptom' | 'maintenance' | 'condition' | 'system';
+  value: string;
+  source: 'questionnaire' | 'additional_info';
+};
+
+type CandidateDiagnosis = {
+  id: string;
+  name: string;
+  severity: string;
+  baseProbability: number;
+  supportedBy: Observation[];
+  contradictedBy: Observation[];
+  eliminated: boolean;
+  eliminationReason?: string;
+  confidenceContribution: number;
+};
+
+type ReasoningState = {
+  observations: Observation[];
+  candidates: CandidateDiagnosis[];
+  mostProbable: CandidateDiagnosis | null;
+  baseConfidence: number;
+  finalConfidence: number;
+  missingEvidence: string[];
+  nextSteps: string;
+};
+
+function extractEvidencePipeline(symptoms: string[], notes: string = ""): Observation[] {
+  const obs: Observation[] = [];
+  
+  symptoms.forEach(s => {
+    obs.push({ type: 'symptom', value: s.toLowerCase(), source: 'questionnaire' });
+  });
+
+  if (notes) {
+    const notesLower = notes.toLowerCase();
+    
+    // Extract maintenance
+    const maintenanceKeywords = ['replace', 'new', 'refill', 'recharge', 'service', 'flush', 'jump', 'change'];
+    maintenanceKeywords.forEach(k => {
+      if (notesLower.includes(k)) {
+        obs.push({ type: 'maintenance', value: notesLower, source: 'additional_info' });
+      }
+    });
+
+    // Extract conditions
+    const conditionKeywords = ['highway', 'speed', 'idle', 'turn', 'cold', 'hot', 'rain', 'bump', 'pothole', 'accident', 'start'];
+    conditionKeywords.forEach(k => {
+      if (notesLower.includes(k)) {
+        obs.push({ type: 'condition', value: notesLower, source: 'additional_info' });
+      }
+    });
+
+    // Extract raw symptoms if none of the above matched distinctly, or just add the whole note
+    if (obs.filter(o => o.source === 'additional_info').length === 0) {
+       obs.push({ type: 'symptom', value: notesLower, source: 'additional_info' });
+    }
+  }
+  return obs;
+}
+
+function evaluateCandidates(observations: Observation[]): CandidateDiagnosis[] {
+  // Define initial candidates across major systems
+  let candidates: CandidateDiagnosis[] = [
+    { id: "ac_leak", name: "A/C Compressor or Leak Fault", severity: "Medium", baseProbability: 40, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "ac_deplete", name: "A/C Refrigerant Depletion", severity: "Low", baseProbability: 60, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "steer_align", name: "Wheel Alignment Issue", severity: "Low", baseProbability: 50, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "steer_susp", name: "Suspension Component Wear", severity: "Medium", baseProbability: 50, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "brake_rotor", name: "Brake Rotor or Caliper Fault", severity: "High", baseProbability: 40, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "brake_pad", name: "Brake Pad Depletion", severity: "High", baseProbability: 70, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "start_alt", name: "Alternator or Starter Failure", severity: "High", baseProbability: 40, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "start_bat", name: "Battery Degradation", severity: "Medium", baseProbability: 70, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "trans_valve", name: "Transmission Valve Body Fault", severity: "High", baseProbability: 30, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "trans_fluid", name: "Transmission Fluid Degradation", severity: "High", baseProbability: 60, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "eng_ign", name: "Ignition System Misfire", severity: "Medium", baseProbability: 60, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
+    { id: "eng_fuel", name: "Fuel Delivery Issue", severity: "Medium", baseProbability: 40, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 }
+  ];
+
+  // Evaluate against observations
+  observations.forEach(obs => {
+    const val = obs.value;
+    
+    // AC
+    if (val.includes("ac ") || val.includes("cool") || val.includes("air")) {
+      candidates.find(c => c.id === "ac_leak")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "ac_deplete")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'maintenance' && (val.includes("recharg") || val.includes("refill") || val.includes("freon"))) {
+      candidates.find(c => c.id === "ac_deplete")!.contradictedBy.push(obs);
+      candidates.find(c => c.id === "ac_leak")!.supportedBy.push(obs);
+    }
+
+    // Steering/Suspension
+    if (val.includes("steer") || val.includes("pull") || val.includes("vibrat") || val.includes("align")) {
+      candidates.find(c => c.id === "steer_align")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "steer_susp")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'maintenance' && (val.includes("tire") || val.includes("wheel"))) {
+      candidates.find(c => c.id === "steer_align")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'condition' && (val.includes("pothole") || val.includes("bump"))) {
+      candidates.find(c => c.id === "steer_susp")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "steer_align")!.supportedBy.push(obs);
+    }
+
+    // Brakes
+    if (val.includes("brake") || val.includes("squeak") || val.includes("grind") || val.includes("stop")) {
+      candidates.find(c => c.id === "brake_rotor")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "brake_pad")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'maintenance' && (val.includes("pad") || val.includes("brake"))) {
+      candidates.find(c => c.id === "brake_pad")!.contradictedBy.push(obs);
+      candidates.find(c => c.id === "brake_rotor")!.supportedBy.push(obs);
+    }
+
+    // Starting
+    if (val.includes("start") || val.includes("crank") || val.includes("click") || val.includes("battery")) {
+      candidates.find(c => c.id === "start_alt")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "start_bat")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'maintenance' && (val.includes("jump") || val.includes("battery"))) {
+      candidates.find(c => c.id === "start_bat")!.contradictedBy.push(obs);
+      candidates.find(c => c.id === "start_alt")!.supportedBy.push(obs);
+    }
+
+    // Transmission
+    if (val.includes("shift") || val.includes("gear") || val.includes("trans")) {
+      candidates.find(c => c.id === "trans_valve")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "trans_fluid")!.supportedBy.push(obs);
+    }
+    if (obs.type === 'maintenance' && val.includes("fluid")) {
+      candidates.find(c => c.id === "trans_fluid")!.contradictedBy.push(obs);
+      candidates.find(c => c.id === "trans_valve")!.supportedBy.push(obs);
+    }
+
+    // Engine
+    if (val.includes("engine") || val.includes("idle") || val.includes("stall") || val.includes("misfire") || val.includes("rough")) {
+      candidates.find(c => c.id === "eng_ign")!.supportedBy.push(obs);
+      candidates.find(c => c.id === "eng_fuel")!.supportedBy.push(obs);
+    }
+  });
+
+  return candidates;
+}
+
+function reasonOverEvidencePipeline(candidates: CandidateDiagnosis[]): CandidateDiagnosis[] {
+  // Eliminate candidates with direct contradictions
+  candidates.forEach(c => {
+    if (c.contradictedBy.length > 0) {
+      c.eliminated = true;
+      c.eliminationReason = `contradicted by ${c.contradictedBy[0].value}`;
+      c.confidenceContribution = -20;
+    } else if (c.supportedBy.length > 0) {
+      c.confidenceContribution = 20 + (c.supportedBy.length * 10);
+    }
+  });
+
+  // Filter to only those with support
+  let viable = candidates.filter(c => c.supportedBy.length > 0);
+  
+  if (viable.length === 0) {
+    viable = [{
+      id: "mech_general",
+      name: "Drivetrain or Component Failure",
+      severity: "Medium",
+      baseProbability: 50,
+      supportedBy: [],
+      contradictedBy: [],
+      eliminated: false,
+      confidenceContribution: 10
+    }];
+  }
+
+  // Sort by combination of base probability and confidence contribution
+  viable.sort((a, b) => {
+    const scoreA = a.eliminated ? 0 : a.baseProbability + a.confidenceContribution;
+    const scoreB = b.eliminated ? 0 : b.baseProbability + b.confidenceContribution;
+    return scoreB - scoreA;
+  });
+
+  return viable;
+}
+
+function calculateConfidence(state: ReasoningState): number {
+  let confidence = 70; // Base baseline
+
+  if (state.mostProbable) {
+    // Increase for multiple supporting observations
+    if (state.mostProbable.supportedBy.length > 1) confidence += 15;
+    
+    // Increase if alternative was explicitly eliminated
+    const eliminatedAlts = state.candidates.filter(c => c.eliminated && c.id.split('_')[0] === state.mostProbable!.id.split('_')[0]);
+    if (eliminatedAlts.length > 0) confidence += 10;
+  }
+
+  // Decrease if too many viable alternatives remain in the same category
+  const viableAlts = state.candidates.filter(c => !c.eliminated);
+  if (viableAlts.length > 1) {
+    confidence -= (viableAlts.length - 1) * 5;
+  }
+
+  // Cap at 98, floor at 40
+  return Math.max(40, Math.min(98, confidence));
+}
+
+function generateNaturalSummary(state: ReasoningState): string {
+  const primary = state.mostProbable;
+  if (!primary) return "There is not enough specific evidence to pinpoint a single component failure.";
+
+  const hasAddInfo = state.observations.some(o => o.source === 'additional_info');
+  const addInfoObs = state.observations.find(o => o.source === 'additional_info');
+  
+  const eliminatedAlt = state.candidates.find(c => c.eliminated && c.id.split('_')[0] === primary.id.split('_')[0]);
+
+  let summary = "";
+
+  // Introduction based on evidence
+  if (eliminatedAlt && hasAddInfo) {
+    summary += `Looking at the new information provided (${addInfoObs?.value}), we can likely rule out a simple ${eliminatedAlt.name.toLowerCase()}. `;
+    summary += `Since the symptoms persist despite that, the issue is highly likely a ${primary.name.toLowerCase()}. `;
+  } else if (primary.supportedBy.length > 1) {
+    summary += `The combination of the reported symptoms strongly aligns with a ${primary.name.toLowerCase()}. `;
+  } else {
+    summary += `Based on the primary symptom, this appears to be a ${primary.name.toLowerCase()}. `;
+  }
+
+  // Reasoning body
+  if (primary.id.includes("ac_leak")) summary += "When the system is recharged but loses cooling again, it confirms a physical breach in the pressurized lines or a failing compressor seal rather than just normal depletion. ";
+  if (primary.id.includes("steer_align")) summary += "Vibrations or pulling that coincide with tire changes or impacts usually point to the geometry of the wheels being knocked out of spec. ";
+  if (primary.id.includes("brake_rotor")) summary += "Since the pads are relatively new, the persistent noise or vibration is typically caused by warped rotors or a caliper piston failing to retract completely. ";
+  if (primary.id.includes("start_alt")) summary += "If the battery has been replaced or jumped and starting issues remain, the alternator is likely failing to generate the voltage needed to keep the system charged. ";
+  if (primary.id.includes("trans_valve")) summary += "Fresh fluid should resolve minor shifting hesitation; if it doesn't, the internal valve body or shift solenoids are likely sticking under pressure. ";
+
+  // Conclusion / Next Steps
+  summary += "To confirm this, ";
+  if (primary.id.includes("ac")) summary += "a UV dye test and pressure check should be performed on the A/C lines.";
+  else if (primary.id.includes("steer")) summary += "a technician should check the suspension bushings and put the vehicle on an alignment rack.";
+  else if (primary.id.includes("brake")) summary += "the rotor runout should be measured and the caliper slide pins inspected for binding.";
+  else if (primary.id.includes("start")) summary += "a full charging system test (measuring alternator output under load) is required.";
+  else if (primary.id.includes("trans")) summary += "a diagnostic scan of the transmission control module and a line pressure test are the best next steps.";
+  else summary += "a hands-on physical inspection of the system is the logical next step.";
+
+  return summary;
+}
+
+function simulateDiagnosticReasoning(data: DiagnosisSummaryData): { refinedIssue: string, refinedSummary: string, refinedSeverity: string, refinedConfidence: string } {
+  const observations = extractEvidencePipeline(data.symptoms, data.additionalNotes);
+  const candidates = evaluateCandidates(observations);
+  const reasonedCandidates = reasonOverEvidencePipeline(candidates);
+  
+  const mostProbable = reasonedCandidates[0] || null;
+  
+  const state: ReasoningState = {
+    observations,
+    candidates: reasonedCandidates,
+    mostProbable,
+    baseConfidence: 70,
+    finalConfidence: 70,
+    missingEvidence: [],
+    nextSteps: ""
+  };
+
+  state.finalConfidence = calculateConfidence(state);
+  const summary = generateNaturalSummary(state);
+
+  return { 
+    refinedIssue: mostProbable ? mostProbable.name : "System Fault", 
+    refinedSummary: summary, 
+    refinedSeverity: mostProbable ? mostProbable.severity : "Medium",
+    refinedConfidence: `${state.finalConfidence}%`
+  };
+}
+
 function DiagnoseResultsScreen({
   issueText,
   answerSummaryItems,
@@ -910,6 +1226,50 @@ function DiagnoseResultsScreen({
     activeCategory,
     resultIssues
   );
+
+  const initialAnalysis = simulateDiagnosticReasoning({
+    primaryIssue: activeCategory?.label || "Issue Detected",
+    symptoms: answerSummaryItems.map(item => item.value),
+    severity: "Medium",
+    confidence: confidenceScore ? `${confidenceScore}%` : "85%"
+  });
+
+  const [diagnosisState, setDiagnosisState] = useState({
+    primaryIssue: initialAnalysis.refinedIssue,
+    severity: initialAnalysis.refinedSeverity,
+    confidence: confidenceScore ? `${confidenceScore}%` : "85%",
+    summary: initialAnalysis.refinedSummary,
+    symptoms: answerSummaryItems.map(item => item.value),
+    isRefined: false
+  });
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerateDiagnosis = () => {
+    if (!additionalNotes.trim()) return;
+    setIsRegenerating(true);
+    setTimeout(() => {
+      setDiagnosisState(prev => {
+        const newAnalysis = simulateDiagnosticReasoning({
+          primaryIssue: prev.primaryIssue,
+          symptoms: prev.symptoms,
+          severity: prev.severity,
+          confidence: prev.confidence,
+          additionalNotes: additionalNotes
+        });
+
+        return {
+          ...prev,
+          primaryIssue: newAnalysis.refinedIssue,
+          severity: newAnalysis.refinedSeverity,
+          confidence: newAnalysis.refinedConfidence,
+          summary: newAnalysis.refinedSummary,
+          isRefined: true
+        };
+      });
+      setIsRegenerating(false);
+    }, 1500);
+  };
   return (
     <div className="space-y-5 pb-6">
       <IssueDetailsModal
@@ -926,38 +1286,56 @@ function DiagnoseResultsScreen({
         </div>
       </div>
 
-      <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)]">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 flex-1">
+      <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)] overflow-y-auto [scrollbar-width:thin]">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1">
             <div className={homeSectionHeadingClass}>Your Issue</div>
-            {issueText && issueText !== DEFAULT_ISSUE_TEXT ? (
-              <div className="mt-2.5 text-[13px] font-medium text-[#17307a] bg-[#f5f8ff] rounded-[12px] px-4 py-2 border border-[#e2eafd] inline-block max-w-full">
-                <span className="text-[#5f7099] text-[10px] block uppercase tracking-wider font-bold mb-0.5">Symptom Description</span>
-                &quot;{issueText}&quot;
+
+            <div className="mt-3">
+              <div className="text-[14.5px] font-bold text-[#17307a]">{diagnosisState.primaryIssue}</div>
+              {diagnosisState.isRefined && (
+                <div className="mt-1 text-[11px] font-semibold text-[#25a24a] flex items-center gap-1">
+                  ✓ Refined using your additional information
+                </div>
+              )}
+              <div className="mt-1.5 flex gap-2">
+                <span className="rounded-full bg-[#fff4e5] px-2.5 py-0.5 text-[11px] font-bold text-[#b54708]">Severity: {diagnosisState.severity}</span>
+                <span className="rounded-full bg-[#e8f8eb] px-2.5 py-0.5 text-[11px] font-bold text-[#25a24a]">Confidence: {diagnosisState.confidence}</span>
               </div>
-            ) : null}
-            {activeCategory ? (
-              <div className="mt-3 inline-flex rounded-full bg-[#dfe9ff] px-3.5 py-1.5 text-[12px] font-semibold text-[#1a56db] shadow-[0_6px_16px_rgba(26,86,219,0.08)]">
-                Detected issue family: {activeCategory.label}
-              </div>
-            ) : null}
-            {answerSummaryItems.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {answerSummaryItems.map(({ label, value }) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#17307a] shadow-[0_4px_12px_rgba(20,44,112,0.04)]"
-                  >
-                    {label}: {value}
-                  </span>
+              <p className="mt-2.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
+                {diagnosisState.summary}
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {diagnosisState.symptoms.map(sym => (
+                  <span key={sym} className="rounded-md bg-[#f4f7ff] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{sym}</span>
                 ))}
               </div>
-            ) : null}
+            </div>
+
+
+
+            <div className="mt-4 border-t border-[#e6ecfb] pt-3">
+              <label className="text-[14.5px] font-bold text-[#17307a]">Additional Information</label>
+              <p className="mt-0.5 text-[12.5px] text-[#6b7ba5]">Add any new observations not covered in the original questionnaire.</p>
+              <textarea
+                className="mt-2.5 w-full rounded-xl border border-[#dbe6ff] p-3 text-[13.5px] text-[#17307a] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db] focus:outline-none placeholder:text-[#8ea0c7] transition-all resize-y"
+                rows={2}
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder="e.g. Issue started after hitting a pothole"
+              />
+              <div className="mt-3 flex flex-wrap gap-2.5 pb-1">
+                <button type="button" onClick={handleRegenerateDiagnosis} disabled={isRegenerating || !additionalNotes.trim()} className="inline-flex h-[36px] items-center justify-center rounded-[10px] bg-[#1a56db] px-4 text-[13px] font-semibold text-white hover:bg-[#17307a] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                  {isRegenerating ? 'Regenerating...' : 'Regenerate Diagnosis'}
+                </button>
+              </div>
+            </div>
           </div>
+
           <button
             type="button"
             onClick={onEditIssue}
-            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
+            className="shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
           >
             <PenLine className="h-4 w-4" />
             <span>Edit Issue</span>
@@ -994,8 +1372,8 @@ function DiagnoseResultsScreen({
                   <span>{selectedVehicle?.vin ? 'VIN' : 'Petrol'}</span>
                   <span className="font-mono truncate max-w-[80px]">{selectedVehicle?.vin ? selectedVehicle.vin.slice(-6) : '2018'}</span>
                   <span className="col-span-2">
-                    {selectedVehicle?.mileage !== undefined && selectedVehicle?.mileage !== null 
-                      ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} mi` 
+                    {selectedVehicle?.mileage !== undefined && selectedVehicle?.mileage !== null
+                      ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} mi`
                       : 'KM Driven: 58,320 km'}
                   </span>
                 </div>
@@ -1421,8 +1799,8 @@ function FindingQuotesScreen({
                     isComplete
                       ? 'border-[#17884f] bg-[#17884f] text-white'
                       : isActive
-                      ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                      : 'border-[#7d85ba] bg-white text-transparent'
+                        ? 'border-[#2351f6] bg-white text-[#2351f6]'
+                        : 'border-[#7d85ba] bg-white text-transparent'
                   )}
                 >
                   {isComplete ? (
@@ -1470,8 +1848,8 @@ function FindingQuotesScreen({
               <span className="font-mono">{selectedVehicle?.vin ? selectedVehicle.vin.slice(-6) : '2018'}</span>
             </div>
             <div className="mt-4 text-[11px] text-[#5f7099]">
-              {selectedVehicle?.mileage !== undefined && selectedVehicle?.mileage !== null 
-                ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} mi` 
+              {selectedVehicle?.mileage !== undefined && selectedVehicle?.mileage !== null
+                ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} mi`
                 : 'KM Driven: 58,320 km'}
             </div>
           </div>
@@ -1543,8 +1921,8 @@ function FindingQuotesScreen({
               const status = isComplete
                 ? 'Completed'
                 : isActive
-                ? 'In progress'
-                : 'Pending';
+                  ? 'In progress'
+                  : 'Pending';
               return (
                 <div key={step.title} className="relative flex gap-4">
                   {index < array.length - 1 ? (
@@ -1556,8 +1934,8 @@ function FindingQuotesScreen({
                       isComplete
                         ? 'border-[#17884f] bg-[#17884f] text-white'
                         : isActive
-                        ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                        : 'border-[#707ab3] bg-white text-transparent'
+                          ? 'border-[#2351f6] bg-white text-[#2351f6]'
+                          : 'border-[#707ab3] bg-white text-transparent'
                     )}
                   >
                     {isComplete ? (
@@ -1574,8 +1952,8 @@ function FindingQuotesScreen({
                         isComplete
                           ? 'text-[#5f7099]'
                           : isActive
-                          ? 'text-[#1a56db]'
-                          : 'text-[#7f8db3]'
+                            ? 'text-[#1a56db]'
+                            : 'text-[#7f8db3]'
                       )}
                     >
                       {status}
@@ -1605,6 +1983,90 @@ function FindingQuotesScreen({
       </div>
     </div>
   );
+}
+
+type IntentCategory = 'component' | 'system' | 'symptom' | 'maintenance' | 'warning_light' | 'operating_condition' | 'timing' | 'environmental' | 'recent_event' | 'unknown';
+
+type ExtractedEntity = {
+  category: IntentCategory;
+  value: string;
+};
+
+const ENTITY_DICTIONARY: Record<string, string[]> = {
+  component: ['radiator', 'thermostat', 'battery', 'alternator', 'spark plug', 'brake pad', 'compressor', 'fuel pump', 'rotor', 'caliper', 'tire', 'wheel', 'clutch', 'belt', 'hose', 'sensor'],
+  system: ['engine', 'cooling', 'ac', 'brakes', 'steering', 'suspension', 'transmission', 'hvac', 'electrical', 'exhaust', 'fuel', 'ignition'],
+  symptom: ['leak', 'overheat', 'squeak', 'grind', 'click', 'vibrat', 'pull', 'rough', 'idle', 'stall', 'misfire', 'hesitat', 'noise', 'smell', 'smoke', 'warm', 'cold', 'won\'t start', 'dead', 'shaking', 'knock', 'rattle', 'whine'],
+  maintenance: ['replace', 'refill', 'recharge', 'flush', 'jump', 'new', 'service', 'fix', 'change', 'repair', 'rebuilt', 'swap'],
+  warning_light: ['check engine', 'abs', 'battery light', 'oil', 'warning light', 'tpms', 'cel', 'mil', 'light on', 'flashing'],
+  operating_condition: ['cold start', 'braking', 'acceleration', 'highway', 'speed', 'idle', 'turn', 'start', 'driving', 'stopping', 'cruising', 'load', 'uphill'],
+  timing: ['morning', 'intermittent', 'constant', 'always', 'sometimes', 'every time', 'random', 'first thing', 'once a week', 'sporadic'],
+  environmental: ['rain', 'wet', 'hot', 'cold', 'freezing', 'snow', 'weather', 'puddle', 'humid', 'dry'],
+  recent_event: ['pothole', 'accident', 'crash', 'hit', 'bump', 'repair', 'curb', 'jumped', 'dead battery', 'tow']
+};
+
+function normalizeInput(text: string): string {
+  return text.toLowerCase().trim().replace(/[.,!?;:]/g, '');
+}
+
+function extractEntities(text: string): ExtractedEntity[] {
+  const entities: ExtractedEntity[] = [];
+  
+  for (const [category, keywords] of Object.entries(ENTITY_DICTIONARY)) {
+    for (const keyword of keywords) {
+      if (text.includes(keyword)) {
+        entities.push({ category: category as IntentCategory, value: keyword });
+      }
+    }
+  }
+
+  if (entities.length === 0) {
+    entities.push({ category: 'unknown', value: text });
+  }
+  return entities;
+}
+
+function determineMissingContext(entities: ExtractedEntity[], turns: number): { isSufficient: boolean, missing: IntentCategory[] } {
+  const hasSymptom = entities.some(e => e.category === 'symptom' || e.category === 'warning_light');
+  const hasCondition = entities.some(e => e.category === 'operating_condition' || e.category === 'timing' || e.category === 'environmental' || e.category === 'recent_event');
+  
+  const missing: IntentCategory[] = [];
+  
+  if (!hasSymptom) {
+    missing.push('symptom');
+  } else if (!hasCondition && turns < 2) { 
+    // Ask for condition if we have a symptom but no condition, up to a limit
+    missing.push('operating_condition');
+  }
+
+  // It is sufficient if we have a symptom, and we've either collected condition/context or we've asked at least twice.
+  const isSufficient = hasSymptom && (hasCondition || turns >= 2);
+  
+  return { isSufficient, missing };
+}
+
+function generateContextAwareFollowUp(missing: IntentCategory[], entities: ExtractedEntity[]): string {
+  const components = entities.filter(e => e.category === 'component' || e.category === 'system').map(e => e.value);
+  const symptoms = entities.filter(e => e.category === 'symptom' || e.category === 'warning_light').map(e => e.value);
+  const maintenance = entities.filter(e => e.category === 'maintenance' || e.category === 'recent_event').map(e => e.value);
+
+  if (missing.includes('symptom')) {
+    if (components.length > 0) {
+      return `I understand you're referring to the ${components[0]}. Could you describe exactly what it's doing? Are there any unusual noises, leaks, or performance issues?`;
+    }
+    if (maintenance.length > 0) {
+      return `You mentioned a recent ${maintenance[0]}. What specific symptoms or problems have you noticed since then?`;
+    }
+    return `Could you provide more details about the symptoms you're experiencing? What exactly is the vehicle doing or not doing?`;
+  }
+
+  if (missing.includes('operating_condition')) {
+    if (symptoms.length > 0) {
+      return `You mentioned a ${symptoms[0]} issue. When exactly does this happen? Is it during acceleration, braking, idling, or at certain speeds?`;
+    }
+    return `To help me narrow this down, can you tell me under what conditions this happens? For example, during a cold start, turning, or on the highway?`;
+  }
+
+  return `Could you tell me a little more about when this issue happens or what you were doing when it started?`;
 }
 
 export function AIDiagnosePage() {
@@ -1650,6 +2112,8 @@ export function AIDiagnosePage() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(-1);
   const [dynamicAnswers, setDynamicAnswers] = useState<Record<string, string>>({});
   const [hasStartedDiagnose, setHasStartedDiagnose] = useState<boolean>(false);
+  const [accumulatedIntakeContext, setAccumulatedIntakeContext] = useState<string>('');
+  const [clarificationTurns, setClarificationTurns] = useState<number>(0);
 
   // Custom API Integration States
   const [apiResult, setApiResult] = useState<DiagnosisResponse | null>(null);
@@ -1812,12 +2276,12 @@ export function AIDiagnosePage() {
             },
             stage: 'final' as const,
           };
-          
+
           const response = await submitDiagnosis(payload);
           setApiResult(response);
-          
+
           if (response.result && response.result.issues) {
-            const mapped = response.result.issues.map((issue: LlmIssue, index: number) => 
+            const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
               mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel)
             );
             setCustomResultIssues(mapped);
@@ -1832,7 +2296,7 @@ export function AIDiagnosePage() {
           setApiError(message);
         }
       };
-      
+
       runApiDiagnosis();
     }
   }, [isAnalyzingResults, apiResult, apiError, dynamicAnswers, dynamicQuestions, issueText, selectedVehicleId, attachedMedia]);
@@ -1874,6 +2338,8 @@ export function AIDiagnosePage() {
     setCurrentQuestionIdx(-1);
     setDynamicAnswers({});
     setHasStartedDiagnose(false);
+    setAccumulatedIntakeContext('');
+    setClarificationTurns(0);
   };
 
   useEffect(() => {
@@ -1995,11 +2461,11 @@ export function AIDiagnosePage() {
 
   const nextSteps = apiResult && apiResult.result && apiResult.result.diyAllowed && apiResult.result.diySteps && apiResult.result.diySteps.length > 0
     ? apiResult.result.diySteps.map((stepText: string, index: number) => ({
-        step: `0${index + 1}`,
-        title: `Step ${index + 1}`,
-        body: stepText,
-        meta: 'DIY Guidance',
-      }))
+      step: `0${index + 1}`,
+      title: `Step ${index + 1}`,
+      body: stepText,
+      meta: 'DIY Guidance',
+    }))
     : undefined;
 
   const confidenceScore = apiResult?.result?.confidenceScore;
@@ -2091,8 +2557,37 @@ export function AIDiagnosePage() {
 
     // If we haven't started the session yet, this input is the initial symptom!
     if (!hasStartedDiagnose) {
-      setIssueText(inputMsg);
-      startDiagnoseSession(selectedVehicleId, inputMsg);
+      const combinedContext = accumulatedIntakeContext ? `${accumulatedIntakeContext} ${inputMsg}` : inputMsg;
+      const normalized = normalizeInput(combinedContext);
+      const entities = extractEntities(normalized);
+      const { isSufficient, missing } = determineMissingContext(entities, clarificationTurns);
+      
+      setAccumulatedIntakeContext(combinedContext);
+
+      if (!isSufficient) {
+        const followUp = generateContextAwareFollowUp(missing, entities);
+        setClarificationTurns(prev => prev + 1);
+        
+        setIsTyping(true);
+        setTypingText('WrectifAI is thinking...');
+        setTimeout(() => {
+          setIsTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `bot-clarification-${Date.now()}`,
+              sender: 'assistant',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              kind: 'message',
+              text: followUp,
+            },
+          ]);
+        }, 1000);
+        return;
+      }
+      
+      setIssueText(combinedContext);
+      startDiagnoseSession(selectedVehicleId, combinedContext);
       return;
     }
 
@@ -2237,15 +2732,15 @@ export function AIDiagnosePage() {
                         {isDiagnosed
                           ? 'WrectifAI Diagnostics Complete!'
                           : isAnalyzingResults
-                          ? 'WrectifAI is analyzing your issue.'
-                          : 'I need a bit more information to diagnose accurately.'}
+                            ? 'WrectifAI is analyzing your issue.'
+                            : 'I need a bit more information to diagnose accurately.'}
                       </h2>
                       <p className="mt-0.5 text-[11px] text-[#5f7099]">
                         {isDiagnosed
                           ? 'Review your results and connect with garages below.'
                           : isAnalyzingResults
-                          ? 'Please wait while we prepare your diagnosis.'
-                          : 'Please answer a few quick questions.'}
+                            ? 'Please wait while we prepare your diagnosis.'
+                            : 'Please answer a few quick questions.'}
                       </p>
                     </div>
                   </div>
@@ -2421,8 +2916,8 @@ export function AIDiagnosePage() {
                                               isSelected
                                                 ? 'border-[#4d81ff] bg-[#fbfdff] text-[#2a5eea] shadow-[inset_0_0_0_1px_rgba(77,129,255,0.14)] font-bold'
                                                 : (hasSelected || !selectedVehicleId)
-                                                ? 'border-[#f2f4f8] bg-[#fafbfc] text-[#b0c0df] cursor-not-allowed'
-                                                : 'border-[#e8edf8] bg-white text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
+                                                  ? 'border-[#f2f4f8] bg-[#fafbfc] text-[#b0c0df] cursor-not-allowed'
+                                                  : 'border-[#e8edf8] bg-white text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
                                             )}
                                           >
                                             <span>{option}</span>
@@ -2531,11 +3026,10 @@ export function AIDiagnosePage() {
                     type="button"
                     disabled={!selectedVehicleId || isAnalyzingResults}
                     onClick={handleToggleRecording}
-                    className={`flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isRecording
+                    className={`flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isRecording
                         ? 'text-red-500 animate-pulse'
                         : 'hover:text-[#1a56db]'
-                    }`}
+                      }`}
                   >
                     <Mic className="h-3.5 w-3.5 text-[#6a8cff]" />
                     <span>{isRecording ? 'Stop Recording' : 'Record Sound'}</span>
@@ -2598,9 +3092,9 @@ export function AIDiagnosePage() {
             <Card className="rounded-[18px] border-[#e8edf8] bg-white p-5 shadow-[0_12px-28px_rgba(35,64,143,0.04)]">
               <h2 className={homeSubheadingClass}>Diagnosing Vehicle</h2>
               <div className="mt-4">
-                <VehicleSelector 
-                  value={selectedVehicleId} 
-                  onChange={handleVehicleChange} 
+                <VehicleSelector
+                  value={selectedVehicleId}
+                  onChange={handleVehicleChange}
                 />
               </div>
             </Card>

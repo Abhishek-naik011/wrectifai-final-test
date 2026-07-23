@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthGuard } from '@/components/common/auth-guard';
+import { FavoritesProvider } from '@/lib/favorites-context';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -31,9 +32,11 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased">
         <GoogleOAuthProvider clientId={googleClientId}>
           <AuthProvider>
-            <AuthGuard>
-              {children}
-            </AuthGuard>
+            <FavoritesProvider>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+            </FavoritesProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>
