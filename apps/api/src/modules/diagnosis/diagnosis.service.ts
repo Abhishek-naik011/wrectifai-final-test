@@ -415,10 +415,17 @@ The diagnosis MUST contain:
 1. Most likely issue (set this as the first issue in the 'issues' array. Make it specific, not generic).
 2. Confidence % (populate 'confidenceScore' and the 'confidence' field of the first issue).
 3. Severity (populate 'riskLevel').
-4. Technical reasoning based on the original symptom and complete interview (include this as the first item in the 'diySteps' array, clearly labeled as "Technical Reasoning:").
+4. Why this diagnosis? (include this as the first item in the 'diySteps' array, clearly labeled as "Why this diagnosis?:"). Provide a clear, natural, customer-friendly explanation of how the AI reached its conclusion based on the complete interview. Preserve exactly the same meaning and evidence but sound like a helpful AI explaining its conclusion based on the user's answers rather than a technical report.
 5. Ranked alternative possible causes (include these as additional issues in the 'issues' array, ordered by likelihood).
 6. Recommended inspection or confirmation steps (include this as the second item in the 'diySteps' array, clearly labeled as "Recommended Next Inspection:").
-Be realistic about whether a repair is DIY-safe. Safety-critical components (brakes, steering, suspension, airbags, high-voltage EV battery systems) should NEVER have diyAllowed = true. Always output prices in US dollars.`;
+
+Decide the correct DIY category dynamically based on safety, complexity, and whether safe owner-level actions exist:
+- "repair": Use ONLY when the issue can realistically be repaired safely by a typical owner without specialised tools or advanced mechanical knowledge. Set diyAllowed = true.
+- "troubleshooting": Use when the issue should not be repaired by the user but there are safe software or visual troubleshooting steps that may resolve or isolate the problem without opening components. Set diyAllowed = true. (Prefer this over "none" if safe checks exist).
+- "none": Use ONLY for issues requiring professional tools, advanced diagnostics, disassembly, or safety-critical work (brakes, steering, high-voltage). Set diyAllowed = false.
+Always include the chosen category as the third item in the 'diySteps' array, exactly labeled as "DIY Category: repair", "DIY Category: troubleshooting", or "DIY Category: none".
+If the category is "repair" or "troubleshooting", generate the appropriate steps, time, tools (or things to verify), and expected outcome as additional items in the 'diySteps' array. Do NOT generate repair instructions if the category is "troubleshooting".
+Always output prices in US dollars.`;
 
     const finalSystemPrompt = systemPrompt;
 

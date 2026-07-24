@@ -76,6 +76,7 @@ export interface DiagnosticIssueResult {
   risks: string[];
   estimatedCost: string;
   imageSrc: string;
+  inspectionItems?: string[];
 }
 
 export interface IssueCategoryConfig {

@@ -121,9 +121,9 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
 
   let reasoning = llmIssue.description || '';
   if (index === 0 && diySteps && diySteps.length > 0) {
-    const reasoningStep = diySteps.find(step => step.toLowerCase().includes('technical reasoning'));
+    const reasoningStep = diySteps.find(step => step.toLowerCase().includes('why this diagnosis') || step.toLowerCase().includes('technical reasoning'));
     if (reasoningStep) {
-        reasoning = reasoningStep.replace(/^technical reasoning:\\s*/i, '');
+        reasoning = reasoningStep.replace(/^(?:\\*\\*)?(?:why this diagnosis\\??|technical reasoning):?(?:\\*\\*)?\\s*/i, '');
     } else {
         reasoning = diySteps[0];
     }
@@ -133,20 +133,17 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
     reasoning = `Diagnosed issue: ${title}.`;
   }
 
-  const partsText = llmIssue.requiredParts && llmIssue.requiredParts.length > 0
-    ? ` Likely inspection items: ${llmIssue.requiredParts.join(', ')}.`
-    : '';
-
   return {
     id,
     title,
     badge,
     badgeClass,
-    description: `${reasoning}${partsText}`,
+    description: reasoning,
     match,
     risks: [capitalizedRisk],
     estimatedCost,
     imageSrc: '/assets/mega car.png',
+    inspectionItems: llmIssue.requiredParts || [],
   };
 }
 
@@ -905,6 +902,7 @@ type DiagnoseResultsScreenProps = {
   nextSteps?: NextStep[];
   confidenceScore?: number;
   onRegenerateDiagnosis?: (notes: string) => Promise<void>;
+  diyType?: 'repair' | 'troubleshooting' | 'none';
 };
 
 interface DiagnosisSummaryData {
@@ -1211,6 +1209,7 @@ function DiagnoseResultsScreen({
   nextSteps,
   confidenceScore,
   onRegenerateDiagnosis,
+  diyType = 'none',
 }: DiagnoseResultsScreenProps) {
   const selectedCount = selectedIssues.length;
   const detailsTabs = ['Text Details', 'Photo', 'Video', 'Audio'];
@@ -1228,10 +1227,12 @@ function DiagnoseResultsScreen({
     confidence: confidenceScore ? `${confidenceScore}%` : "85%",
     summary: primaryLLMIssue?.description || "WrectifAI has identified potential issues.",
     symptoms: answerSummaryItems.map(item => item.value),
-    isRefined: false
+    isRefined: false,
+    inspectionItems: primaryLLMIssue?.inspectionItems || []
   });
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isDiyDrawerOpen, setIsDiyDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (resultIssues[0]) {
@@ -1240,6 +1241,7 @@ function DiagnoseResultsScreen({
         primaryIssue: resultIssues[0].title,
         severity: resultIssues[0].risks?.[0] || "Medium",
         summary: resultIssues[0].description || "WrectifAI has identified potential issues.",
+        inspectionItems: resultIssues[0].inspectionItems || []
       }));
       setIsRegenerating(false);
       setAdditionalNotes('');
@@ -1292,14 +1294,28 @@ function DiagnoseResultsScreen({
                 <span className="rounded-full bg-[#fff4e5] px-2.5 py-0.5 text-[11px] font-bold text-[#b54708]">Severity: {diagnosisState.severity}</span>
                 <span className="rounded-full bg-[#e8f8eb] px-2.5 py-0.5 text-[11px] font-bold text-[#25a24a]">Confidence: {diagnosisState.confidence}</span>
               </div>
-              <p className="mt-2.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
-                {diagnosisState.summary}
-              </p>
+              <div className="mt-4">
+                <div className="text-[14.5px] font-bold text-[#17307a]">Why this diagnosis?</div>
+                <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
+                  {diagnosisState.summary}
+                </p>
+              </div>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {diagnosisState.symptoms.map(sym => (
                   <span key={sym} className="rounded-md bg-[#f4f7ff] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{sym}</span>
                 ))}
               </div>
+
+              {diagnosisState.inspectionItems && diagnosisState.inspectionItems.length > 0 && (
+                <div className="mt-4">
+                  <div className="text-[14.5px] font-bold text-[#17307a]">Inspection Items</div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {diagnosisState.inspectionItems.map(item => (
+                      <span key={item} className="rounded-md bg-[#f4f7ff] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
 
@@ -1424,9 +1440,9 @@ function DiagnoseResultsScreen({
           </Card>
 
           <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className={homeSectionHeadingClass}>Top Possible Issues</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className={homeSectionHeadingClass}>Top Possible Issues</h2>
                 <span className="text-[11px] text-[#5f7099]">
                   (Select one or more to request quotes)
                 </span>
@@ -1594,28 +1610,6 @@ function DiagnoseResultsScreen({
               24/7 Available
             </div>
           </Card>
-
-          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-6 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
-            <h3 className={homeCardHeadingClass}>Next Steps</h3>
-            <div className="mt-6 space-y-6">
-              {(nextSteps || resultNextSteps).map((step) => (
-                <div key={step.step} className="flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f2f5ff] text-[12px] font-semibold text-[#3059e1]">
-                    {step.step}
-                  </div>
-                  <div>
-                    <div className={homeSubheadingClass}>{step.title}</div>
-                    <p className="mt-1 text-[11px] leading-5 text-[#5f7099]">
-                      {step.body}
-                    </p>
-                    <div className="mt-2 text-[11px] font-medium text-[#5f7099]">
-                      ◉ {step.meta}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
         </div>
       </div>
 
@@ -1635,15 +1629,25 @@ function DiagnoseResultsScreen({
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-1.5 lg:items-end">
-            <button
-              type="button"
-              onClick={onRequestQuotes}
-              className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-[linear-gradient(90deg,#1a46e8_0%,#245cff_100%)] px-6 text-[12px] font-semibold text-white shadow-[0_10px_24px_rgba(37,82,235,0.18)] transition-transform hover:scale-[1.01]"
-            >
-              <Send className="h-4.5 w-4.5" />
-              <span>Request Quotes ({selectedCount})</span>
-            </button>
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setIsDiyDrawerOpen(true)}
+                className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-white border border-[#dbe6ff] px-6 text-[12.5px] font-bold text-[#17307a] shadow-[0_4px_12px_rgba(37,73,153,0.04)] transition-all hover:bg-[#f4f7ff] hover:border-[#1a56db] hover:text-[#1a56db]"
+              >
+                <Wrench className="h-4.5 w-4.5" />
+                <span>Get DIY Guide</span>
+              </button>
+              <button
+                type="button"
+                onClick={onRequestQuotes}
+                className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-[linear-gradient(90deg,#1a46e8_0%,#245cff_100%)] px-6 text-[12px] font-semibold text-white shadow-[0_10px_24px_rgba(37,82,235,0.18)] transition-transform hover:scale-[1.01]"
+              >
+                <Send className="h-4.5 w-4.5" />
+                <span>Request Quotes ({selectedCount})</span>
+              </button>
+            </div>
             <div className="text-[11px] text-[#5f7099]">
               You will receive quotes within 30 mins
             </div>
@@ -1668,6 +1672,78 @@ function DiagnoseResultsScreen({
           </div>
         ))}
       </div>
+
+      {/* DIY Centered Modal */}
+      {isDiyDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-sm transition-opacity" onClick={() => setIsDiyDrawerOpen(false)} />
+          
+          {(diyType === 'repair' || diyType === 'troubleshooting') && nextSteps && nextSteps.length > 0 ? (
+            <div className="relative w-full max-w-2xl bg-white shadow-2xl rounded-[24px] flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-[#e6ecfb] px-6 py-5 bg-white z-10 rounded-t-[24px]">
+                <h2 className="text-[20px] font-bold text-[#17307a]">
+                  {diyType === 'troubleshooting' ? 'Troubleshooting Guide' : 'DIY Guide'}
+                </h2>
+                <button onClick={() => setIsDiyDrawerOpen(false)} className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                <div className="mb-6 rounded-[16px] border border-[#dbe6ff] bg-[#fbfcff] p-5">
+                  <div className="flex items-center gap-2 font-bold text-[#17307a] mb-2">
+                    <Wrench className="h-4.5 w-4.5 text-[#1a56db]" /> Before you start
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-[#4c5f8f]">
+                    Please ensure you have the proper tools and a safe working environment. If you feel uncomfortable at any point, we strongly recommend requesting quotes from trusted garages instead.
+                  </p>
+                </div>
+
+                <h3 className="text-[16px] font-bold text-[#17307a] mb-5">Step-by-step Instructions</h3>
+                <div className="space-y-6">
+                  {nextSteps.map((step) => (
+                    <div key={step.step} className="flex gap-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[13px] font-bold text-[#1a56db]">
+                        {step.step}
+                      </div>
+                      <div>
+                        <div className="text-[14.5px] font-bold text-[#17307a]">{step.title}</div>
+                        <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
+                          {step.body}
+                        </p>
+                        {step.meta && (
+                          <div className="mt-2.5 text-[11.5px] font-bold text-[#1a56db] bg-[#f4f7ff] inline-block px-2.5 py-1 rounded-md">
+                            {step.meta}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative w-full max-w-md bg-white shadow-2xl rounded-[24px] flex flex-col animate-in zoom-in-95 duration-200 p-6 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff4e5] text-[#b54708] mb-4">
+                <Wrench className="h-6 w-6" />
+              </div>
+              <h2 className="text-[20px] font-bold text-[#17307a] mb-2">DIY Repair Not Recommended</h2>
+              <p className="text-[14px] leading-relaxed text-[#4c5f8f] mb-6">
+                This issue requires professional diagnosis, specialised tools or safety procedures and is not recommended for self-repair.
+                <br /><br />
+                Please visit a trusted garage for professional inspection and repair.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsDiyDrawerOpen(false)}
+                className="flex h-[46px] w-full items-center justify-center rounded-[12px] bg-[#f4f7ff] px-6 text-[13.5px] font-bold text-[#1a56db] hover:bg-[#e6ecfb] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2449,13 +2525,20 @@ export function AIDiagnosePage() {
     Object.keys(dynamicAnswers).length > 0 ? dynamicAnswers : answers
   );
 
-  const nextSteps = apiResult && apiResult.result && apiResult.result.diyAllowed && apiResult.result.diySteps && apiResult.result.diySteps.length > 0
-    ? apiResult.result.diySteps.map((stepText: string, index: number) => ({
-      step: `0${index + 1}`,
-      title: `Step ${index + 1}`,
-      body: stepText,
-      meta: 'DIY Guidance',
-    }))
+  const rawDiySteps = apiResult?.result?.diySteps || [];
+  const categoryStep = rawDiySteps.find(s => s.toLowerCase().startsWith('diy category:'));
+  const diyTypeRaw = categoryStep ? categoryStep.split(':')[1]?.trim().toLowerCase() : (apiResult?.result?.diyAllowed ? 'repair' : 'none');
+  const diyType = ['repair', 'troubleshooting'].includes(diyTypeRaw) ? diyTypeRaw as 'repair' | 'troubleshooting' : 'none';
+
+  const nextSteps = apiResult && apiResult.result && apiResult.result.diyAllowed && rawDiySteps.length > 0
+    ? rawDiySteps
+        .filter(s => !s.toLowerCase().startsWith('diy category:'))
+        .map((stepText: string, index: number) => ({
+          step: `0${index + 1}`,
+          title: `Step ${index + 1}`,
+          body: stepText,
+          meta: diyType === 'troubleshooting' ? 'Troubleshooting' : 'DIY Guidance',
+        }))
     : undefined;
 
   const confidenceScore = apiResult?.result?.confidenceScore;
@@ -2658,6 +2741,7 @@ export function AIDiagnosePage() {
             selectedVehicle={selectedVehicle}
             nextSteps={nextSteps}
             confidenceScore={confidenceScore}
+            diyType={diyType}
             onRegenerateDiagnosis={async (notes) => {
               const newSymptom = issueText + '\\n\\nAdditional information: ' + notes;
               setIssueText(newSymptom);
