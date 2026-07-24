@@ -140,7 +140,13 @@ export class DiagnosisService {
   static async generateQuestions(
     customerId: string,
     vehicleId: string,
-    symptomText: string
+    symptomText: string,
+    intakeAnswers?: { 
+      category?: string; 
+      answers?: Record<string, string>; 
+      questions?: string[]; 
+      qas?: Record<string, string>;
+    }
   ) {
     const env = getEnv();
 
@@ -167,14 +173,6 @@ export class DiagnosisService {
       console.error('Failed to retrieve matched issues from database:', dbErr);
     }
 
-    if (matchedIssues.length === 0) {
-      // Bypasses LLM directly on zero DB matches (Option A)
-      return {
-        questions: [],
-        matchedIssues: [],
-      };
-    }
-
     // Call LLM to generate targeted questions based on database matches
     const { generateObject } = await import('ai');
     const { createOpenAI } = await import('@ai-sdk/openai');
@@ -198,27 +196,54 @@ export class DiagnosisService {
 
     const modelInstance = aiProvider(env.llmModel);
 
+    let previousAnswersContext = '';
+    if (intakeAnswers) {
+      const qas = intakeAnswers.qas || intakeAnswers.answers;
+      if (qas && Object.keys(qas).length > 0) {
+        previousAnswersContext = `\n\nPrevious questions asked and user's answers:\n${Object.entries(qas).map(([q, a]) => `- Q: ${q}\n  A: ${a}`).join('\n')}`;
+      }
+    }
+
+
     const systemPrompt = `You are an expert automotive diagnostic assistant.
-The user has reported a symptom: "${symptomText}".
-Our database indicates this could be one of the following known issues:
-${matchedIssues.map(issue => `- Issue: ${issue.issue_name}\n  Description: ${issue.description}`).join('\n')}
+The user has reported a symptom: "${symptomText}".${previousAnswersContext}
 
-Your task is to generate exactly 5 highly specific multiple choice questions to ask the user.
-These questions should be designed to narrow down WHICH of the database issues is the correct one.
-Do not ask generic questions (e.g. "what model is your car?"). Focus strictly on symptoms, sound patterns, warning lights, or operating conditions related to the potential issues listed.
-For each question, provide 2 to 4 concise multiple choice options (e.g., ["Crank is slow", "Starter clicks only", "No crank at all"]).
-Output your response as a strict JSON array under a "questions" field, where each item is an object containing "question" (string) and "options" (array of strings).`;
+Your task is to generate exactly 5 concise follow-up questions to ask the user. They must form a complete diagnostic interview that progressively narrows down the issue like an experienced mechanic.
+First, internally identify the primary affected vehicle subsystem from the user's primary symptom (e.g. Tyres, Brakes, Battery, Charging, Engine Cooling, Engine, Transmission, Steering, Suspension, Fuel, Electrical, AC, etc.).
+Ask ALL follow-up questions only within that subsystem. Never ask unrelated cross-system questions unless previous answers provide strong evidence that another subsystem is involved.
+Generate the questions using the original symptom, vehicle details, and only the information required to narrow the diagnosis.
+Every next question must depend on the original symptom, vehicle details and all previous answers to eliminate the most likely causes.
+Each question must be relevant, evidence-based and help narrow the diagnosis.
+Never ask unrelated or repeated questions (e.g. AC for tyre pressure).
+Use conversation context to avoid repeated or contradictory questions.
+The next question should reduce diagnostic uncertainty.
+Do not ask generic questions (e.g. "what model is your car?"). Focus strictly on symptoms, sound patterns, warning lights, or operating conditions related to the potential issues.
+Provide 3 to 5 concise multiple choice options for each question (e.g., ["Crank is slow", "Starter clicks only", "No crank at all"]).
+Output your response as a strict JSON array under a "questions" field containing exactly 5 objects with "question" (string) and "options" (array of strings).`;
 
-    const llmResponse = await generateObject({
-      model: modelInstance,
-      schema: z.object({
-        questions: z.array(z.object({
-          question: z.string(),
-          options: z.array(z.string()),
+    let llmResponse;
+    try {
+      llmResponse = await generateObject({
+        model: modelInstance,
+        schema: z.object({
+          questions: z.array(z.object({
+            question: z.string(),
+            options: z.array(z.string()),
+          })),
+        }),
+        prompt: systemPrompt,
+      });
+    } catch (err) {
+      console.error('LLM generation failed:', err);
+      return {
+        questions: [],
+        matchedIssues: matchedIssues.map(issue => ({
+          id: issue.id,
+          issue_name: issue.issue_name,
+          safety_critical: issue.safety_critical,
         })),
-      }),
-      prompt: systemPrompt,
-    });
+      };
+    }
 
     // ponytail: map dynamic questions to clean structured objects with dynamic IDs
     const questionsWithIds = llmResponse.object.questions.map((q, idx) => ({
@@ -351,109 +376,86 @@ Output your response as a strict JSON array under a "questions" field, where eac
     let result: DiagnosisResult;
     let finalSymptomText = symptomText;
 
-    if (matchedIssues.length === 0) {
-      // ponytail: bypass LLM entirely to save latency & costs when there are 0 DB matches
-      result = {
-        issues: [{
-          name: 'Clarification Required',
-          confidence: 0,
-          estimatedPriceRange: { min: 0, max: 0 },
-          requiredParts: [],
-        }],
-        confidenceScore: 0,
-        riskLevel: 'low',
-        diyAllowed: false,
-        diySteps: ["I couldn't find a direct match. Can you describe the noise it's making, or when exactly it happens?"],
-        nextAction: 'diy',
-      };
-    } else {
-      // 3. Call LLM (Vercel AI SDK OpenAI or Groq)
-      const { generateObject } = await import('ai');
-      const { createOpenAI } = await import('@ai-sdk/openai');
-      let aiProvider;
-      if (env.llmProvider === 'groq') {
-        if (!env.groqApiKey) {
-          throw new Error('GROQ_API_KEY is not defined in the environment');
-        }
-        aiProvider = createOpenAI({
-          baseURL: 'https://api.groq.com/openai/v1',
-          apiKey: env.groqApiKey,
-        });
-      } else {
-        if (!env.openaiApiKey) {
-          throw new Error('OPENAI_API_KEY is not defined in the environment');
-        }
-        aiProvider = createOpenAI({
-          apiKey: env.openaiApiKey,
-        });
+    // 3. Call LLM (Vercel AI SDK OpenAI or Groq)
+    const { generateObject } = await import('ai');
+    const { createOpenAI } = await import('@ai-sdk/openai');
+    let aiProvider;
+    if (env.llmProvider === 'groq') {
+      if (!env.groqApiKey) {
+        throw new Error('GROQ_API_KEY is not defined in the environment');
       }
+      aiProvider = createOpenAI({
+        baseURL: 'https://api.groq.com/openai/v1',
+        apiKey: env.groqApiKey,
+      });
+    } else {
+      if (!env.openaiApiKey) {
+        throw new Error('OPENAI_API_KEY is not defined in the environment');
+      }
+      aiProvider = createOpenAI({
+        apiKey: env.openaiApiKey,
+      });
+    }
 
-      const modelInstance = aiProvider(env.llmModel);
+    const modelInstance = aiProvider(env.llmModel);
 
-      // Format service history for the prompt
-      const serviceHistoryText = serviceHistory.length > 0
-        ? serviceHistory.map(h => `- [${new Date(h.service_date).toLocaleDateString()}] ${h.description} ($${h.cost || 0})`).join('\n')
-        : 'No prior service history recorded.';
+    // Format service history for the prompt
+    const serviceHistoryText = serviceHistory.length > 0
+      ? serviceHistory.map(h => `- [${new Date(h.service_date).toLocaleDateString()}] ${h.description} ($${h.cost || 0})`).join('\n')
+      : 'No prior service history recorded.';
 
-      const systemPrompt = `You are WrectifAI, an advanced automotive diagnostic expert system.
+    const systemPrompt = `You are WrectifAI, an advanced automotive diagnostic expert system.
 Analyze the vehicle details, recent service history, user symptoms, and any provided media descriptions.
-Provide a highly structured diagnosis conforming exactly to the required JSON schema.
+You must reason over the complete conversation and ALL user answers, not simply combine or restate them. Do NOT rely on the initial symptom or database matches alone.
+The diagnosis must be specific and evidence-based. Avoid generic issue names. The diagnosis should identify the most probable component or system responsible based on the complete interview.
+The diagnosis must sound like an experienced mechanic explaining the reasoning, not a generic AI summary or a restatement of the user's answers.
+
+Provide a highly structured professional AI diagnosis conforming exactly to the required JSON schema.
+The diagnosis MUST contain:
+1. Most likely issue (set this as the first issue in the 'issues' array. Make it specific, not generic).
+2. Confidence % (populate 'confidenceScore' and the 'confidence' field of the first issue).
+3. Severity (populate 'riskLevel').
+4. Technical reasoning based on the original symptom and complete interview (include this as the first item in the 'diySteps' array, clearly labeled as "Technical Reasoning:").
+5. Ranked alternative possible causes (include these as additional issues in the 'issues' array, ordered by likelihood).
+6. Recommended inspection or confirmation steps (include this as the second item in the 'diySteps' array, clearly labeled as "Recommended Next Inspection:").
 Be realistic about whether a repair is DIY-safe. Safety-critical components (brakes, steering, suspension, airbags, high-voltage EV battery systems) should NEVER have diyAllowed = true. Always output prices in US dollars.`;
 
-      let groundingText = '';
-      if (matchedIssues.length > 0) {
-        groundingText = `\n\nKnown Issues for this vehicle (from diagnostic database):
----
-${matchedIssues.map(issue => `
-Issue: ${issue.issue_name}
-- Risk Level: ${issue.risk_level}
-- DIY Allowed: ${issue.diy_allowed ? 'Yes' : 'No'}
-- Required Parts: ${JSON.stringify(issue.required_parts)}
-- Cost Range: $${issue.estimated_cost_min} - $${issue.estimated_cost_max}
-- DIY Steps: ${JSON.stringify(issue.diy_steps)}
-- Garage Steps: ${JSON.stringify(issue.garage_steps)}
-- Base Confidence: ${issue.base_confidence}%
-`).join('\n---\n')}
----
-Use these known issues as PRIMARY reference. Adjust confidence based on how well the user's symptoms match. Only suggest issues NOT in this list if no known issue fits well. Make sure estimated prices and steps reflect this database grounding.`;
+    const finalSystemPrompt = systemPrompt;
+
+    let intakeText = '';
+    if (intakeAnswers) {
+      const qas = intakeAnswers.qas || intakeAnswers.answers;
+      if (qas && Object.keys(qas).length > 0) {
+        intakeText = `\nIntake Answers:\n${Object.entries(qas).map(([q, a]) => `- ${q}: ${a}`).join('\n')}`;
       }
+    }
 
-      const finalSystemPrompt = `${systemPrompt}${groundingText}`;
+    // Process media in parallel before LLM call
+    const [imageDescriptions, audioTranscripts] = await Promise.all([
+      Promise.all(
+        mediaInputs
+          .filter(m => m.mediaType === 'image')
+          .map(m => DiagnosisService.analyzeImage(m.base64))
+      ),
+      Promise.all(
+        mediaInputs
+          .filter(m => m.mediaType === 'audio')
+          .map(m => DiagnosisService.transcribeAudio(m.base64, 'audio/wav'))
+      ),
+    ]);
 
-      let intakeText = '';
-      if (intakeAnswers) {
-        const qas = intakeAnswers.qas || intakeAnswers.answers;
-        if (qas && Object.keys(qas).length > 0) {
-          intakeText = `\nIntake Answers:\n${Object.entries(qas).map(([q, a]) => `- ${q}: ${a}`).join('\n')}`;
-        }
-      }
+    // Append transcripts to symptomText so they persist to DB too
+    const transcriptText = audioTranscripts.filter(Boolean).join('\n');
+    finalSymptomText = transcriptText
+      ? `${symptomText}\n\n[Transcribed Audio]: ${transcriptText}`
+      : symptomText;
 
-      // Process media in parallel before LLM call
-      const [imageDescriptions, audioTranscripts] = await Promise.all([
-        Promise.all(
-          mediaInputs
-            .filter(m => m.mediaType === 'image')
-            .map(m => DiagnosisService.analyzeImage(m.base64))
-        ),
-        Promise.all(
-          mediaInputs
-            .filter(m => m.mediaType === 'audio')
-            .map(m => DiagnosisService.transcribeAudio(m.base64, 'audio/wav'))
-        ),
-      ]);
+    // Build image context for prompt
+    const imageContext = imageDescriptions.filter(Boolean).length > 0
+      ? `\n\nImage Analysis:\n${imageDescriptions.map((d, i) => `- Image #${i + 1}: ${d}`).join('\n')}`
+      : '';
 
-      // Append transcripts to symptomText so they persist to DB too
-      const transcriptText = audioTranscripts.filter(Boolean).join('\n');
-      finalSymptomText = transcriptText
-        ? `${symptomText}\n\n[Transcribed Audio]: ${transcriptText}`
-        : symptomText;
-
-      // Build image context for prompt
-      const imageContext = imageDescriptions.filter(Boolean).length > 0
-        ? `\n\nImage Analysis:\n${imageDescriptions.map((d, i) => `- Image #${i + 1}: ${d}`).join('\n')}`
-        : '';
-
-      const userPrompt = `Vehicle Context:
+    const userPrompt = `Vehicle Context:
 - Make: ${vehicle.make}
 - Model: ${vehicle.model}
 - Year: ${vehicle.year}
@@ -468,22 +470,21 @@ ${intakeText}
 
 Please diagnose the issue.`;
 
-      const contentPayload: { type: 'text'; text: string }[] = [{ type: 'text', text: userPrompt + imageContext }];
+    const contentPayload: { type: 'text'; text: string }[] = [{ type: 'text', text: userPrompt + imageContext }];
 
-      const llmResponse = await generateObject({
-        model: modelInstance,
-        schema: diagnosisResultSchema,
-        system: finalSystemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: contentPayload,
-          },
-        ],
-      });
+    const llmResponse = await generateObject({
+      model: modelInstance,
+      schema: diagnosisResultSchema,
+      system: finalSystemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: contentPayload,
+        },
+      ],
+    });
 
-      result = DiagnosisService.applySafetyGuardrail(llmResponse.object, symptomText, matchedIssues);
-    }
+    result = DiagnosisService.applySafetyGuardrail(llmResponse.object, symptomText, matchedIssues);
 
     // 5. Database Transaction Persistence
     const pool = getDbPool();

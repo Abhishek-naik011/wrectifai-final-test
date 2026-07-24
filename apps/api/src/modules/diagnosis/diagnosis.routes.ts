@@ -33,7 +33,8 @@ diagnosisRouter.post('/', authenticate, requireRole(['user', 'garage', 'vendor',
       const questionsData = await DiagnosisService.generateQuestions(
         customerId,
         vehicleId,
-        symptomText
+        symptomText,
+        intakeAnswers
       );
       return success(res, questionsData, 200);
     }

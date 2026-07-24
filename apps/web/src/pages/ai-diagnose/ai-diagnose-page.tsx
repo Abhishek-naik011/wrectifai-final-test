@@ -884,6 +884,7 @@ type DiagnoseResultsScreenProps = {
   selectedVehicle?: Vehicle | null;
   nextSteps?: NextStep[];
   confidenceScore?: number;
+  onRegenerateDiagnosis?: (notes: string) => Promise<void>;
 };
 
 interface DiagnosisSummaryData {
@@ -1175,34 +1176,6 @@ function generateNaturalSummary(state: ReasoningState): string {
   return summary;
 }
 
-function simulateDiagnosticReasoning(data: DiagnosisSummaryData): { refinedIssue: string, refinedSummary: string, refinedSeverity: string, refinedConfidence: string } {
-  const observations = extractEvidencePipeline(data.symptoms, data.additionalNotes);
-  const candidates = evaluateCandidates(observations);
-  const reasonedCandidates = reasonOverEvidencePipeline(candidates);
-  
-  const mostProbable = reasonedCandidates[0] || null;
-  
-  const state: ReasoningState = {
-    observations,
-    candidates: reasonedCandidates,
-    mostProbable,
-    baseConfidence: 70,
-    finalConfidence: 70,
-    missingEvidence: [],
-    nextSteps: ""
-  };
-
-  state.finalConfidence = calculateConfidence(state);
-  const summary = generateNaturalSummary(state);
-
-  return { 
-    refinedIssue: mostProbable ? mostProbable.name : "System Fault", 
-    refinedSummary: summary, 
-    refinedSeverity: mostProbable ? mostProbable.severity : "Medium",
-    refinedConfidence: `${state.finalConfidence}%`
-  };
-}
-
 function DiagnoseResultsScreen({
   issueText,
   answerSummaryItems,
@@ -1217,6 +1190,7 @@ function DiagnoseResultsScreen({
   selectedVehicle,
   nextSteps,
   confidenceScore,
+  onRegenerateDiagnosis,
 }: DiagnoseResultsScreenProps) {
   const selectedCount = selectedIssues.length;
   const detailsTabs = ['Text Details', 'Photo', 'Video', 'Audio'];
@@ -1227,48 +1201,44 @@ function DiagnoseResultsScreen({
     resultIssues
   );
 
-  const initialAnalysis = simulateDiagnosticReasoning({
-    primaryIssue: activeCategory?.label || "Issue Detected",
-    symptoms: answerSummaryItems.map(item => item.value),
-    severity: "Medium",
-    confidence: confidenceScore ? `${confidenceScore}%` : "85%"
-  });
-
+  const primaryLLMIssue = resultIssues[0];
   const [diagnosisState, setDiagnosisState] = useState({
-    primaryIssue: initialAnalysis.refinedIssue,
-    severity: initialAnalysis.refinedSeverity,
+    primaryIssue: primaryLLMIssue ? primaryLLMIssue.title : "Diagnosis Pending",
+    severity: primaryLLMIssue?.risks?.[0] || "Medium",
     confidence: confidenceScore ? `${confidenceScore}%` : "85%",
-    summary: initialAnalysis.refinedSummary,
+    summary: primaryLLMIssue?.description || "WrectifAI has identified potential issues.",
     symptoms: answerSummaryItems.map(item => item.value),
     isRefined: false
   });
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  const handleRegenerateDiagnosis = () => {
+  useEffect(() => {
+    if (resultIssues[0]) {
+      setDiagnosisState(prev => ({
+        ...prev,
+        primaryIssue: resultIssues[0].title,
+        severity: resultIssues[0].risks?.[0] || "Medium",
+        summary: resultIssues[0].description || "WrectifAI has identified potential issues.",
+      }));
+      setIsRegenerating(false);
+      setAdditionalNotes('');
+    }
+  }, [resultIssues]);
+
+  const handleRegenerateDiagnosis = async () => {
     if (!additionalNotes.trim()) return;
     setIsRegenerating(true);
-    setTimeout(() => {
-      setDiagnosisState(prev => {
-        const newAnalysis = simulateDiagnosticReasoning({
-          primaryIssue: prev.primaryIssue,
-          symptoms: prev.symptoms,
-          severity: prev.severity,
-          confidence: prev.confidence,
-          additionalNotes: additionalNotes
-        });
-
-        return {
-          ...prev,
-          primaryIssue: newAnalysis.refinedIssue,
-          severity: newAnalysis.refinedSeverity,
-          confidence: newAnalysis.refinedConfidence,
-          summary: newAnalysis.refinedSummary,
-          isRefined: true
-        };
-      });
+    if (onRegenerateDiagnosis) {
+      setDiagnosisState(prev => ({ ...prev, isRefined: true }));
+      try {
+        await onRegenerateDiagnosis(additionalNotes);
+      } catch (err) {
+        setIsRegenerating(false);
+      }
+    } else {
       setIsRegenerating(false);
-    }, 1500);
+    }
   };
   return (
     <div className="space-y-5 pb-6">
@@ -2668,6 +2638,39 @@ export function AIDiagnosePage() {
             selectedVehicle={selectedVehicle}
             nextSteps={nextSteps}
             confidenceScore={confidenceScore}
+            onRegenerateDiagnosis={async (notes) => {
+              const newSymptom = issueText + '\\n\\nAdditional information: ' + notes;
+              setIssueText(newSymptom);
+              try {
+                const payload = {
+                  vehicleId: selectedVehicleId || 'v1',
+                  symptomText: newSymptom,
+                  media: attachedMedia.map(m => ({ mediaType: m.mediaType, base64: m.base64 })),
+                  intakeAnswers: {
+                    questions: dynamicQuestions.map(q => q.question),
+                    qas: dynamicAnswers,
+                  },
+                  stage: 'final' as const,
+                };
+
+                const response = await submitDiagnosis(payload);
+                setApiResult(response);
+
+                if (response.result && response.result.issues) {
+                  const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
+                    mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel)
+                  );
+                  setCustomResultIssues(mapped);
+                  setSelectedIssues(mapped.map((m) => m.id));
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('wrectifai_custom_issues', JSON.stringify(mapped));
+                  }
+                }
+              } catch (err) {
+                console.error('API Diagnosis failed:', err);
+                throw err;
+              }
+            }}
           />
         </div>
       </DashboardShell>
