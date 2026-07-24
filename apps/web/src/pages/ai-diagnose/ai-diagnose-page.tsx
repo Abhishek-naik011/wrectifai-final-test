@@ -108,7 +108,7 @@ function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
   return { badge: 'Caution', badgeClass: 'text-[#e27622] bg-[#fdf5ed]' };
 }
 
-function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overallRisk?: string): DiagnosticIssueResult {
+function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overallRisk?: string, diySteps?: string[]): DiagnosticIssueResult {
   const match = llmIssue.confidence;
   const priceRange = llmIssue.estimatedPriceRange;
   const estimatedCost = `$${priceRange.min} - $${priceRange.max}`;
@@ -117,14 +117,34 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
 
   const { badge, badgeClass } = getBadgeForIssue(title, overallRisk, index);
 
+  const capitalizedRisk = overallRisk ? overallRisk.charAt(0).toUpperCase() + overallRisk.slice(1) : 'Medium';
+
+  let reasoning = llmIssue.description || '';
+  if (index === 0 && diySteps && diySteps.length > 0) {
+    const reasoningStep = diySteps.find(step => step.toLowerCase().includes('technical reasoning'));
+    if (reasoningStep) {
+        reasoning = reasoningStep.replace(/^technical reasoning:\\s*/i, '');
+    } else {
+        reasoning = diySteps[0];
+    }
+  }
+
+  if (!reasoning) {
+    reasoning = `Diagnosed issue: ${title}.`;
+  }
+
+  const partsText = llmIssue.requiredParts && llmIssue.requiredParts.length > 0
+    ? ` Likely inspection items: ${llmIssue.requiredParts.join(', ')}.`
+    : '';
+
   return {
     id,
     title,
     badge,
     badgeClass,
-    description: `Diagnosed issue: ${title}. Requires parts: ${llmIssue.requiredParts?.join(', ') || 'None specified'}.`,
+    description: `${reasoning}${partsText}`,
     match,
-    risks: [`Confidence match: ${match}%`],
+    risks: [capitalizedRisk],
     estimatedCost,
     imageSrc: '/assets/mega car.png',
   };
@@ -2252,7 +2272,7 @@ export function AIDiagnosePage() {
 
           if (response.result && response.result.issues) {
             const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
-              mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel)
+              mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps)
             );
             setCustomResultIssues(mapped);
             setSelectedIssues(mapped.map((m) => m.id));
@@ -2658,7 +2678,7 @@ export function AIDiagnosePage() {
 
                 if (response.result && response.result.issues) {
                   const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
-                    mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel)
+                    mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps)
                   );
                   setCustomResultIssues(mapped);
                   setSelectedIssues(mapped.map((m) => m.id));
