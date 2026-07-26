@@ -110,7 +110,7 @@ export class DiagnosisService {
       mimeType = match[1];
     }
 
-    const aiProvider = createOpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+    const aiProvider = createOpenAI({ apiKey, ...(baseURL ? { baseURL } : {}), fetch });
 
     try {
       const { text } = await generateText({
@@ -184,6 +184,7 @@ export class DiagnosisService {
       aiProvider = createOpenAI({
         baseURL: 'https://api.groq.com/openai/v1',
         apiKey: env.groqApiKey,
+        fetch,
       });
     } else {
       if (!env.openaiApiKey) {
@@ -191,6 +192,7 @@ export class DiagnosisService {
       }
       aiProvider = createOpenAI({
         apiKey: env.openaiApiKey,
+        fetch,
       });
     }
 
@@ -387,6 +389,7 @@ Output your response as a strict JSON array under a "questions" field containing
       aiProvider = createOpenAI({
         baseURL: 'https://api.groq.com/openai/v1',
         apiKey: env.groqApiKey,
+        fetch,
       });
     } else {
       if (!env.openaiApiKey) {
@@ -394,6 +397,7 @@ Output your response as a strict JSON array under a "questions" field containing
       }
       aiProvider = createOpenAI({
         apiKey: env.openaiApiKey,
+        fetch,
       });
     }
 

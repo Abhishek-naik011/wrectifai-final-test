@@ -91,6 +91,7 @@ import { Card } from '@/components/common/card';
 import { cn } from '@/utils/cn';
 import { VehicleSelector } from '@/components/common/vehicle-selector';
 import { submitDiagnosis, type DiagnosisResponse } from '../../lib/diagnosis-api';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
   if (index === 0 && overallRisk) {
@@ -108,7 +109,7 @@ function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
   return { badge: 'Caution', badgeClass: 'text-[#e27622] bg-[#fdf5ed]' };
 }
 
-function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overallRisk?: string, diySteps?: string[]): DiagnosticIssueResult {
+function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overallRisk?: string, diySteps?: string[], selectedVehicle?: Vehicle | null): DiagnosticIssueResult {
   const match = llmIssue.confidence;
   const priceRange = llmIssue.estimatedPriceRange;
   const estimatedCost = `$${priceRange.min} - $${priceRange.max}`;
@@ -142,8 +143,7 @@ function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overal
     match,
     risks: [capitalizedRisk],
     estimatedCost,
-    imageSrc: '/assets/mega car.png',
-    inspectionItems: llmIssue.requiredParts || [],
+    imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year),
   };
 }
 
@@ -387,9 +387,11 @@ function getIssueVisualMeta(issue: DiagnosticIssueResult) {
 function IssueVisual({
   issue,
   size = 64,
+  vehicleImageSrc,
 }: {
   issue: DiagnosticIssueResult;
   size?: number;
+  vehicleImageSrc?: string;
 }) {
   const [hasImageError, setHasImageError] = useState(false);
   const { icon: Icon, accentClass, fillClass } = getIssueVisualMeta(issue);
@@ -404,12 +406,13 @@ function IssueVisual({
     >
       {!hasImageError ? (
         <Image
-          src={issue.imageSrc}
+          src={vehicleImageSrc || issue.imageSrc}
           alt={issue.title}
           width={size}
           height={size}
           className="object-contain p-2"
           onError={() => setHasImageError(true)}
+          unoptimized={true}
         />
       ) : (
         <Icon
@@ -424,9 +427,11 @@ function IssueVisual({
 function IssueDetailsModal({
   issue,
   onClose,
+  vehicleImageSrc,
 }: {
   issue: DiagnosticIssueResult | null;
   onClose: () => void;
+  vehicleImageSrc?: string;
 }) {
   useEffect(() => {
     if (!issue) {
@@ -453,7 +458,7 @@ function IssueDetailsModal({
         <div className="px-5 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <IssueVisual issue={issue} size={72} />
+              <IssueVisual issue={issue} size={72} vehicleImageSrc={vehicleImageSrc} />
               <div>
                 <h3 className={homeSectionHeadingClass}>{issue.title}</h3>
                 <p className="mt-1 text-[11px] leading-5 text-[#5f7099]">
@@ -1228,7 +1233,6 @@ function DiagnoseResultsScreen({
     summary: primaryLLMIssue?.description || "WrectifAI has identified potential issues.",
     symptoms: answerSummaryItems.map(item => item.value),
     isRefined: false,
-    inspectionItems: primaryLLMIssue?.inspectionItems || []
   });
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -1240,8 +1244,7 @@ function DiagnoseResultsScreen({
         ...prev,
         primaryIssue: resultIssues[0].title,
         severity: resultIssues[0].risks?.[0] || "Medium",
-        summary: resultIssues[0].description || "WrectifAI has identified potential issues.",
-        inspectionItems: resultIssues[0].inspectionItems || []
+        summary: resultIssues[0].description || "WrectifAI has identified potential issues."
       }));
       setIsRegenerating(false);
       setAdditionalNotes('');
@@ -1267,6 +1270,7 @@ function DiagnoseResultsScreen({
       <IssueDetailsModal
         issue={activeIssueDetails}
         onClose={() => setActiveIssueDetails(null)}
+        vehicleImageSrc={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
       />
       <div>
         <div>
@@ -1306,16 +1310,7 @@ function DiagnoseResultsScreen({
                 ))}
               </div>
 
-              {diagnosisState.inspectionItems && diagnosisState.inspectionItems.length > 0 && (
-                <div className="mt-4">
-                  <div className="text-[14.5px] font-bold text-[#17307a]">Inspection Items</div>
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {diagnosisState.inspectionItems.map(item => (
-                      <span key={item} className="rounded-md bg-[#f4f7ff] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{item}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
+
             </div>
 
 
@@ -1362,14 +1357,14 @@ function DiagnoseResultsScreen({
             </div>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
-              <div className="flex flex-col items-center rounded-[18px] bg-[radial-gradient(circle_at_top,#f8faff_0%,#ffffff_70%)] px-3 py-4 text-center">
+              <div className="flex flex-col items-center justify-center rounded-[14px] bg-[radial-gradient(circle_at_top,#f8faff_0%,#ffffff_70%)] border border-[#e8ecf8] px-4 py-4 text-center">
                 <Image
-                  src="/assets/mega car.png"
+                  src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
                   alt="Car"
                   width={230}
                   height={132}
-                  className="h-auto w-[190px] object-contain"
-                  style={{ width: '190px', height: 'auto' }}
+                  className="h-auto w-[180px] object-contain"
+                  unoptimized={true}
                 />
                 <div className={cn('mt-3', homeCardHeadingClass)}>
                   {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City (TS07 AB 1234)'}
@@ -1473,7 +1468,7 @@ function DiagnoseResultsScreen({
                       />
                     </label>
                     <div className="flex justify-center md:justify-start">
-                      <IssueVisual issue={issue} size={56} />
+                      <IssueVisual issue={issue} size={56} vehicleImageSrc={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
@@ -1818,14 +1813,17 @@ function FindingQuotesScreen({
             </div>
             <div className="absolute left-1/2 top-[92px] h-[95px] w-[320px] -translate-x-1/2 rounded-[999px] bg-[radial-gradient(ellipse_at_center,rgba(74,121,255,0.16)_0%,rgba(74,121,255,0)_72%)] blur-md" />
             <div className="absolute left-1/2 top-[106px] -translate-x-1/2">
-              <Image
-                src="/assets/mega car.png"
-                alt="Car"
-                width={260}
-                height={110}
-                className="h-auto w-[250px] object-contain drop-shadow-[0_16px_24px_rgba(28,74,188,0.18)]"
-                style={{ width: '250px', height: 'auto' }}
-              />
+              <div className="relative z-10 flex h-full items-center justify-center">
+                <Image
+                  src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
+                  alt="Car"
+                  width={420}
+                  height={180}
+                  className="h-auto w-[380px] object-contain drop-shadow-[0_16px_24px_rgba(28,74,188,0.25)] mix-blend-multiply"
+                  style={{ width: '380px', height: 'auto' }}
+                  unoptimized={true}
+                />
+              </div>
             </div>
             <div className="pointer-events-none absolute inset-0 hidden md:block">
               <div className="absolute left-[20px] top-[86px] h-px w-[98px] bg-[#d7e3ff]" />
@@ -1936,12 +1934,13 @@ function FindingQuotesScreen({
               >
                 <div className="flex justify-center md:justify-start">
                   <Image
-                    src={issue.imageSrc}
+                    src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
                     alt={issue.title}
                     width={72}
                     height={72}
                     className="h-[66px] w-[66px] object-contain"
                     style={{ width: '66px', height: '66px' }}
+                    unoptimized={true}
                   />
                 </div>
                 <div>
@@ -2348,7 +2347,7 @@ export function AIDiagnosePage() {
 
           if (response.result && response.result.issues) {
             const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
-              mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps)
+              mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps, selectedVehicle)
             );
             setCustomResultIssues(mapped);
             setSelectedIssues(mapped.map((m) => m.id));
@@ -2365,7 +2364,7 @@ export function AIDiagnosePage() {
 
       runApiDiagnosis();
     }
-  }, [isAnalyzingResults, apiResult, apiError, dynamicAnswers, dynamicQuestions, issueText, selectedVehicleId, attachedMedia]);
+  }, [isAnalyzingResults, apiResult, apiError, dynamicAnswers, dynamicQuestions, issueText, selectedVehicleId, attachedMedia, selectedVehicle]);
 
   // Transition to results screen only when both timer is finished and API response has arrived
   useEffect(() => {
@@ -2761,13 +2760,13 @@ export function AIDiagnosePage() {
                 setApiResult(response);
 
                 if (response.result && response.result.issues) {
-                  const mapped = response.result.issues.map((issue: LlmIssue, index: number) =>
-                    mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps)
+                  const issues = response.result.issues.map((issue: any, index: number) =>
+                    mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps, selectedVehicle)
                   );
-                  setCustomResultIssues(mapped);
-                  setSelectedIssues(mapped.map((m) => m.id));
+                  setCustomResultIssues(issues);
+                  setSelectedIssues(issues.map((m) => m.id));
                   if (typeof window !== 'undefined') {
-                    localStorage.setItem('wrectifai_custom_issues', JSON.stringify(mapped));
+                    localStorage.setItem('wrectifai_custom_issues', JSON.stringify(issues));
                   }
                 }
               } catch (err) {

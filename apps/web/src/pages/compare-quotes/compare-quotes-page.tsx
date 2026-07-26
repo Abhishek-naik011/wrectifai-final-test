@@ -33,6 +33,7 @@ import { fetchQuotes } from '@/lib/quotes-api';
 import type { QuoteItem } from '@/components/quotes/quotes-shared';
 import { resultIssues } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { cn } from '@/utils/cn';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 const DOLLAR = '$';
 const BULLET = '\u2022';
@@ -153,7 +154,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
           badgeClass: 'text-[#e27622] bg-[#fdf5ed]',
           description: `Requested issue: ${name.trim()}`,
           match: 85,
-          imageSrc: '/assets/mega car.png',
+          imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year),
         };
       });
     }

@@ -49,93 +49,13 @@ const BULLET = '\u2022';
 
 const homeSectionHeadingClass = 'ui-page-title';
 const homeCardHeadingClass = 'ui-card-title';
-const issueImageFallbacks: Record<string, string> = {
-  'low-engine-oil': '/assets/Engine_oil.png',
-  'belt-tensioner': '/assets/Electrical.png',
-  'timing-component': '/assets/repair-services.png',
-  'low-refrigerant': '/assets/new_ac.png',
-  'ac-filter-blower': '/assets/ac_vent_1778070688367.png',
-  'compressor-performance': '/assets/Ac service.png',
-  'warped-rotor': '/assets/brake_rotor.png',
-  'pad-deposit': '/assets/Brake care.png',
-  'brake-caliper': '/assets/Brake_inspection.png',
-  'air-intake-restriction': '/assets/repair-services.png',
-  'fuel-delivery': '/assets/Electrical.png',
-  'ignition-performance': '/assets/Parts and components.png',
-  'battery-discharge': '/assets/Battery.png',
-  'starter-motor': '/assets/Electrical.png',
-  'fuel-ignition-no-start': '/assets/Electrical.png',
-  'wheel-balance': '/assets/tyres_and_wheels.png',
-  'wheel-alignment': '/assets/Tyre_rotataion.png',
-  'brake-disc': '/assets/brake_rotor.png',
-};
-
-const issuePrimaryVisuals: Record<string, string> = {
-  'low-engine-oil': '/assets/Engine_oil.png',
-  'belt-tensioner': '/assets/Electrical.png',
-  'timing-component': '/assets/repair-services.png',
-  'low-refrigerant': '/assets/new_ac.png',
-  'ac-filter-blower': '/assets/ac_vent_1778070688367.png',
-  'compressor-performance': '/assets/Ac service.png',
-  'warped-rotor': '/assets/brake_rotor.png',
-  'pad-deposit': '/assets/Brake care.png',
-  'brake-caliper': '/assets/Brake_inspection.png',
-  'air-intake-restriction': '/assets/repair-services.png',
-  'fuel-delivery': '/assets/Electrical.png',
-  'ignition-performance': '/assets/Parts and components.png',
-  'battery-discharge': '/assets/Battery.png',
-  'starter-motor': '/assets/Electrical.png',
-  'fuel-ignition-no-start': '/assets/Electrical.png',
-  'wheel-balance': '/assets/tyres_and_wheels.png',
-  'wheel-alignment': '/assets/Tyre_rotataion.png',
-  'brake-disc': '/assets/brake_rotor.png',
-};
-
-const issueTitleVisuals: Array<{ match: RegExp; src: string }> = [
-  { match: /warped brake disc|brake disc/i, src: '/assets/brake_rotor.png' },
-  {
-    match: /uneven brake pad deposit|brake pad/i,
-    src: '/assets/Brake care.png',
-  },
-  {
-    match: /brake caliper sticking|brake caliper/i,
-    src: '/assets/Brake_inspection.png',
-  },
-  {
-    match: /wheel balancing|wheel balance/i,
-    src: '/assets/tyres_and_wheels.png',
-  },
-  { match: /wheel alignment/i, src: '/assets/Tyre_rotataion.png' },
-];
-
-function resolveIssueVisual(
-  issueId: string,
-  issueTitle: string,
-  imageSrc: string
-) {
-  const mappedById =
-    issuePrimaryVisuals[issueId] ?? issueImageFallbacks[issueId];
-  if (mappedById) return mappedById;
-
-  const mappedByTitle = issueTitleVisuals.find((entry) =>
-    entry.match.test(issueTitle)
-  )?.src;
-  if (mappedByTitle) return mappedByTitle;
-
-  return imageSrc;
-}
-
 function IssuePreview({
-  issueId,
   issueTitle,
-  imageSrc,
+  selectedVehicle,
 }: {
-  issueId: string;
   issueTitle: string;
-  imageSrc: string;
+  selectedVehicle: Vehicle | null;
 }) {
-  const preferredSrc = resolveIssueVisual(issueId, issueTitle, imageSrc);
-  const [currentSrc, setCurrentSrc] = useState(preferredSrc);
   const [showFallbackIcon, setShowFallbackIcon] = useState(false);
 
   if (showFallbackIcon) {
@@ -148,35 +68,28 @@ function IssuePreview({
 
   return (
     <Image
-      src={currentSrc}
+      src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
       alt={issueTitle}
       width={60}
       height={60}
       className="h-[60px] w-[60px] object-contain"
-      onError={() => {
-        const nextFallback = issueImageFallbacks[issueId];
-
-        if (nextFallback && nextFallback !== currentSrc) {
-          setCurrentSrc(nextFallback);
-          return;
-        }
-
-        setShowFallbackIcon(true);
-      }}
+      onError={() => setShowFallbackIcon(true)}
+      unoptimized={true}
     />
   );
 }
 
-function VehiclePreview() {
+function VehiclePreview({ selectedVehicle }: { selectedVehicle: Vehicle | null }) {
   return (
     <div className="flex h-[112px] w-[112px] items-center justify-center rounded-[24px] bg-[radial-gradient(circle_at_top,#f7f9ff_0%,#eef3ff_62%,#e9efff_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
       <Image
-        src="/assets/mega car.png"
-        alt="Honda City"
+        src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
+        alt="Car"
         width={94}
         height={56}
-        className="h-[56px] w-[94px] object-contain"
+        className="h-auto w-[94px] object-contain"
         priority
+        unoptimized={true}
       />
     </div>
   );
@@ -193,6 +106,7 @@ interface Vehicle {
 
 import { getQuoteRequest } from '@/lib/quotes-api';
 import { getDiagnosis } from '@/lib/diagnosis-api';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 export function RequestAentPage({ issues, requestId }: { issues?: string; requestId?: string }) {
   const router = useRouter();
@@ -264,8 +178,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                     badge,
                     badgeClass,
                     description: `Diagnosed issue: ${issue.name || issue.title}. Requires parts: ${issue.requiredParts?.join(', ') || 'None specified'}.`,
-                    match,
-                    imageSrc: '/assets/mega car.png'
+                    imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
                   };
                 });
                 setSelectedIssues(mapped);
@@ -289,7 +202,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                 badgeClass: 'text-[#e27622] bg-[#fdf5ed]',
                 description: `Requested issue: ${name.trim()}`,
                 match: 85,
-                imageSrc: '/assets/mega car.png'
+                imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
               };
             });
             setSelectedIssues(summaryIssues);
@@ -386,7 +299,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
               <div className="mt-4 rounded-[16px] border border-[#e8eefc] bg-[linear-gradient(135deg,#fbfcff_0%,#f6f9ff_100%)] px-4 py-4">
                 <div className="grid gap-4 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
                   <div className="flex justify-center sm:justify-start">
-                    <VehiclePreview />
+                    <VehiclePreview selectedVehicle={selectedVehicle} />
                   </div>
 
                   <div className="min-w-0">
@@ -451,9 +364,8 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                     <div className="flex justify-center md:justify-start">
                       <IssuePreview
                         key={issue.id}
-                        issueId={issue.id}
                         issueTitle={issue.title}
-                        imageSrc={issue.imageSrc}
+                        selectedVehicle={selectedVehicle}
                       />
                     </div>
 

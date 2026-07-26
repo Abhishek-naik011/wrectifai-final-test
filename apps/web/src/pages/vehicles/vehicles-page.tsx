@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { 
-  Car, 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  AlertTriangle, 
+import {
+  Car,
+  Plus,
+  Trash2,
+  Edit3,
+  AlertTriangle,
   ShieldAlert,
   X,
   Sparkles,
@@ -139,7 +139,7 @@ export function VehiclesPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  
+
   // Active selection states
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
@@ -254,8 +254,8 @@ export function VehiclesPage() {
   };
 
   return (
-    <DashboardShell 
-      header={<FeatureHeader onAddClick={() => { resetForm(); setIsAddOpen(true); }} />} 
+    <DashboardShell
+      header={<FeatureHeader onAddClick={() => { resetForm(); setIsAddOpen(true); }} />}
       aside={<FeatureAside />}
     >
       <div className="space-y-6">
@@ -337,18 +337,18 @@ export function VehiclesPage() {
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleEditClick(vehicle)}
                     className="flex items-center gap-1.5"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
                     Edit
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleDeleteClick(vehicle)}
                     className="border-red-100 text-red-600 hover:border-red-200 hover:bg-red-50/50 flex items-center gap-1.5"
                   >
@@ -365,7 +365,7 @@ export function VehiclesPage() {
         {isAddOpen && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
             <Card className="w-full max-w-lg rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
-              <button 
+              <button
                 onClick={() => setIsAddOpen(false)}
                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
               >
@@ -375,49 +375,49 @@ export function VehiclesPage() {
                 <Car className="h-5 w-5 text-[#1a56db]" />
                 Add New Vehicle
               </h2>
-              
+
               <form onSubmit={handleAddSubmit} className="space-y-4">
                 {formError && (
                   <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-[10px]">
                     {formError}
                   </div>
                 )}
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     Make *
                   </label>
-                  <Input 
-                    placeholder="e.g. Honda, Toyota" 
-                    value={make} 
-                    onChange={(e) => setMake(e.target.value)} 
+                  <Input
+                    placeholder="e.g. Honda, Toyota"
+                    value={make}
+                    onChange={(e) => setMake(e.target.value)}
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     Model *
                   </label>
-                  <Input 
-                    placeholder="e.g. Accord, RAV4" 
-                    value={model} 
-                    onChange={(e) => setModel(e.target.value)} 
+                  <Input
+                    placeholder="e.g. Accord, RAV4"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Year *
                     </label>
-                    <Input 
+                    <Input
                       type="number"
                       min={1900}
                       max={new Date().getFullYear() + 1}
-                      value={year} 
-                      onChange={(e) => setYear(Number(e.target.value))} 
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value))}
                       required
                     />
                   </div>
@@ -425,22 +425,22 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Mileage (miles)
                     </label>
-                    <Input 
+                    <Input
                       type="number"
                       placeholder="e.g. 45000"
-                      value={mileage} 
-                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} 
+                      value={mileage}
+                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')}
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     VIN (17 characters)
                   </label>
-                  <Input 
-                    placeholder="Enter 17-digit VIN" 
-                    value={vin} 
+                  <Input
+                    placeholder="Enter 17-digit VIN"
+                    value={vin}
                     onChange={(e) => setVin(e.target.value.toUpperCase())}
                     maxLength={17}
                   />
@@ -463,7 +463,7 @@ export function VehiclesPage() {
         {isEditOpen && selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
             <Card className="w-full max-w-lg rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
-              <button 
+              <button
                 onClick={() => setIsEditOpen(false)}
                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
               >
@@ -473,47 +473,47 @@ export function VehiclesPage() {
                 <Settings className="h-5 w-5 text-[#1a56db]" />
                 Edit Vehicle Details
               </h2>
-              
+
               <form onSubmit={handleEditSubmit} className="space-y-4">
                 {formError && (
                   <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-[10px]">
                     {formError}
                   </div>
                 )}
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     Make *
                   </label>
-                  <Input 
-                    value={make} 
-                    onChange={(e) => setMake(e.target.value)} 
+                  <Input
+                    value={make}
+                    onChange={(e) => setMake(e.target.value)}
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     Model *
                   </label>
-                  <Input 
-                    value={model} 
-                    onChange={(e) => setModel(e.target.value)} 
+                  <Input
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
                     required
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Year *
                     </label>
-                    <Input 
+                    <Input
                       type="number"
                       min={1900}
                       max={new Date().getFullYear() + 1}
-                      value={year} 
-                      onChange={(e) => setYear(Number(e.target.value))} 
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value))}
                       required
                     />
                   </div>
@@ -521,22 +521,22 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Mileage (miles)
                     </label>
-                    <Input 
+                    <Input
                       type="number"
                       placeholder="e.g. 45000"
-                      value={mileage} 
-                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} 
+                      value={mileage}
+                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')}
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                     VIN (17 characters)
                   </label>
-                  <Input 
-                    placeholder="Enter 17-digit VIN" 
-                    value={vin} 
+                  <Input
+                    placeholder="Enter 17-digit VIN"
+                    value={vin}
                     onChange={(e) => setVin(e.target.value.toUpperCase())}
                     maxLength={17}
                   />
@@ -564,7 +564,7 @@ export function VehiclesPage() {
               </div>
               <h2 className="text-xl font-bold text-[#17307a]">Delete Vehicle?</h2>
               <p className="mt-2 text-[14px] leading-6 text-[#5d6f9f]">
-                Are you sure you want to remove the <strong>{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</strong>? 
+                Are you sure you want to remove the <strong>{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</strong>?
                 This action is permanent and will hide it from your diagnostics and quotes request lists.
               </p>
 
@@ -572,7 +572,7 @@ export function VehiclesPage() {
                 <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   disabled={submitting}
                   onClick={handleDeleteConfirm}
                   className="bg-red-600 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)] hover:bg-red-700"

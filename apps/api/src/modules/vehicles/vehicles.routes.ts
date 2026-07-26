@@ -2,8 +2,30 @@ import { Router } from 'express';
 import { success, error } from '../../utils/response';
 import { authenticate } from '../../middleware/auth';
 import { query } from '../../config/database';
+import { VehicleImageService } from './vehicle-image.service';
 
 export const vehiclesRouter = Router();
+
+// GET /vehicles/image — get dynamic vehicle image
+vehiclesRouter.get('/image', async (req, res) => {
+  try {
+    const { make, model, year } = req.query;
+    if (!make || !model) {
+      return res.status(400).json({ error: 'Make and model are required' });
+    }
+    
+    const imageUrl = await VehicleImageService.getImageUrl(
+      make as string, 
+      model as string, 
+      (year as string) || ''
+    );
+    
+    return res.redirect(302, imageUrl);
+  } catch (err) {
+    console.error('[vehiclesRouter] image fetch error:', err);
+    return res.status(404).json({ error: 'Vehicle image not found and generation failed' });
+  }
+});
 
 // GET /vehicles — list all active vehicles
 vehiclesRouter.get('/', authenticate, async (req, res) => {

@@ -13,6 +13,7 @@ import { cn } from '@/utils/cn';
 
 import { createQuoteRequest } from '@/lib/quotes-api';
 import { getDiagnosis } from '@/lib/diagnosis-api';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 interface Vehicle {
   id: string;
@@ -75,7 +76,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
                 badgeClass,
                 description: `Diagnosed issue: ${issue.name || issue.title}. Requires parts: ${issue.requiredParts?.join(', ') || 'None specified'}.`,
                 match,
-                imageSrc: '/assets/mega car.png'
+                imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
               };
             });
             setCustomIssues(mapped);
@@ -227,12 +228,13 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
               <div className="absolute left-1/2 top-[92px] h-[95px] w-[320px] -translate-x-1/2 rounded-[999px] bg-[radial-gradient(ellipse_at_center,rgba(74,121,255,0.16)_0%,rgba(74,121,255,0)_72%)] blur-md" />
               <div className="absolute left-1/2 top-[106px] -translate-x-1/2">
                 <Image
-                  src="/assets/mega car.png"
+                  src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
                   alt="Car"
                   width={260}
                   height={110}
                   className="h-auto w-[250px] object-contain drop-shadow-[0_16px_24px_rgba(28,74,188,0.18)]"
                   style={{ width: '250px', height: 'auto' }}
+                  unoptimized={true}
                 />
               </div>
               <div className="pointer-events-none absolute inset-0 hidden md:block">
@@ -326,12 +328,13 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
                 <div key={issue.id} className="grid gap-4 py-5 md:grid-cols-[76px_minmax(0,1fr)_92px] md:items-center">
                   <div className="flex justify-center md:justify-start">
                     <Image
-                      src={issue.imageSrc}
+                      src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
                       alt={issue.title}
                       width={72}
                       height={72}
                       className="h-[66px] w-[66px] object-contain"
                       style={{ width: '66px', height: '66px' }}
+                      unoptimized={true}
                     />
                   </div>
                   <div>

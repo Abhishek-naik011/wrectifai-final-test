@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { apiRouter } from './routes';
 import { errorHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
@@ -23,6 +24,9 @@ export function createApp() {
 
   // Request logger middleware
   app.use(requestLogger);
+
+  // Serve static uploads
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Mount API routers under versioned endpoint /api/v1 and fallback /api
   app.use('/api/v1', apiRouter);

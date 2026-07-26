@@ -62,6 +62,7 @@ export function VehicleSelector({ value, onChange, className = '', error }: Vehi
             const found = data.find((v: Vehicle) => v.id === stored.id);
             if (found) {
               onChangeRef.current(found.id, found);
+              localStorage.setItem('wrectifai_selected_vehicle', JSON.stringify(found));
               selected = true;
             }
           } catch (e) {

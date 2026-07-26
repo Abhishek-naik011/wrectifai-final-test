@@ -75,6 +75,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "ai": "^7.0.14",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
     "expo": "~52.0.11",

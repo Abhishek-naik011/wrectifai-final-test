@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 const getBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
 };
 
 export interface RequestOptions extends RequestInit {
@@ -169,29 +169,29 @@ async function handleResponse<T = unknown>(response: Response): Promise<T> {
   return json as unknown as T;
 }
 
-apiClient.get = <T = unknown>(path: string, options?: RequestOptions) => 
+apiClient.get = <T = unknown>(path: string, options?: RequestOptions) =>
   apiClient<T>(path, { ...options, method: 'GET' });
 
-apiClient.post = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) => 
-  apiClient<T>(path, { 
-    ...options, 
-    method: 'POST', 
-    body: body !== undefined ? JSON.stringify(body) : undefined 
+apiClient.post = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) =>
+  apiClient<T>(path, {
+    ...options,
+    method: 'POST',
+    body: body !== undefined ? JSON.stringify(body) : undefined
   });
 
-apiClient.put = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) => 
-  apiClient<T>(path, { 
-    ...options, 
-    method: 'PUT', 
-    body: body !== undefined ? JSON.stringify(body) : undefined 
+apiClient.put = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) =>
+  apiClient<T>(path, {
+    ...options,
+    method: 'PUT',
+    body: body !== undefined ? JSON.stringify(body) : undefined
   });
 
-apiClient.patch = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) => 
-  apiClient<T>(path, { 
-    ...options, 
-    method: 'PATCH', 
-    body: body !== undefined ? JSON.stringify(body) : undefined 
+apiClient.patch = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) =>
+  apiClient<T>(path, {
+    ...options,
+    method: 'PATCH',
+    body: body !== undefined ? JSON.stringify(body) : undefined
   });
 
-apiClient.delete = <T = unknown>(path: string, options?: RequestOptions) => 
+apiClient.delete = <T = unknown>(path: string, options?: RequestOptions) =>
   apiClient<T>(path, { ...options, method: 'DELETE' });

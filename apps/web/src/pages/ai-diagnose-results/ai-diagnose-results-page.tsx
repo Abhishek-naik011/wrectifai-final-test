@@ -17,6 +17,7 @@ import {
   sharedIcons,
 } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { cn } from '@/utils/cn';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 const { PhoneCall, Send, ShieldCheck } = sharedIcons;
 
@@ -152,11 +153,12 @@ export function AIDiagnoseResultsPage() {
               <div className="mt-5 grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <div className="flex flex-col items-center justify-center rounded-[14px] bg-[radial-gradient(circle_at_top,#f8faff_0%,#ffffff_70%)] border border-[#e8ecf8] px-4 py-4 text-center">
                   <Image
-                    src="/assets/mega car.png"
+                    src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
                     alt="Car"
                     width={230}
                     height={132}
                     className="h-auto w-[180px] object-contain"
+                    unoptimized={true}
                   />
                   <div className="mt-3 text-[14px] font-bold text-[#17307a]">
                     {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.vin ? `(${selectedVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
@@ -215,6 +217,7 @@ export function AIDiagnoseResultsPage() {
               <div className="mt-4 divide-y divide-[#edf1fb]">
                 {resultIssues.map((issue, index) => {
                   const checked = selectedIssues.includes(issue.id);
+                  const finalImageSrc = getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year);
                   return (
                     <div key={issue.id} className="grid gap-4 py-5 md:grid-cols-[30px_70px_minmax(0,1fr)_90px_105px] md:items-center">
                       <div className="flex items-start justify-center pt-1">
@@ -238,11 +241,12 @@ export function AIDiagnoseResultsPage() {
                       </div>
                       <div className="flex justify-center md:justify-start">
                         <Image
-                          src={issue.imageSrc}
+                          src={finalImageSrc}
                           alt={issue.title}
                           width={72}
                           height={72}
                           className="h-[64px] w-[64px] object-contain"
+                          unoptimized={finalImageSrc.includes('/api/v1/vehicles/image')}
                         />
                       </div>
                       <div className="min-w-0">

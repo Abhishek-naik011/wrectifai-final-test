@@ -31,6 +31,7 @@ import type { QuoteItem } from '@/components/quotes/quotes-shared';
 import { resultIssues } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { cn } from '@/utils/cn';
 import type { QuoteStatus } from '@/components/quotes/quotes-shared';
+import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 type QuoteTabKey = 'all' | QuoteStatus;
 
@@ -185,7 +186,7 @@ export function QuotesPage() {
           badgeClass: 'text-[#e27622] bg-[#fdf5ed]',
           description: `Requested issue: ${name.trim()}`,
           match: 85,
-          imageSrc: '/assets/mega car.png',
+          imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year),
         };
       });
     }
