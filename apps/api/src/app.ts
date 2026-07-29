@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 import { apiRouter } from './routes';
 import { errorHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
@@ -17,6 +18,9 @@ export function createApp() {
       credentials: true,
     })
   );
+
+  // Cookie parser
+  app.use(cookieParser());
 
   // Body parsing middlewares — 20 MB limit to accommodate base64-encoded images/audio
   app.use(express.json({ limit: '20mb' }));

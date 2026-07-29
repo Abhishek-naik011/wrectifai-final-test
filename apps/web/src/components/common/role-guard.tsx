@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
 export function RoleGuard({ allowedRoles, children }: { allowedRoles: string[]; children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   
   // Compute authorization synchronously to prevent UI flashes
@@ -17,6 +17,8 @@ export function RoleGuard({ allowedRoles, children }: { allowedRoles: string[]; 
   }
 
   useEffect(() => {
+    if (isLoading) return; // Wait until auth state is resolved
+
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') || localStorage.getItem('accessToken') : null;
     if (!isAuthenticated && !token) {
       router.replace('/login');
@@ -33,9 +35,9 @@ export function RoleGuard({ allowedRoles, children }: { allowedRoles: string[]; 
         router.replace('/');
       }
     }
-  }, [isAuthenticated, user, isAuthorized, router]);
+  }, [isLoading, isAuthenticated, user, isAuthorized, router]);
 
-  if (!isAuthorized) {
+  if (isLoading || !isAuthorized) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f6f8fe]">
         <div className="text-[14px] font-medium text-[#1a56db]">Loading...</div>

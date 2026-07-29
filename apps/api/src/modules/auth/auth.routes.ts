@@ -10,8 +10,34 @@ import {
 } from '../../services/jwt.service';
 import { verifyGoogleIdToken } from '../../services/google-auth.service';
 import { query } from '../../config/database';
+import * as bcrypt from 'bcryptjs';
+import { authenticate, requireRole } from '../../middleware/auth';
+import { CookieOptions, Response } from 'express';
 
 export const authRouter = Router();
+
+const cookieConfig: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
+
+function setTokensInCookies(res: Response, accessToken: string, refreshToken: string) {
+  res.cookie('accessToken', accessToken, cookieConfig);
+  res.cookie('refreshToken', refreshToken, cookieConfig);
+}
+
+// Modular function to encapsulate password reset detection logic.
+// In the future, this can be swapped to check a database flag like `user.requires_password_reset`.
+function checkIfPasswordResetRequired(passwordHash: string, userRoles: string[]): boolean {
+  if (userRoles.includes('admin') && passwordHash) {
+    // If the hash matches the temporary password, require a change.
+    return bcrypt.compareSync('Admin@12345', passwordHash);
+  }
+  return false;
+}
+
 
 const HARDCODED_PHONES = ['9876543210', '1234567890'];
 const HARDCODED_OTP = '123456';
@@ -76,7 +102,10 @@ authRouter.post('/google', async (req, res) => {
   try {
     const googlePayload = await verifyGoogleIdToken(token);
     const authResult = await handleUserLoginOrRegister(googlePayload.email, googlePayload.name);
-    return success(res, authResult, 200);
+    
+    setTokensInCookies(res, authResult.accessToken, authResult.refreshToken);
+    
+    return success(res, { user: authResult.user }, 200);
   } catch (err) {
     return error(res, err instanceof Error ? err.message : 'Google authentication failed', 'UNAUTHORIZED', 401);
   }
@@ -130,6 +159,8 @@ authRouter.post('/register', async (req, res, next) => {
 
     await storeRefreshToken(user.id, refreshToken);
 
+    setTokensInCookies(res, accessToken, refreshToken);
+
     return success(res, {
       user: {
         id: user.id,
@@ -137,9 +168,7 @@ authRouter.post('/register', async (req, res, next) => {
         mobileNumber: user.mobile_number,
         status: user.status,
         roles,
-      },
-      accessToken,
-      refreshToken,
+      }
     }, 201);
   } catch (err) {
     next(err);
@@ -147,7 +176,7 @@ authRouter.post('/register', async (req, res, next) => {
 });
 
 authRouter.post('/login', async (req, res, next) => {
-  const { mobileNumber, otp, provider } = req.body;
+  const { mobileNumber, otp, provider, email, password } = req.body;
 
   try {
     let user;
@@ -179,6 +208,17 @@ authRouter.post('/login', async (req, res, next) => {
           const roleId = roleResult.rows[0].id;
           await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
         }
+      }
+    } else if (email && password) {
+      // Email/Password login (primarily for Admin)
+      const existingUser = await query('SELECT * FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length === 0) {
+        return error(res, 'Invalid email or password', 'UNAUTHORIZED', 401);
+      }
+      user = existingUser.rows[0];
+      
+      if (!user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+        return error(res, 'Invalid email or password', 'UNAUTHORIZED', 401);
       }
     } else {
       if (!mobileNumber || !otp) {
@@ -219,10 +259,14 @@ authRouter.post('/login', async (req, res, next) => {
     );
     const roles = rolesResult.rows.map((row) => row.code);
 
+    const requiresPasswordChange = checkIfPasswordResetRequired(user.password_hash, roles);
+
     const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles });
     const refreshToken = generateRefreshToken({ userId: user.id });
 
     await storeRefreshToken(user.id, refreshToken);
+
+    setTokensInCookies(res, accessToken, refreshToken);
 
     return success(res, {
       user: {
@@ -233,8 +277,7 @@ authRouter.post('/login', async (req, res, next) => {
         status: user.status,
         roles,
       },
-      accessToken,
-      refreshToken,
+      requiresPasswordChange
     });
   } catch (err) {
     next(err);
@@ -242,7 +285,7 @@ authRouter.post('/login', async (req, res, next) => {
 });
 
 authRouter.post('/refresh', async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (!refreshToken) {
     return error(res, 'Refresh token is required', 'BAD_REQUEST', 400);
   }
@@ -268,17 +311,16 @@ authRouter.post('/refresh', async (req, res) => {
 
     await storeRefreshToken(userId, newRefreshToken);
 
-    return success(res, {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    });
+    setTokensInCookies(res, newAccessToken, newRefreshToken);
+
+    return success(res, { message: 'Token refreshed successfully' });
   } catch (err) {
     return error(res, err instanceof Error ? err.message : 'Invalid refresh token', 'UNAUTHORIZED', 401);
   }
 });
 
 authRouter.post('/logout', async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (refreshToken) {
     try {
       await deleteRefreshTokenInDb(refreshToken);
@@ -286,9 +328,82 @@ authRouter.post('/logout', async (req, res) => {
       console.warn('Failed to delete refresh token during logout:', err instanceof Error ? err.message : err);
     }
   }
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
   return success(res, { message: 'Logged out successfully' });
 });
 
 authRouter.get('/status', (_req, res) => {
   return success(res, { feature: 'auth', status: 'ready' });
+});
+
+authRouter.get('/me', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return error(res, 'User ID missing in token', 'UNAUTHORIZED', 401);
+    }
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return error(res, 'User not found', 'NOT_FOUND', 404);
+    }
+    const user = userResult.rows[0];
+    const rolesResult = await query(
+      'SELECT r.code FROM roles r JOIN user_roles ur ON r.id = ur.role_id WHERE ur.user_id = $1',
+      [userId]
+    );
+    const roles = rolesResult.rows.map((row) => row.code);
+
+    return success(res, {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        mobileNumber: user.mobile_number,
+        status: user.status,
+        roles,
+      },
+    });
+  } catch (err) {
+    return error(res, 'Failed to fetch user', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+authRouter.post('/change-password', authenticate, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user?.userId;
+
+  if (!currentPassword || !newPassword) {
+    return error(res, 'Current and new passwords are required', 'BAD_REQUEST', 400);
+  }
+
+  try {
+    const userResult = await query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return error(res, 'User not found', 'NOT_FOUND', 404);
+    }
+
+    const { password_hash } = userResult.rows[0];
+
+    // Verify current password
+    if (!password_hash || !bcrypt.compareSync(currentPassword, password_hash)) {
+      return error(res, 'Invalid current password', 'UNAUTHORIZED', 401);
+    }
+
+    // Prevent reuse of the temporary password
+    if (newPassword === 'Admin@12345') {
+      return error(res, 'You cannot reuse the temporary password. Please choose a strong new password.', 'BAD_REQUEST', 400);
+    }
+
+    // Hash and update
+    const salt = bcrypt.genSaltSync(10);
+    const newHash = bcrypt.hashSync(newPassword, salt);
+
+    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+
+    return success(res, { message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Password change error:', err);
+    return error(res, 'Failed to update password', 'INTERNAL_SERVER_ERROR', 500);
+  }
 });

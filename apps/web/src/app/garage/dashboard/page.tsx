@@ -4,6 +4,7 @@ import { RoleGuard } from '@/components/common/role-guard';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { Card } from '@/components/common/card';
 import { garageNavItems } from '@/lib/garage-config';
+import { DashboardHeader } from '@/components/common/dashboard-header';
 import { Inbox, Clock, CheckCircle, XCircle, CheckSquare, FileText } from 'lucide-react';
 
 export default function GarageDashboard() {
@@ -16,7 +17,7 @@ export default function GarageDashboard() {
 
   return (
     <RoleGuard allowedRoles={['garage']}>
-      <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true}>
+      <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true} header={<DashboardHeader />}>
         <div className="space-y-6 p-4">
           <div>
             <h1 className="text-2xl font-bold text-[#17307a]">Garage Dashboard</h1>

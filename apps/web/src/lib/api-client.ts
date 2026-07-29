@@ -47,13 +47,14 @@ export async function apiClient<T = unknown>(path: string, options: RequestOptio
 
   let config: RequestOptions = {
     ...options,
+    credentials: 'include', // Send HttpOnly cookies automatically
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
     },
   };
 
-  // 1. Inject Authorization header if we have an accessToken stored
+  // 1. Inject Authorization header if we have an accessToken stored (Fallback for non-cookie environments)
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
     if (token && !(config.headers as Record<string, string>)['Authorization']) {
@@ -78,60 +79,55 @@ export async function apiClient<T = unknown>(path: string, options: RequestOptio
     response = await interceptor(response);
   }
 
-  // 4. Handle 401 response and attempt token refresh
   if (response.status === 401 && !config._retry && !path.includes('/auth/refresh') && !path.includes('/auth/login')) {
     config._retry = true;
 
     if (typeof window !== 'undefined') {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        if (!refreshPromise) {
-          refreshPromise = (async () => {
-            try {
-              const refreshRes = await fetch(`${baseUrl}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refreshToken }),
-              });
+      if (!refreshPromise) {
+        refreshPromise = (async () => {
+          try {
+            const refreshRes = await fetch(`${baseUrl}/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
 
-              if (!refreshRes.ok) {
-                throw new Error('Refresh failed');
-              }
+            if (!refreshRes.ok) {
+              throw new Error('Refresh failed');
+            }
 
-              const refreshJson = await refreshRes.json();
-              const newAccessToken = refreshJson.data?.accessToken;
-              const newRefreshToken = refreshJson.data?.refreshToken;
-
-              if (!newAccessToken) {
-                throw new Error('No access token in refresh response');
-              }
-
+            // Since tokens are stored in cookies, we just return true.
+            // Also update localStorage for fallback compat if used.
+            const refreshJson = await refreshRes.json();
+            const newAccessToken = refreshJson.data?.accessToken;
+            if (newAccessToken) {
               localStorage.setItem('accessToken', newAccessToken);
               localStorage.setItem('token', newAccessToken);
-              if (newRefreshToken) {
-                localStorage.setItem('refreshToken', newRefreshToken);
-              }
-              return newAccessToken;
-            } catch (_refreshErr) {
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('token');
-              localStorage.removeItem('refreshToken');
-              localStorage.removeItem('user');
-              refreshPromise = null;
-              window.dispatchEvent(new CustomEvent('auth-logout'));
-              throw new ApiError('Session expired. Please log in again.', 401, 'UNAUTHORIZED_EXPIRED');
             }
-          })();
-        }
-
-        const newToken = await refreshPromise;
-        const retryHeaders = {
-          ...config.headers,
-          'Authorization': `Bearer ${newToken}`
-        };
-        const retryRes = await fetch(url, { ...config, headers: retryHeaders });
-        return handleResponse<T>(retryRes);
+            return 'REFRESHED';
+          } catch (_refreshErr) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            refreshPromise = null;
+            window.dispatchEvent(new CustomEvent('auth-logout'));
+            throw new ApiError('Session expired. Please log in again.', 401, 'UNAUTHORIZED_EXPIRED');
+          }
+        })();
       }
+
+      await refreshPromise;
+      
+      // If we fall back to authorization header, grab it again
+      const retryToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const retryHeaders: any = { ...config.headers };
+      if (retryToken) {
+        retryHeaders['Authorization'] = `Bearer ${retryToken}`;
+      }
+      
+      const retryRes = await fetch(url, { ...config, headers: retryHeaders });
+      return handleResponse<T>(retryRes);
     }
   }
 

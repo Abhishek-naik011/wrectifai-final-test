@@ -3,12 +3,19 @@ import { verifyAccessToken } from '../services/jwt.service';
 import { error } from '../utils/response';
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = req.cookies?.accessToken;
+
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
     return error(res, 'Authentication token missing or invalid format', 'UNAUTHORIZED', 401);
   }
 
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded;

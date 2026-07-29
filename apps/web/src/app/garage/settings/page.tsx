@@ -4,12 +4,13 @@ import { RoleGuard } from '@/components/common/role-guard';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { Card } from '@/components/common/card';
 import { garageNavItems } from '@/lib/garage-config';
+import { DashboardHeader } from '@/components/common/dashboard-header';
 import { Settings } from 'lucide-react';
 
 export default function SettingsPage() {
   return (
     <RoleGuard allowedRoles={['garage']}>
-      <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true}>
+      <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true} header={<DashboardHeader />}>
         <div className="space-y-6 p-4">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[#17307a]">Settings</h1>

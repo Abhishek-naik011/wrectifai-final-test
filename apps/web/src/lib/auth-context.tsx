@@ -15,6 +15,7 @@ export interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (accessToken: string, refreshToken?: string, user?: User) => void;
   logout: () => void;
 }
@@ -38,48 +39,64 @@ function decodeJwt(token: string): any {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserStr = localStorage.getItem('user');
-      if (storedUserStr) {
-        try {
-          return JSON.parse(storedUserStr);
-        } catch {
-          // Ignore parse errors
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Initialize auth state
+  useEffect(() => {
+    let mounted = true;
+
+    async function initAuth() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
+        // Fetch current user from HttpOnly cookie session
+        const res = await fetch(`${baseUrl}/auth/me`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data && json.data.user && mounted) {
+            setUser(json.data.user);
+            setIsAuthenticated(true);
+          }
+        } else {
+          // Fallback check for token in localStorage
+          const storedToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
+          if (storedToken && mounted) {
+            const decoded = decodeJwt(storedToken);
+            if (decoded) {
+              setUser({
+                id: decoded.userId,
+                email: decoded.email,
+                roles: decoded.roles,
+                name: decoded.name || (decoded.email ? decoded.email.split('@')[0] : 'User'),
+              });
+              setToken(storedToken);
+              setIsAuthenticated(true);
+            }
+          }
         }
-      }
-
-      const storedToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      if (storedToken) {
-        const decoded = decodeJwt(storedToken);
-        if (decoded) {
-          return {
-            id: decoded.userId,
-            email: decoded.email,
-            roles: decoded.roles,
-            name: decoded.name || (decoded.email ? decoded.email.split('@')[0] : 'User'),
-          };
+      } catch (err) {
+        // Handle network failures gracefully without throwing
+        console.warn('[AuthContext] Auth initialization network request failed or was aborted. Defaulting to unauthenticated state.');
+        if (mounted) {
+          setUser(null);
+          setToken(null);
+          setIsAuthenticated(false);
         }
+      } finally {
+        if (mounted) setIsLoading(false);
       }
     }
-    return null;
-  });
 
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('accessToken') || localStorage.getItem('token');
-    }
-    return null;
-  });
+    initAuth();
 
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return !!(localStorage.getItem('accessToken') || localStorage.getItem('token'));
-    }
-    return false;
-  });
-
-  const [isLoading] = useState<boolean>(false);
+    return () => { mounted = false; };
+  }, []);
 
   // Listen to silent refresh logout events
   useEffect(() => {
@@ -124,18 +141,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     if (typeof window !== 'undefined') {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1'}/auth/logout`, {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
+        await fetch(`${baseUrl}/auth/logout`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        }).catch(() => {
-          // TODO: Handle logout API failure or log it if needed
         });
+      } catch (err) {
+        console.warn('Logout API failed', err);
       }
+      
       localStorage.removeItem('accessToken');
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
@@ -145,10 +163,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setToken(null);
     setIsAuthenticated(false);
+    
+    // Redirect to login page to prevent back navigation
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, logout }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
