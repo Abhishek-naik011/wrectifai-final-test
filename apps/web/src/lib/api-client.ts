@@ -13,7 +13,7 @@ export class ApiError extends Error {
 }
 
 const getBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1';
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 };
 
 export interface RequestOptions extends RequestInit {
@@ -69,9 +69,7 @@ export async function apiClient<T = unknown>(path: string, options: RequestOptio
   let response: Response;
   try {
     response = await fetch(url, config);
-    console.log('[apiClient] Request to:', url, 'returned status:', response.status);
   } catch (err) {
-    console.error('[apiClient] Request to:', url, 'failed with network error:', err);
     throw new ApiError(err instanceof Error ? err.message : 'Network error', 0);
   }
 

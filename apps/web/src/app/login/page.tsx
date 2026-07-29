@@ -16,18 +16,11 @@ import OtpInput from '@/components/common/otp-input';
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const router = useRouter();
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const isMockMode = !googleClientId || googleClientId === 'your-google-client-id-here' || googleClientId === '';
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
 
   // Form states
   const [mobileNumber, setMobileNumber] = useState('');
@@ -47,10 +40,13 @@ export default function LoginPage() {
           credential: credentialResponse.access_token
         });
         login(data.accessToken, data.refreshToken, data.user);
-        setSuccessMsg('Successfully logged in via Google! Redirecting...');
-        setTimeout(() => {
+        if (data.user?.roles?.includes('admin')) {
+          router.push('/admin/dashboard');
+        } else if (data.user?.roles?.includes('garage')) {
+          router.push('/garage/dashboard');
+        } else {
           router.push('/');
-        }, 800);
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Google login failed.';
         setErrorMsg(message);
@@ -72,21 +68,15 @@ export default function LoginPage() {
       return;
     }
 
-    // Accept hardcoded ones
-    const validPhones = ['9876543210', '1234567890'];
     const sanitizedPhone = mobileNumber.replace(/\s+/g, '');
-    if (!validPhones.includes(sanitizedPhone)) {
+    if (sanitizedPhone.length < 10) {
       setErrorMsg('error: Invalid phone number.');
       return;
     }
 
     setIsSubmitting(true);
-    // Simulate sending OTP
-    setTimeout(() => {
-      setIsOtpSent(true);
-      setIsSubmitting(false);
-      setSuccessMsg('OTP code sent successfully! Use 123456');
-    }, 600);
+    setIsOtpSent(true);
+    setIsSubmitting(false);
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -102,10 +92,13 @@ export default function LoginPage() {
       });
 
       login(data.accessToken, data.refreshToken, data.user);
-      setSuccessMsg('Successfully logged in! Redirecting...');
-      setTimeout(() => {
+      if (data.user?.roles?.includes('admin')) {
+        router.push('/admin/dashboard');
+      } else if (data.user?.roles?.includes('garage')) {
+        router.push('/garage/dashboard');
+      } else {
         router.push('/');
-      }, 800);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Verification failed. Please check the OTP code.';
       setErrorMsg(message);
@@ -121,10 +114,13 @@ export default function LoginPage() {
     try {
       const data = await apiClient.post<AuthResponse>('/auth/login', { provider });
       login(data.accessToken, data.refreshToken, data.user);
-      setSuccessMsg(`Successfully logged in via ${provider === 'google' ? 'Google' : 'Apple'}! Redirecting...`);
-      setTimeout(() => {
+      if (data.user?.roles?.includes('admin')) {
+        router.push('/admin/dashboard');
+      } else if (data.user?.roles?.includes('garage')) {
+        router.push('/garage/dashboard');
+      } else {
         router.push('/');
-      }, 800);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : `${provider === 'google' ? 'Google' : 'Apple'} login failed.`;
       setErrorMsg(message);
@@ -243,10 +239,13 @@ export default function LoginPage() {
                       credential: 'mock_developer'
                     });
                     login(data.accessToken, data.refreshToken, data.user);
-                    setSuccessMsg('Successfully logged in via Mock Google! Redirecting...');
-                    setTimeout(() => {
+                    if (data.user?.roles?.includes('admin')) {
+                      router.push('/admin/dashboard');
+                    } else if (data.user?.roles?.includes('garage')) {
+                      router.push('/garage/dashboard');
+                    } else {
                       router.push('/');
-                    }, 800);
+                    }
                   } catch (err: unknown) {
                     const message = err instanceof Error ? err.message : 'Google mock login failed.';
                     setErrorMsg(message);

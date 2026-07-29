@@ -73,25 +73,27 @@ garagesRouter.get('/search', async (req, res) => {
 
 garagesRouter.get('/:id', async (req, res) => {
   try {
-    const result = await query(
-      `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
-              g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
-              g.starting_price as "startingPrice", g.distance_km as "distanceKm",
-              g.image, g.response_mins as "responseMins",
-              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
-       FROM garages g
-       WHERE g.id = $1`,
-      [req.params.id]
-    );
+    const [result, servicesResult] = await Promise.all([
+      query(
+        `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
+                g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
+                g.starting_price as "startingPrice", g.distance_km as "distanceKm",
+                g.image, g.response_mins as "responseMins",
+                (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
+         FROM garages g
+         WHERE g.id = $1`,
+        [req.params.id]
+      ),
+      query(
+        `SELECT * FROM services WHERE garage_id = $1`,
+        [req.params.id]
+      )
+    ]);
+    
     if (result.rows.length === 0) {
       return error(res, 'Garage not found', 'NOT_FOUND', 404);
     }
     const mapped = mapGarageDbRow(result.rows[0]);
-    
-    const servicesResult = await query(
-      `SELECT * FROM services WHERE garage_id = $1`,
-      [req.params.id]
-    );
     
     return success(res, { ...mapped, services: servicesResult.rows });
   } catch (err) {

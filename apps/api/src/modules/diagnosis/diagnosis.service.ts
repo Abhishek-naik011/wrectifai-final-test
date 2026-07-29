@@ -335,25 +335,25 @@ Output your response as a strict JSON array under a "questions" field containing
     }
     const vehicle = vehicleRes.rows[0];
 
-    // Fetch last 5 service history records
-    const historyRes = await query(
-      'SELECT service_date, description, cost FROM vehicle_service_history WHERE vehicle_id = $1 ORDER BY service_date DESC LIMIT 5',
-      [vehicleId]
-    );
-    const serviceHistory = historyRes.rows;
-
-    // Fetch matching issues from database for grounding
-    let matchedIssues: RetrievedIssue[] = [];
-    try {
-      matchedIssues = await KnowledgeService.findMatchingIssues(
+    // Fetch service history and matching issues in parallel
+    const [historyRes, matchedIssuesResult] = await Promise.all([
+      query(
+        'SELECT service_date, description, cost FROM vehicle_service_history WHERE vehicle_id = $1 ORDER BY service_date DESC LIMIT 5',
+        [vehicleId]
+      ),
+      KnowledgeService.findMatchingIssues(
         symptomText,
         vehicle.make,
         vehicle.year,
         intakeAnswers?.category
-      );
-    } catch (dbErr) {
-      console.error('Failed to retrieve matched issues from database:', dbErr);
-    }
+      ).catch(dbErr => {
+        console.error('Failed to retrieve matched issues from database:', dbErr);
+        return [];
+      })
+    ]);
+    
+    const serviceHistory = historyRes.rows;
+    let matchedIssues = matchedIssuesResult;
 
     // 2. Save media files to local disk
     const savedMediaPaths: { mediaType: 'image' | 'video' | 'audio'; url: string }[] = [];

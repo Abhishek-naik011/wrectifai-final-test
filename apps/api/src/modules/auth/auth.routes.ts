@@ -88,7 +88,7 @@ authRouter.post('/register', async (req, res, next) => {
     return error(res, 'Phone number, name, and OTP are required', 'BAD_REQUEST', 400);
   }
 
-  if (otp !== HARDCODED_OTP || !HARDCODED_PHONES.includes(mobileNumber)) {
+  if (otp !== HARDCODED_OTP) {
     return error(res, 'Invalid phone number or OTP', 'UNAUTHORIZED', 401);
   }
 
@@ -185,11 +185,14 @@ authRouter.post('/login', async (req, res, next) => {
         return error(res, 'Phone number and OTP are required', 'BAD_REQUEST', 400);
       }
 
-      if (otp !== HARDCODED_OTP || !HARDCODED_PHONES.includes(mobileNumber)) {
+      if (otp !== HARDCODED_OTP) {
         return error(res, 'Invalid phone number or OTP', 'UNAUTHORIZED', 401);
       }
 
+      console.log('--- STARTING LOGIN FOR:', mobileNumber, '---');
+      console.log('Querying existing user...');
       const existingUser = await query('SELECT * FROM users WHERE mobile_number = $1', [mobileNumber]);
+      console.log('User query done. found:', existingUser.rows.length);
       if (existingUser.rows.length > 0) {
         user = existingUser.rows[0];
       } else {

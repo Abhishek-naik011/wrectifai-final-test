@@ -19,10 +19,14 @@ export function Sidebar({
   collapsed,
   onToggle,
   onMobileClose,
+  customNavItems,
+  hideBottomWidget,
 }: {
   collapsed: boolean;
   onToggle: () => void;
   onMobileClose?: () => void;
+  customNavItems?: import('@/components/home/data').NavItem[];
+  hideBottomWidget?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -96,7 +100,7 @@ export function Sidebar({
       </div>
 
       <nav className="mt-0.5 flex flex-col gap-[3px] overflow-x-hidden overflow-y-auto pr-0.5 pb-0.5 [scrollbar-width:thin] [scrollbar-color:#e4ecff_transparent] [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#e4ecff] hover:[&::-webkit-scrollbar-thumb]:bg-[#cbd5e1] [&::-webkit-scrollbar-track]:bg-transparent">
-        {navItems.map(({ label, icon: Icon, href, chevron }) => {
+        {(customNavItems || navItems).map(({ label, icon: Icon, href, chevron }) => {
           const active = pathname
             ? href === '/'
               ? pathname === '/' || pathname.startsWith('/deals')
@@ -169,56 +173,58 @@ export function Sidebar({
         })}
       </nav>
 
-      <div className="mt-1 shrink-0">
-        {collapsed ? (
-          <Link
-            href="/offers"
-            className="mx-auto mt-2 flex h-[48px] w-[48px] items-center justify-center rounded-[12px] bg-[#f3f7ff] shadow-none hover:bg-[#ebf2fd] transition-colors"
-            title="Refer & Earn"
-          >
-            <Image
-              src="/assets/gift icon.png"
-              alt="Refer & Earn Gift"
-              width={32}
-              height={32}
-              priority
-              style={{ width: '32px', height: 'auto' }}
-              className="w-[32px] h-auto object-contain"
-            />
-          </Link>
-        ) : (
-          <div className="relative mt-0.5 overflow-hidden rounded-[14px] bg-[#f3f7ff] p-3 shadow-none">
-            <div className="flex items-center justify-between gap-1">
-              <div className="flex-1 flex flex-col">
-                <h2 className="text-[12.5px] font-bold text-[#17307a] tracking-tight mb-0.5">
-                  Refer &amp; Earn
-                </h2>
-                <p className="max-w-[130px] text-[10.5px] font-normal leading-snug text-[#17307a] mb-2.5">
-                  Invite your friends and earn up to {'\u20B9500'}
-                </p>
-                <Button
-                  asChild
-                  className="h-[25px] w-fit rounded-[6px] bg-[#1a56db] font-semibold hover:bg-[#1a56db]/90 text-[10.5px] px-3.5 shadow-none"
-                  size="sm"
-                >
-                  <Link href="/offers">Refer Now</Link>
-                </Button>
-              </div>
-              <div className="shrink-0 flex items-center justify-center pl-1">
-                <Image
-                  src="/assets/gift icon.png"
-                  alt="Refer & Earn Gift"
-                  width={56}
-                  height={56}
-                  priority
-                  style={{ width: '56px', height: 'auto' }}
-                  className="w-[56px] h-auto object-contain"
-                />
+      {!hideBottomWidget && (
+        <div className="mt-1 shrink-0">
+          {collapsed ? (
+            <Link
+              href="/offers"
+              className="mx-auto mt-2 flex h-[48px] w-[48px] items-center justify-center rounded-[12px] bg-[#f3f7ff] shadow-none hover:bg-[#ebf2fd] transition-colors"
+              title="Refer & Earn"
+            >
+              <Image
+                src="/assets/gift icon.png"
+                alt="Refer & Earn Gift"
+                width={32}
+                height={32}
+                priority
+                style={{ width: '32px', height: 'auto' }}
+                className="w-[32px] h-auto object-contain"
+              />
+            </Link>
+          ) : (
+            <div className="relative mt-0.5 overflow-hidden rounded-[14px] bg-[#f3f7ff] p-3 shadow-none">
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex-1 flex flex-col">
+                  <h2 className="text-[12.5px] font-bold text-[#17307a] tracking-tight mb-0.5">
+                    Refer &amp; Earn
+                  </h2>
+                  <p className="max-w-[130px] text-[10.5px] font-normal leading-snug text-[#17307a] mb-2.5">
+                    Invite your friends and earn up to {'\u20B9500'}
+                  </p>
+                  <Button
+                    asChild
+                    className="h-[25px] w-fit rounded-[6px] bg-[#1a56db] font-semibold hover:bg-[#1a56db]/90 text-[10.5px] px-3.5 shadow-none"
+                    size="sm"
+                  >
+                    <Link href="/offers">Refer Now</Link>
+                  </Button>
+                </div>
+                <div className="shrink-0 flex items-center justify-center pl-1">
+                  <Image
+                    src="/assets/gift icon.png"
+                    alt="Refer & Earn Gift"
+                    width={56}
+                    height={56}
+                    priority
+                    style={{ width: '56px', height: 'auto' }}
+                    className="w-[56px] h-auto object-contain"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </aside>
   );
 }

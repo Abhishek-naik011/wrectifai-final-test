@@ -3,16 +3,21 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/home/sidebar';
+import type { NavItem } from '@/components/home/data';
 import { cn } from '@/utils/cn';
 
 export function DashboardShell({
   header,
   children,
   aside,
+  customNavItems,
+  hideBottomWidget,
 }: {
   header?: ReactNode;
   children: ReactNode;
   aside?: ReactNode;
+  customNavItems?: NavItem[];
+  hideBottomWidget?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -60,6 +65,8 @@ export function DashboardShell({
               collapsed={collapsed}
               onToggle={handleToggle}
               onMobileClose={() => setMobileOpen(false)}
+              customNavItems={customNavItems}
+              hideBottomWidget={hideBottomWidget}
             />
           </div>
 
