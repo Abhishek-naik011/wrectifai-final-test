@@ -259,6 +259,14 @@ authRouter.post('/login', async (req, res, next) => {
     );
     const roles = rolesResult.rows.map((row) => row.code);
 
+    let garageName = undefined;
+    if (roles.includes('garage')) {
+      const garageResult = await query('SELECT name FROM garages WHERE owner_user_id = $1', [user.id]);
+      if (garageResult.rows.length > 0) {
+        garageName = garageResult.rows[0].name;
+      }
+    }
+
     const requiresPasswordChange = checkIfPasswordResetRequired(user.password_hash, roles);
 
     const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles });
@@ -273,6 +281,7 @@ authRouter.post('/login', async (req, res, next) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        garageName,
         mobileNumber: user.mobile_number,
         status: user.status,
         roles,
@@ -354,11 +363,20 @@ authRouter.get('/me', authenticate, async (req, res) => {
     );
     const roles = rolesResult.rows.map((row) => row.code);
 
+    let garageName = undefined;
+    if (roles.includes('garage')) {
+      const garageResult = await query('SELECT name FROM garages WHERE owner_user_id = $1', [userId]);
+      if (garageResult.rows.length > 0) {
+        garageName = garageResult.rows[0].name;
+      }
+    }
+
     return success(res, {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
+        garageName,
         mobileNumber: user.mobile_number,
         status: user.status,
         roles,

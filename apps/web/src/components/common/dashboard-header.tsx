@@ -33,9 +33,9 @@ export function DashboardHeader({ title }: { title?: string }) {
           <div className="relative group ml-[5px]">
             <button className="flex h-9 lg:h-10 shrink-0 items-center gap-2 rounded-full border border-[#dbe6ff] bg-white p-0.5 lg:py-1 lg:pl-1.5 lg:pr-3 hover:bg-[#fcfdff] transition-all shadow-sm focus:outline-none">
               <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full bg-[#1a56db] text-white font-bold text-sm">
-                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                {(user.garageName || user.name) ? (user.garageName || user.name)!.charAt(0).toUpperCase() : 'U'}
               </div>
-              <span className="hidden text-[13px] font-semibold text-[#17307a] lg:block">Hi, {user.name}</span>
+              <span className="hidden text-[13px] font-semibold text-[#17307a] lg:block">Hi, {user.garageName || user.name}</span>
               <ChevronDown className="hidden h-4 w-4 text-[#17307a] lg:block group-hover:rotate-180 transition-transform duration-200" />
             </button>
             <div className="absolute right-0 top-full pt-2 w-48 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">

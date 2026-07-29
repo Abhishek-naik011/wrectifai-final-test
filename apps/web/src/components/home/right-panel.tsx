@@ -15,7 +15,7 @@ function OverviewPanel() {
   const [quotesCount, setQuotesCount] = useState<number>(0);
   const [vehiclesCount, setVehiclesCount] = useState<number>(0);
   const [vehicleDesc, setVehicleDesc] = useState<string>('No vehicles added');
-  const [ordersCount, setOrdersCount] = useState<number>(3);
+  const [ordersCount, setOrdersCount] = useState<number>(0);
 
   useEffect(() => {
     let active = true;
@@ -71,9 +71,12 @@ function OverviewPanel() {
     apiClient.get<any>('/marketplace/orders')
       .then((data) => {
         if (!active || !data) return;
-        setOrdersCount(data.count);
+        setOrdersCount(data.count || 0);
       })
-      .catch((err) => console.error('Overview panel orders fetch failed:', err));
+      .catch((err) => {
+        console.error('Overview panel orders fetch failed:', err);
+        setOrdersCount(0);
+      });
 
     return () => {
       active = false;
@@ -93,7 +96,7 @@ function OverviewPanel() {
     {
       title: 'Part Orders',
       value: String(ordersCount),
-      description: ordersCount === 1 ? '1 Order In Transit' : `${ordersCount} Orders`,
+      description: ordersCount === 0 ? 'No Part Orders' : (ordersCount === 1 ? '1 Order In Transit' : `${ordersCount} Orders`),
       cta: 'View All',
       href: '/offers',
       icon: Package,
@@ -142,13 +145,13 @@ function OverviewPanel() {
             >
               <Icon className="h-6 w-6" />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-[#17307a]">{title}</p>
-              <div className="mt-0.5 flex items-end gap-2">
-                <span className="text-[14.5px] font-semibold text-[#17307a]">{value}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-semibold text-[#17307a]">{title}</p>
+                <div className="mt-0.5 flex items-end gap-2">
+                  <span className="text-[14.5px] font-semibold text-[#17307a]">{value}</span>
+                </div>
+                <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">{description}</p>
               </div>
-              <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">{description}</p>
-            </div>
             <a href={href} className="self-center text-[11.5px] font-semibold text-[#1a56db] cursor-pointer hover:underline">{cta}</a>
           </div>
         ))}

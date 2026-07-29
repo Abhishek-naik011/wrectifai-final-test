@@ -7,8 +7,14 @@ export const quotesRouter = Router();
 
 quotesRouter.get('/', authenticate, async (req, res) => {
   try {
+    const customerId = req.user?.userId;
+    if (!customerId) {
+      return error(res, 'Authentication failed: no customer ID found', 'UNAUTHORIZED', 401);
+    }
+
     const result = await query(
       `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details,
+              q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.total_cost as "totalCost", q.eta_note as "etaNote",
               g.name as "garageName", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
               qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
@@ -16,29 +22,32 @@ quotesRouter.get('/', authenticate, async (req, res) => {
        JOIN garages g ON q.garage_id = g.id
        JOIN quote_requests qr ON q.quote_request_id = qr.id
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
-       ORDER BY q.created_at DESC`
+       WHERE qr.customer_id = $1
+       ORDER BY q.created_at DESC`,
+      [customerId]
     );
 
     const mapped = result.rows.map((row: Record<string, any>) => {
       const details = row.details || {};
-      const amountNum = Number(row.amount);
-      const savingsNum = Number(details.savings || 0);
+      const amountNum = Number(row.amount || row.totalCost || 0);
+      const laborCostNum = Number(row.laborCost || 0);
+      const partsCostNum = Number(row.partsCost || 0);
 
       return {
         id: row.id,
         quoteRequestId: row.quoteRequestId,
-        status: details.ui_status || 'open',
+        status: row.status || 'open',
         garage: row.garageName,
-        image: details.image || '/assets/garage_1_1778071156220.png',
+        image: '/assets/garage_1_1778071156220.png',
         rating: String(row.ratingAvg || '4.5'),
         reviews: Number(row.ratingCount || 0),
-        distance: details.distance || '3.0 km away',
-        meta: details.tag || 'Certified technicians',
-        metaSecondary: details.warranty || '6 Months warranty',
+        distance: '3.0 km away',
+        meta: 'Certified technicians',
+        metaSecondary: '6 Months warranty',
         price: `$${amountNum.toLocaleString('en-US')}`,
-        savings: `$${savingsNum.toLocaleString('en-US')}`,
-        time: details.availability || '10 mins ago',
-        tag: details.tag || undefined,
+        savings: undefined,
+        time: row.etaNote || (row.etaDays ? `${row.etaDays} days` : 'TBD'),
+        tag: undefined,
         requestCreatedAt: row.requestCreatedAt,
         requestIssueSummary: row.requestIssueSummary,
         vehicle: row.vehicleMake ? {
@@ -49,14 +58,10 @@ quotesRouter.get('/', authenticate, async (req, res) => {
           mileage: row.vehicleMileage
         } : null,
         details: {
-          parts: details.parts,
-          labour: details.labour,
-          consumables: details.consumables,
-          gst: details.gst,
-          availability: details.availability,
-          pickupDrop: details.pickup_drop,
-          warranty: details.warranty,
-          experience: details.experience,
+          parts: partsCostNum,
+          labour: laborCostNum,
+          remarks: details.remarks,
+          pickupDrop: row.pickupDropSupported ? 'Available' : 'Not Available',
         }
       };
     });
@@ -72,6 +77,142 @@ quotesRouter.get('/', authenticate, async (req, res) => {
   }
 });
 
+quotesRouter.get('/garage-requests', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized for garage access', 'UNAUTHORIZED', 403);
+    }
+    
+    const result = await query(
+      `SELECT qr.id, qr.customer_id as "customerId", qr.vehicle_id as "vehicleId", qr.issue_summary as "issueSummary", qr.status, qr.created_at as "createdAt",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage",
+              p.avatar_url as "customerAvatar", u.name as "customerName"
+       FROM quote_requests qr
+       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
+       LEFT JOIN users u ON qr.customer_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       WHERE qr.status = 'open'
+       ORDER BY qr.created_at DESC`
+    );
+
+    const mapped = result.rows.map((row: any) => ({
+      id: row.id,
+      customerId: row.customerId,
+      customerName: row.customerName || 'Customer',
+      customerAvatar: row.customerAvatar,
+      vehicleId: row.vehicleId,
+      issueSummary: row.issueSummary,
+      status: row.status,
+      createdAt: row.createdAt,
+      vehicle: row.vehicleMake ? {
+        make: row.vehicleMake,
+        model: row.vehicleModel,
+        year: row.vehicleYear,
+        vin: row.vehicleVin,
+        mileage: row.vehicleMileage
+      } : null
+    }));
+
+    return success(res, mapped);
+  } catch (err) {
+    return error(res, err instanceof Error ? err.message : 'Failed to fetch garage requests', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.get('/garage/stats', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized for garage access', 'UNAUTHORIZED', 403);
+    }
+
+    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
+    if (garageRes.rows.length === 0) {
+      return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+    }
+    const garageId = garageRes.rows[0].id;
+
+    const incomingRes = await query(`SELECT COUNT(*) FROM quote_requests WHERE status = 'open'`);
+    const activeJobsRes = await query(`SELECT COUNT(*) FROM quotes WHERE garage_id = $1 AND status IN ('active', 'selected')`, [garageId]);
+    const generatedQuotesRes = await query(`SELECT COUNT(*) FROM quotes WHERE garage_id = $1`, [garageId]);
+    const completedRes = await query(`SELECT COUNT(*) FROM bookings b JOIN quotes q ON b.quote_id = q.id WHERE q.garage_id = $1 AND b.status = 'completed'`, [garageId]);
+
+    const stats = {
+      incoming: Number(incomingRes.rows[0].count),
+      activeJobs: Number(activeJobsRes.rows[0].count),
+      generatedQuotes: Number(generatedQuotesRes.rows[0].count),
+      completed: Number(completedRes.rows[0].count)
+    };
+
+    return success(res, stats);
+  } catch (err) {
+    return error(res, 'Failed to fetch garage stats', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.post('/garage-requests/:id/accept', authenticate, async (req, res) => {
+  try {
+    if (!req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    
+    const result = await query(
+      `UPDATE quote_requests SET status = 'open' WHERE id = $1 AND status = 'open' RETURNING id`,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return error(res, 'Request is no longer pending or not found', 'BAD_REQUEST', 400);
+    }
+
+    return success(res, { success: true, message: 'Request accepted' });
+  } catch (err) {
+    return error(res, 'Database error', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.post('/:quoteRequestId/quotes', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+
+    const { labourCost, partsCost, estimatedTime, remarks } = req.body;
+    
+    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
+    if (garageRes.rows.length === 0) {
+      return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+    }
+    const garageId = garageRes.rows[0].id;
+
+    const amount = Number(labourCost || 0) + Number(partsCost || 0);
+
+    const result = await query(
+      `INSERT INTO quotes (quote_request_id, garage_id, amount, currency, status, labor_cost, parts_cost, total_cost, eta_note, details)
+       VALUES ($1, $2, $3, 'USD', 'active', $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        req.params.quoteRequestId, 
+        garageId, 
+        amount, 
+        labourCost, 
+        partsCost, 
+        amount, 
+        estimatedTime, 
+        JSON.stringify({ remarks })
+      ]
+    );
+
+    await query(`UPDATE quote_requests SET status = 'quoted' WHERE id = $1`, [req.params.quoteRequestId]);
+
+    return success(res, { success: true, quoteId: result.rows[0].id }, 201);
+  } catch (err) {
+    return error(res, 'Database error', 'DATABASE_ERROR', 500);
+  }
+});
+
 quotesRouter.post('/requests', authenticate, async (req, res) => {
   try {
     const { vehicleId, issueSummary, diagnosisRequestId, preferredDate } = req.body;
@@ -84,7 +225,6 @@ quotesRouter.post('/requests', authenticate, async (req, res) => {
       return error(res, 'Authentication failed: no customer ID found', 'UNAUTHORIZED', 401);
     }
 
-    // Verify vehicle exists
     const vehicleRes = await query(
       'SELECT id FROM vehicles WHERE id = $1',
       [vehicleId]
@@ -100,90 +240,7 @@ quotesRouter.post('/requests', authenticate, async (req, res) => {
       [customerId, vehicleId, diagnosisRequestId || null, issueSummary, preferredDate || null]
     );
 
-    const newRequest = result.rows[0];
-
-    // Mock Quote Generation: Insert 3 mock quotes from existing garages in the DB for the newly created quote request
-    const garagesRes = await query('SELECT id, name FROM garages LIMIT 3');
-    if (garagesRes.rows.length >= 3) {
-      const templates = [
-        {
-          amount: 3050.00,
-          details: {
-            ui_status: "new",
-            parts: 1650,
-            labour: 1050,
-            consumables: 200,
-            gst: 150,
-            availability: "Today, 6:00 PM",
-            pickup_drop: "Available",
-            warranty: "6 Months / 10,000 km",
-            experience: "8+ Years",
-            savings: 450,
-            tag: "Express service",
-            image: "/assets/garage_2_1778071173295.png"
-          }
-        },
-        {
-          amount: 3450.00,
-          details: {
-            ui_status: "new",
-            parts: 1900,
-            labour: 1250,
-            consumables: 250,
-            gst: 200,
-            availability: "Tomorrow, 10:00 AM",
-            pickup_drop: "Not Available",
-            warranty: "3 Months / 5,000 km",
-            experience: "6+ Years",
-            savings: 250,
-            tag: "Specialized repair",
-            image: "/assets/garage_3_1778071191282.png"
-          }
-        },
-        {
-          amount: 3200.00,
-          details: {
-            ui_status: "new",
-            parts: 1700,
-            labour: 1200,
-            consumables: 200,
-            gst: 100,
-            availability: "Today, 7:30 PM",
-            pickup_drop: "Available",
-            warranty: "2 Years / 20,000 km",
-            experience: "10+ Years",
-            savings: 150,
-            tag: "Free pickup & drop",
-            image: "/assets/garage_1_1778071156220.png"
-          }
-        }
-      ];
-
-      for (let i = 0; i < 3; i++) {
-        const garage = garagesRes.rows[i];
-        const template = templates[i];
-        await query(
-          `INSERT INTO quotes (quote_request_id, garage_id, amount, currency, eta_days, status, details)
-           VALUES ($1, $2, $3, 'USD', $4, 'active', $5)`,
-          [
-            newRequest.id,
-            garage.id,
-            template.amount,
-            i === 1 ? 2 : 1,
-            JSON.stringify(template.details)
-          ]
-        );
-      }
-
-      // Update the quote_request status to 'quoted' since quotes are now available
-      await query(
-        `UPDATE quote_requests SET status = 'quoted' WHERE id = $1`,
-        [newRequest.id]
-      );
-      newRequest.status = 'quoted';
-    }
-
-    return success(res, newRequest, 201);
+    return success(res, result.rows[0], 201);
   } catch (err: any) {
     console.error('Quote request creation failed:', err);
     return error(
@@ -195,7 +252,6 @@ quotesRouter.post('/requests', authenticate, async (req, res) => {
   }
 });
 
-// List Requests Endpoint: Retrieve all quote requests for the authenticated user (sorted by created_at DESC)
 quotesRouter.get('/requests', authenticate, async (req, res) => {
   try {
     const customerId = req.user?.userId;
@@ -285,6 +341,7 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
   try {
     const result = await query(
       `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details,
+              q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.total_cost as "totalCost", q.eta_note as "etaNote",
               g.name as "garageName", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
               qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
@@ -302,24 +359,25 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
 
     const row = result.rows[0];
     const details = row.details || {};
-    const amountNum = Number(row.amount);
-    const savingsNum = Number(details.savings || 0);
+    const amountNum = Number(row.amount || row.totalCost || 0);
+    const laborCostNum = Number(row.laborCost || 0);
+    const partsCostNum = Number(row.partsCost || 0);
 
     const mapped = {
       id: row.id,
       quoteRequestId: row.quoteRequestId,
-      status: details.ui_status || 'open',
+      status: row.status || 'open',
       garage: row.garageName,
-      image: details.image || '/assets/garage_1_1778071156220.png',
+      image: '/assets/garage_1_1778071156220.png',
       rating: String(row.ratingAvg || '4.5'),
       reviews: Number(row.ratingCount || 0),
-      distance: details.distance || '3.0 km away',
-      meta: details.tag || 'Certified technicians',
-      metaSecondary: details.warranty || '6 Months warranty',
+      distance: '3.0 km away',
+      meta: 'Certified technicians',
+      metaSecondary: '6 Months warranty',
       price: `$${amountNum.toLocaleString('en-US')}`,
-      savings: `$${savingsNum.toLocaleString('en-US')}`,
-      time: details.availability || '10 mins ago',
-      tag: details.tag || undefined,
+      savings: undefined,
+      time: row.etaNote || (row.etaDays ? `${row.etaDays} days` : 'TBD'),
+      tag: undefined,
       requestCreatedAt: row.requestCreatedAt,
       requestIssueSummary: row.requestIssueSummary,
       vehicle: row.vehicleMake ? {
@@ -330,14 +388,10 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
         mileage: row.vehicleMileage
       } : null,
       details: {
-        parts: details.parts,
-        labour: details.labour,
-        consumables: details.consumables,
-        gst: details.gst,
-        availability: details.availability,
-        pickupDrop: details.pickup_drop,
-        warranty: details.warranty,
-        experience: details.experience,
+        parts: partsCostNum,
+        labour: laborCostNum,
+        remarks: details.remarks,
+        pickupDrop: row.pickupDropSupported ? 'Available' : 'Not Available',
       }
     };
 
@@ -352,3 +406,112 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
   }
 });
 
+quotesRouter.get('/garage/active-jobs', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
+    if (garageRes.rows.length === 0) {
+      return error(res, 'Garage not found', 'BAD_REQUEST', 400);
+    }
+    const garageId = garageRes.rows[0].id;
+
+    const result = await query(
+      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.status as "quoteStatus", q.created_at as "quoteCreatedAt", q.details,
+              qr.issue_summary as "issueSummary", qr.status as "requestStatus",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
+              u.name as "customerName", p.avatar_url as "customerAvatar",
+              b.status as "bookingStatus", b.scheduled_at as "bookingDate", b.service_type as "serviceType"
+       FROM quotes q
+       JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
+       LEFT JOIN users u ON qr.customer_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       LEFT JOIN bookings b ON b.quote_id = q.id
+       WHERE q.garage_id = $1
+       
+       UNION
+       
+       SELECT b.id as "id", NULL as "quoteRequestId", b.total_amount as "amount", 'active' as "quoteStatus", b.created_at as "quoteCreatedAt", NULL as "details",
+              b.service_type as "issueSummary", NULL as "requestStatus",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
+              u.name as "customerName", p.avatar_url as "customerAvatar",
+              b.status as "bookingStatus", b.scheduled_at as "bookingDate", b.service_type as "serviceType"
+       FROM bookings b
+       LEFT JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN users u ON b.customer_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       WHERE b.garage_id = $1 AND b.quote_id IS NULL
+       
+       ORDER BY "quoteCreatedAt" DESC`,
+      [garageId]
+    );
+    return success(res, result.rows);
+  } catch (err) {
+    return error(res, 'Failed to fetch active jobs', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.get('/garage/quotes', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
+    if (garageRes.rows.length === 0) return error(res, 'Garage not found', 'BAD_REQUEST', 400);
+    const garageId = garageRes.rows[0].id;
+
+    const result = await query(
+      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount as "totalCost", q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.eta_days as "etaDays", q.eta_note as "etaNote", q.status as "quoteStatus", q.created_at as "createdAt", q.details,
+              qr.issue_summary as "issueSummary",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
+              u.name as "customerName", p.avatar_url as "customerAvatar"
+       FROM quotes q
+       JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
+       LEFT JOIN users u ON qr.customer_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       WHERE q.garage_id = $1
+       ORDER BY q.created_at DESC`,
+      [garageId]
+    );
+    return success(res, result.rows);
+  } catch (err) {
+    return error(res, 'Failed to fetch quotes', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.get('/garage/completed-jobs', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
+    if (garageRes.rows.length === 0) return error(res, 'Garage not found', 'BAD_REQUEST', 400);
+    const garageId = garageRes.rows[0].id;
+
+    const result = await query(
+      `SELECT b.id, b.status as "bookingStatus", b.created_at as "completionDate",
+              q.amount as "quoteAmount", q.details,
+              qr.issue_summary as "issueSummary",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
+              u.name as "customerName", u.mobile_number as "customerContact", p.avatar_url as "customerAvatar"
+       FROM bookings b
+       JOIN quotes q ON b.quote_id = q.id
+       JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
+       LEFT JOIN users u ON qr.customer_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
+       WHERE q.garage_id = $1 AND b.status = 'completed'
+       ORDER BY b.updated_at DESC`,
+      [garageId]
+    );
+    return success(res, result.rows);
+  } catch (err) {
+    return error(res, 'Failed to fetch completed jobs', 'DATABASE_ERROR', 500);
+  }
+});

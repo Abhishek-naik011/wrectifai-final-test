@@ -6,6 +6,7 @@ export interface User {
   id: string;
   email?: string;
   name?: string;
+  garageName?: string;
   roles: string[];
   mobileNumber?: string;
   status?: string;

@@ -291,45 +291,7 @@ export function QuotesPage() {
               </div>
             </div>
 
-            <Card className="rounded-[18px] border-[#e4ebff] bg-[linear-gradient(180deg,#f8f9ff_0%,#f4f7ff_100%)] px-5 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-[50px] w-[50px] items-center justify-center rounded-[14px] border border-[#dce5ff] bg-[#fbfdff] text-[#1a56db]">
-                    <Image
-                      src="/assets/Robo_icon.png"
-                      alt="WrectifAI"
-                      width={42}
-                      height={42}
-                      className="h-[36px] w-[36px] object-contain"
-                    />
-                  </span>
-                  <div>
-                    <div className={homeSubheadingClass}>
-                      WrectifAI Estimated Quote
-                    </div>
-                    <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099]">
-                      This is a WrectifAI generated estimate based on your
-                      selected issues and market data.
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-8">
-                  <div>
-                    <div className={homeBodyClass}>Estimated Price Range</div>
-                    <div className="mt-1.5 whitespace-nowrap text-[15.5px] font-semibold tracking-[-0.03em] text-[#159a5d]">
-                      {aiEstimatedQuoteRange}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="inline-flex h-[38px] items-center justify-center whitespace-nowrap rounded-[12px] border border-[#c9d8ff] px-4 text-[12px] font-semibold text-[#1a56db]"
-                  >
-                    View Estimate Details
-                  </button>
-                </div>
-              </div>
-            </Card>
 
             <div className="space-y-4">
               {loading ? (
@@ -450,12 +412,19 @@ export function QuotesPage() {
                       <div className="mt-1 text-[11px] text-[#5f7099]">
                         Total Estimate
                       </div>
-                      <div className="mt-3 flex items-center gap-2 whitespace-nowrap text-[11px] font-medium text-[#159a5d]">
+                      <div className="mt-3 flex flex-col gap-1 text-[11px] font-medium text-[#17307a]">
                         <span className="whitespace-nowrap">
-                          You save {quote.savings}
+                          Labour: ${quote.details?.labour || 0}
                         </span>
-                        <CircleHelp className="h-3.5 w-3.5 text-[#8090b7]" />
+                        <span className="whitespace-nowrap">
+                          Parts: ${quote.details?.parts || 0}
+                        </span>
                       </div>
+                      {quote.details?.remarks && (
+                        <div className="mt-2 text-[10px] text-gray-500 italic max-w-[150px] truncate" title={quote.details.remarks}>
+                          "{quote.details.remarks}"
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-2 gap-y-3 sm:grid-cols-4 sm:gap-x-1">

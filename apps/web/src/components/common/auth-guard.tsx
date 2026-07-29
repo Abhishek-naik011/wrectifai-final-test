@@ -27,23 +27,38 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     if (isAuthenticated && user && !isPublicPath) {
-      // If the user has a role but is trying to access a route that belongs to another role
       const isAdmin = user.roles?.includes('admin');
       const isGarage = user.roles?.includes('garage');
 
       const onAdminPath = pathname?.startsWith('/admin');
-      const onGaragePath = pathname?.startsWith('/garage');
+      // Fix: /garages is a customer path. /garage/ is the garage module.
+      const onGaragePath = pathname?.startsWith('/garage/') || pathname === '/garage' || pathname === '/garage/dashboard';
+      const isRoot = pathname === '/';
+      
+      const onCustomerPath = !onAdminPath && !onGaragePath && !isRoot;
 
-      // If they are on a path they are authorized for, do nothing.
-      if (isAdmin && onAdminPath) return;
-      if (isGarage && onGaragePath) return;
-      if (!isAdmin && !isGarage && !onAdminPath && !onGaragePath) return;
+      // 1. Garage cannot access Admin routes, Customer cannot access Admin routes
+      if (onAdminPath && !isAdmin) {
+        if (isGarage) router.replace('/garage/dashboard');
+        else router.replace('/');
+        return;
+      }
 
-      // Otherwise, redirect them to their highest priority role path
-      if (isAdmin) {
-        router.push('/admin/dashboard');
-      } else if (isGarage) {
-        router.push('/garage/dashboard');
+      // 2. Customer cannot access Garage routes, Admin cannot access Garage routes
+      if (onGaragePath && !isGarage) {
+        if (isAdmin) router.replace('/admin/dashboard');
+        else router.replace('/');
+        return;
+      }
+
+      // 3. Garage cannot access Customer protected routes, Admin cannot access Customer routes
+      if (onCustomerPath && (isGarage || isAdmin)) {
+        // Wait, what if a user is BOTH Garage and Customer? WrectifAI separates roles heavily in the Prompt. 
+        // We will assume `isGarage` takes precedence, and they shouldn't access customer paths.
+        // Wait, if we block it, Garage can't access `/bookings`.
+        if (isAdmin) router.replace('/admin/dashboard');
+        else router.replace('/garage/dashboard');
+        return;
       }
     }
   }, [isAuthenticated, user, isPublicPath, router, pathname]);

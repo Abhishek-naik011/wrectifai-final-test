@@ -110,10 +110,11 @@ async function createBookingInternal(req: any, res: any, data: {
   bookingType: string;
   quoteId?: string | null;
   currency?: string;
+  serviceType?: string;
 }) {
   const customerId = req.user?.userId;
   let { garageId } = data;
-  const { vehicleId, scheduledAt, totalAmount, bookingType, quoteId, currency } = data;
+  const { vehicleId, scheduledAt, totalAmount, bookingType, quoteId, currency, serviceType } = data;
 
   if (!vehicleId || !scheduledAt || !totalAmount || !bookingType) {
     return error(res, 'Missing required booking fields', 'BAD_REQUEST', 400);
@@ -139,11 +140,13 @@ async function createBookingInternal(req: any, res: any, data: {
     return error(res, 'Garage ID is required to create a booking', 'BAD_REQUEST', 400);
   }
 
+  const finalServiceType = serviceType || 'General Service';
+
   try {
     const result = await query(
-      `INSERT INTO bookings (customer_id, garage_id, vehicle_id, quote_id, booking_type, scheduled_at, status, total_amount, currency)
-       VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', $7, $8)
-       RETURNING id, customer_id as "customerId", garage_id as "garageId", vehicle_id as "vehicleId", quote_id as "quoteId", booking_type as "bookingType", scheduled_at as "scheduledAt", status, total_amount as "totalAmount", currency, created_at as "createdAt"`,
+      `INSERT INTO bookings (customer_id, garage_id, vehicle_id, quote_id, booking_type, scheduled_at, status, total_amount, currency, service_type)
+       VALUES ($1, $2, $3, $4, $5, $6, 'confirmed', $7, $8, $9)
+       RETURNING id, customer_id as "customerId", garage_id as "garageId", vehicle_id as "vehicleId", quote_id as "quoteId", booking_type as "bookingType", scheduled_at as "scheduledAt", status, total_amount as "totalAmount", currency, service_type as "serviceType", created_at as "createdAt"`,
       [
         customerId,
         garageId,
@@ -153,6 +156,7 @@ async function createBookingInternal(req: any, res: any, data: {
         scheduledAt,
         totalAmount,
         currency || 'USD',
+        finalServiceType
       ]
     );
 
@@ -182,7 +186,7 @@ bookingsRouter.post('/', authenticate, async (req, res) => {
 
 // POST /bookings/instant — legacy/instant booking alias
 bookingsRouter.post('/instant', authenticate, async (req, res) => {
-  const { garageId, vehicleId, scheduledAt, totalAmount, currency } = req.body;
+  const { garageId, vehicleId, scheduledAt, totalAmount, currency, serviceType } = req.body;
   return createBookingInternal(req, res, {
     garageId,
     vehicleId,
@@ -191,13 +195,14 @@ bookingsRouter.post('/instant', authenticate, async (req, res) => {
     bookingType: 'instant',
     quoteId: null,
     currency,
+    serviceType,
   });
 });
 
 // POST /bookings/from-quote/:quoteId — booking from quote alias
 bookingsRouter.post('/from-quote/:quoteId', authenticate, async (req, res) => {
   const { quoteId } = req.params;
-  const { vehicleId, scheduledAt, totalAmount, currency } = req.body;
+  const { vehicleId, scheduledAt, totalAmount, currency, serviceType } = req.body;
   return createBookingInternal(req, res, {
     vehicleId,
     scheduledAt,
@@ -205,6 +210,7 @@ bookingsRouter.post('/from-quote/:quoteId', authenticate, async (req, res) => {
     bookingType: 'quoteBased',
     quoteId,
     currency,
+    serviceType,
   });
 });
 
