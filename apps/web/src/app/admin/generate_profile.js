@@ -1,3 +1,15 @@
+const fs = require('fs');
+const path = require('path');
+
+const write = (filepath, content) => {
+  const dir = path.dirname(filepath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filepath, content.trim() + '\n', 'utf8');
+};
+
+const adminProfileDir = 'd:/WRECTIFIAI/wrectifai/apps/web/src/app/admin/profile';
+
+write(`${adminProfileDir}/page.tsx`, `
 'use client';
 import { Card } from '@/components/common/card';
 import { Shield, Clock, Calendar, Edit, Mail, Phone, MapPin, CheckCircle2, Lock, Smartphone, Laptop, History, Globe, Sun, Moon, Monitor } from 'lucide-react';
@@ -11,7 +23,7 @@ export default function ProfilePage() {
     phone: '+91 98765 43210',
     location: 'Hyderabad, Telangana, India',
     joinedOn: '12 Jan, 2024',
-    lastLogin: '29 Jun, 2024\n10:45 AM',
+    lastLogin: '29 Jun, 2024\\n10:45 AM',
     accountStatus: 'Active',
     mfaStatus: 'Enabled',
     bio: 'Super Admin of WrectifAI platform. Managing all operations, users, and system configurations.',
@@ -82,8 +94,8 @@ export default function ProfilePage() {
                  <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><Calendar className="w-5 h-5" /></div>
                  <p className="text-xs font-bold text-slate-900">Last Login</p>
                  <div className="text-center">
-                   <p className="text-xs text-slate-600">{adminInfo.lastLogin.split('\n')[0]}</p>
-                   <p className="text-xs text-slate-600">{adminInfo.lastLogin.split('\n')[1]}</p>
+                   <p className="text-xs text-slate-600">{adminInfo.lastLogin.split('\\n')[0]}</p>
+                   <p className="text-xs text-slate-600">{adminInfo.lastLogin.split('\\n')[1]}</p>
                  </div>
               </div>
               <div className="flex flex-col items-center justify-center gap-2">
@@ -293,3 +305,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+`);

@@ -1,6 +1,18 @@
+const fs = require('fs');
+const path = require('path');
+
+const write = (filepath, content) => {
+  const dir = path.dirname(filepath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filepath, content.trim() + '\n', 'utf8');
+};
+
+const adminSettingsDir = 'd:/WRECTIFIAI/wrectifai/apps/web/src/app/admin/settings';
+
+write(`${adminSettingsDir}/page.tsx`, `
 'use client';
 import { Card } from '@/components/common/card';
-import { Save, Settings, Sliders, Shield, Wrench, Info, Brain, FileText, Activity, Star, Server, Database, Code2, Monitor } from 'lucide-react';
+import { Save, Settings, Sliders, Shield, Wrench, Info, Brain, FileText, Activity, Star, Server, Database, Code2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SettingsPage() {
@@ -93,9 +105,9 @@ export default function SettingsPage() {
                  <button 
                     type="button"
                     onClick={() => setAiEnabled(!aiEnabled)}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${aiEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${aiEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${aiEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${aiEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                  </button>
               </div>
               
@@ -109,9 +121,9 @@ export default function SettingsPage() {
                  <button 
                     type="button"
                     onClick={() => setQuotesEnabled(!quotesEnabled)}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${quotesEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${quotesEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${quotesEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${quotesEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                  </button>
               </div>
               
@@ -125,9 +137,9 @@ export default function SettingsPage() {
                  <button 
                     type="button"
                     onClick={() => setRequestsEnabled(!requestsEnabled)}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${requestsEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${requestsEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${requestsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${requestsEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                  </button>
               </div>
               
@@ -141,9 +153,9 @@ export default function SettingsPage() {
                  <button 
                     type="button"
                     onClick={() => setReviewsEnabled(!reviewsEnabled)}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${reviewsEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${reviewsEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${reviewsEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${reviewsEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                  </button>
               </div>
            </div>
@@ -168,9 +180,9 @@ export default function SettingsPage() {
                  <button 
                     type="button"
                     onClick={() => setMfaEnabled(!mfaEnabled)}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${mfaEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                    className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${mfaEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                  >
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${mfaEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${mfaEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                  </button>
               </div>
               <div className="border-l border-slate-100 pl-8">
@@ -210,16 +222,16 @@ export default function SettingsPage() {
                     <button 
                        type="button"
                        onClick={() => setMaintenanceEnabled(!maintenanceEnabled)}
-                       className={`w-12 h-6 rounded-full p-1 transition-colors relative ${maintenanceEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                       className={\`w-12 h-6 rounded-full p-1 transition-colors relative \${maintenanceEnabled ? 'bg-indigo-600' : 'bg-slate-200'}\`}
                     >
-                       <div className={`w-4 h-4 bg-white rounded-full transition-transform ${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                       <div className={\`w-4 h-4 bg-white rounded-full transition-transform \${maintenanceEnabled ? 'translate-x-6' : 'translate-x-0'}\`}></div>
                     </button>
                  </div>
               </div>
               <div>
                  <label className="block text-sm font-bold text-slate-900 mb-2">Maintenance Message</label>
                  <textarea 
-                    defaultValue="We are currently performing scheduled maintenance.\nPlease check back soon." 
+                    defaultValue="We are currently performing scheduled maintenance.\\nPlease check back soon." 
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-slate-50 text-slate-700 min-h-[80px]" 
                  />
               </div>
@@ -286,3 +298,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+`);

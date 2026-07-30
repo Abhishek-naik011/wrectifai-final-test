@@ -26,39 +26,64 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (isAuthenticated && user && !isPublicPath) {
-      const isAdmin = user.roles?.includes('admin');
-      const isGarage = user.roles?.includes('garage');
+    if (isAuthenticated && user) {
+      const roles = user.roles || [];
+      const isAdmin = roles.includes('admin');
+      const isGarage = roles.includes('garage');
+      const isCustomer = roles.includes('customer') || roles.includes('user');
+
+      // Determine the primary role to enforce strict isolation
+      let primaryRole = 'customer';
+      if (isAdmin) primaryRole = 'admin';
+      else if (isGarage && !isCustomer) primaryRole = 'garage';
+      else if (isGarage && isCustomer) primaryRole = 'customer'; // Favor customer if both, to fix the 'My Bookings' bug
 
       const onAdminPath = pathname?.startsWith('/admin');
-      // Fix: /garages is a customer path. /garage/ is the garage module.
-      const onGaragePath = pathname?.startsWith('/garage/') || pathname === '/garage' || pathname === '/garage/dashboard';
+      const onGaragePath = pathname?.startsWith('/garage/') || pathname === '/garage';
       const isRoot = pathname === '/';
       
+      // If a path is not admin and not garage, it's considered a customer path
       const onCustomerPath = !onAdminPath && !onGaragePath && !isRoot;
 
-      // 1. Garage cannot access Admin routes, Customer cannot access Admin routes
-      if (onAdminPath && !isAdmin) {
-        if (isGarage) router.replace('/garage/dashboard');
+      // 1. Admin Security - Admin can only access admin paths
+      if (primaryRole === 'admin' && !onAdminPath && !isRoot) {
+         router.replace('/admin/dashboard');
+         return;
+      }
+      if (onAdminPath && primaryRole !== 'admin') {
+        if (primaryRole === 'garage') router.replace('/garage/dashboard');
         else router.replace('/');
         return;
       }
 
-      // 2. Customer cannot access Garage routes, Admin cannot access Garage routes
-      if (onGaragePath && !isGarage) {
-        if (isAdmin) router.replace('/admin/dashboard');
+      // 2. Garage Security - Garage can only access garage paths
+      if (primaryRole === 'garage' && !onGaragePath && !isRoot) {
+         router.replace('/garage/dashboard');
+         return;
+      }
+      if (onGaragePath && primaryRole !== 'garage') {
+        if (primaryRole === 'admin') router.replace('/admin/dashboard');
         else router.replace('/');
         return;
       }
 
-      // 3. Garage cannot access Customer protected routes, Admin cannot access Customer routes
-      if (onCustomerPath && (isGarage || isAdmin)) {
-        // Wait, what if a user is BOTH Garage and Customer? WrectifAI separates roles heavily in the Prompt. 
-        // We will assume `isGarage` takes precedence, and they shouldn't access customer paths.
-        // Wait, if we block it, Garage can't access `/bookings`.
-        if (isAdmin) router.replace('/admin/dashboard');
+      // 3. Customer Security
+      if (onCustomerPath && primaryRole !== 'customer') {
+        if (primaryRole === 'admin') router.replace('/admin/dashboard');
         else router.replace('/garage/dashboard');
         return;
+      }
+
+      // 4. Root Route Redirects
+      if (isRoot) {
+        if (primaryRole === 'admin') {
+          router.replace('/admin/dashboard');
+          return;
+        }
+        if (primaryRole === 'garage') {
+          router.replace('/garage/dashboard');
+          return;
+        }
       }
     }
   }, [isAuthenticated, user, isPublicPath, router, pathname]);
