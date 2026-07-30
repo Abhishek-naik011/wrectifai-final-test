@@ -73,3 +73,12 @@ postman/
 apps/web/tsconfig.tsbuildinfo
 uploads/
 .obsidian/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+
+apps/api/.env
+apps/api/.env.test
