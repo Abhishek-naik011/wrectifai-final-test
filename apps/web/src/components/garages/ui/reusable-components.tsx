@@ -50,7 +50,7 @@ export const WorkshopCard = ({title, status, items}: any) => (
   </div>
 );
 
-export const RequestCard = ({name, vehicle, issue, time}: any) => (
+export const RequestCard = ({name, vehicle, issue, time, onView}: any) => (
   <div className="flex items-start gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0 pt-3 first:pt-0">
     <div className="w-10 h-10 rounded bg-slate-100 flex-shrink-0"></div>
     <div className="flex-1">
@@ -60,6 +60,11 @@ export const RequestCard = ({name, vehicle, issue, time}: any) => (
       </div>
       <p className="text-[11px] text-slate-500 font-medium">{vehicle}</p>
       <p className="text-[11px] font-bold mt-1 text-slate-700">Issue: {issue}</p>
+      {onView && (
+        <button onClick={onView} className="mt-2 text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded hover:bg-blue-100">
+          View
+        </button>
+      )}
     </div>
   </div>
 );

@@ -5,6 +5,7 @@ import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
 import { Card } from '@/components/common/card';
 import { CheckCircle2, Edit2, MapPin, Mail, Phone, Calendar as CalendarIcon, Clock, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ProfilePage() {
   return (
@@ -138,9 +139,9 @@ export default function ProfilePage() {
                  <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="w-5 h-5 rounded bg-green-50 text-green-500 flex justify-center items-center text-[10px]">👥</span> Total Customers</span> <span className="text-sm">98</span></div>
                  <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="w-5 h-5 rounded bg-yellow-50 text-yellow-500 flex justify-center items-center text-[10px]">★</span> Total Reviews</span> <span className="text-sm">128</span></div>
                  <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="w-5 h-5 rounded bg-purple-50 text-purple-500 flex justify-center items-center text-[10px]">⭐</span> Average Rating</span> <span className="text-sm">4.6 / 5</span></div>
-                 <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="w-5 h-5 rounded bg-green-50 text-green-600 flex justify-center items-center text-[10px]">₹</span> Total Earnings</span> <span className="text-sm font-black">₹8,45,320</span></div>
+                 <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="w-5 h-5 rounded bg-green-50 text-green-600 flex justify-center items-center text-[10px]">$</span> Total Earnings</span> <span className="text-sm font-black">USD 8,45,320</span></div>
                </div>
-               <a href="#" className="block text-[11px] text-blue-600 font-bold mt-4">View Full Analytics &rarr;</a>
+               <Link href="/coming-soon" className="block text-[11px] text-blue-600 font-bold mt-4">View Full Analytics &rarr;</Link>
              </Card>
              <Card className="p-5">
                <h3 className="font-bold text-[#17307a] mb-6">Account Status</h3>
@@ -156,10 +157,10 @@ export default function ProfilePage() {
              <Card className="p-5">
                <h3 className="font-bold text-[#17307a] mb-4">Quick Links</h3>
                <div className="space-y-3 text-xs font-bold text-slate-600">
-                  <a href="#" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🔒</span> Change Password</span> <ChevronRight className="w-4 h-4 text-slate-400"/></a>
-                  <a href="#" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🔔</span> Notification Settings</span> <ChevronRight className="w-4 h-4 text-slate-400"/></a>
-                  <a href="#" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🛡️</span> Privacy Policy</span> <ChevronRight className="w-4 h-4 text-slate-400"/></a>
-                  <a href="#" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">📄</span> Terms & Conditions</span> <ChevronRight className="w-4 h-4 text-slate-400"/></a>
+                  <Link href="/coming-soon" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🔒</span> Change Password</span> <ChevronRight className="w-4 h-4 text-slate-400"/></Link>
+                  <Link href="/coming-soon" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🔔</span> Notification Settings</span> <ChevronRight className="w-4 h-4 text-slate-400"/></Link>
+                  <Link href="/coming-soon" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">🛡️</span> Privacy Policy</span> <ChevronRight className="w-4 h-4 text-slate-400"/></Link>
+                  <Link href="/coming-soon" className="flex items-center justify-between hover:text-blue-600"><span className="flex items-center gap-2"><span className="text-slate-400">📄</span> Terms & Conditions</span> <ChevronRight className="w-4 h-4 text-slate-400"/></Link>
                </div>
              </Card>
           </div>

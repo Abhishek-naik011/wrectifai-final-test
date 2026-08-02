@@ -208,7 +208,7 @@ const legacyResultIssues = [
       'Unbalanced wheels can cause vibration in the steering wheel, especially at higher speeds.',
     match: 85,
     risks: ['Uneven tyre wear', 'Suspension damage'],
-    estimatedCost: '₹1,500 - ₹2,500',
+    estimatedCost: 'USD 1,500 - USD 2,500',
     imageSrc: '/assets/tyres_and_wheels.png',
   },
   {
@@ -220,7 +220,7 @@ const legacyResultIssues = [
       'Improper alignment can cause vibrations and pulling to one side.',
     match: 65,
     risks: ['Uneven tyre wear', 'Handling issues'],
-    estimatedCost: '₹800 - ₹1,500',
+    estimatedCost: 'USD 800 - USD 1,500',
     imageSrc: '/assets/Tyre_rotataion.png',
   },
   {
@@ -232,7 +232,7 @@ const legacyResultIssues = [
       'Warped brake discs can cause vibration in the steering wheel while braking.',
     match: 40,
     risks: ['Reduced braking performance', 'Safety risk'],
-    estimatedCost: '₹2,500 - ₹4,500',
+    estimatedCost: 'USD 2,500 - USD 4,500',
     imageSrc: '/assets/brake_rotor.png',
   },
 ];
@@ -2332,7 +2332,7 @@ export function AIDiagnosePage() {
       const runApiDiagnosis = async () => {
         try {
           const payload = {
-            vehicleId: selectedVehicleId || 'v1',
+            vehicleId: selectedVehicleId || '00000000-0000-0000-0000-000000000002',
             symptomText: issueText,
             media: attachedMedia.map(m => ({ mediaType: m.mediaType, base64: m.base64 })),
             intakeAnswers: {
@@ -2343,6 +2343,11 @@ export function AIDiagnosePage() {
           };
 
           const response = await submitDiagnosis(payload);
+          if (response.success === false) {
+            setApiError(response.message || "We couldn't generate the diagnosis right now. Please try again.");
+            return;
+          }
+          
           setApiResult(response);
 
           if (response.result && response.result.issues) {
@@ -2350,15 +2355,15 @@ export function AIDiagnosePage() {
               mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps, selectedVehicle)
             );
             setCustomResultIssues(mapped);
-            setSelectedIssues(mapped.map((m) => m.id));
+            setSelectedIssues(mapped.map((m: any) => m.id));
             if (typeof window !== 'undefined') {
               localStorage.setItem('wrectifai_custom_issues', JSON.stringify(mapped));
             }
           }
         } catch (err) {
           console.error('API Diagnosis failed:', err);
-          const message = err instanceof Error ? err.message : 'Failed to complete diagnosis. Please check your credentials or network.';
-          setApiError(message);
+          // Never expose ApiError or stack traces to the user
+          setApiError("We couldn't generate the diagnosis right now. Please try again.");
         }
       };
 
@@ -2746,7 +2751,7 @@ export function AIDiagnosePage() {
               setIssueText(newSymptom);
               try {
                 const payload = {
-                  vehicleId: selectedVehicleId || 'v1',
+                  vehicleId: selectedVehicleId || '00000000-0000-0000-0000-000000000002',
                   symptomText: newSymptom,
                   media: attachedMedia.map(m => ({ mediaType: m.mediaType, base64: m.base64 })),
                   intakeAnswers: {
@@ -2764,7 +2769,7 @@ export function AIDiagnosePage() {
                     mapLlmIssueToDiagnosticResult(issue, index, response.result.riskLevel, response.result.diySteps, selectedVehicle)
                   );
                   setCustomResultIssues(issues);
-                  setSelectedIssues(issues.map((m) => m.id));
+                  setSelectedIssues(issues.map((m: any) => m.id));
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('wrectifai_custom_issues', JSON.stringify(issues));
                   }

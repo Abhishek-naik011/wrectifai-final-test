@@ -139,8 +139,7 @@ export function VehiclesPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-  // Active selection states
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   // Form states
@@ -234,6 +233,7 @@ export function VehiclesPage() {
 
   const handleDeleteClick = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
+    setDeleteError(null);
     setIsDeleteOpen(true);
   };
 
@@ -247,7 +247,7 @@ export function VehiclesPage() {
       fetchVehicles();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete vehicle';
-      alert(message);
+      setDeleteError(message);
     } finally {
       setSubmitting(false);
     }
@@ -558,27 +558,36 @@ export function VehiclesPage() {
         {/* Modal: Confirm Delete */}
         {isDeleteOpen && selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="w-full max-w-md rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] text-center animate-in fade-in zoom-in-95 duration-200">
+            <Card className="w-full max-w-md rounded-[24px] border border-[#dbe6ff] bg-white p-6 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500 mx-auto mb-4">
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <h2 className="text-xl font-bold text-[#17307a]">Delete Vehicle?</h2>
-              <p className="mt-2 text-[14px] leading-6 text-[#5d6f9f]">
-                Are you sure you want to remove the <strong>{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</strong>?
-                This action is permanent and will hide it from your diagnostics and quotes request lists.
-              </p>
+              
+              {deleteError ? (
+                <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                  {deleteError}
+                </div>
+              ) : (
+                <p className="mt-2 text-[14px] leading-6 text-[#5d6f9f]">
+                  Are you sure you want to remove the <strong>{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</strong>?
+                  This action is permanent and will hide it from your diagnostics and quotes request lists.
+                </p>
+              )}
 
               <div className="mt-6 flex justify-center gap-3">
                 <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-                  Cancel
+                  {deleteError ? 'Close' : 'Cancel'}
                 </Button>
-                <Button
-                  disabled={submitting}
-                  onClick={handleDeleteConfirm}
-                  className="bg-red-600 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)] hover:bg-red-700"
-                >
-                  {submitting ? 'Deleting...' : 'Confirm Delete'}
-                </Button>
+                {!deleteError && (
+                  <Button
+                    disabled={submitting}
+                    onClick={handleDeleteConfirm}
+                    className="bg-red-600 text-white shadow-[0_10px_20px_rgba(220,38,38,0.2)] hover:bg-red-700"
+                  >
+                    {submitting ? 'Deleting...' : 'Confirm Delete'}
+                  </Button>
+                )}
               </div>
             </Card>
           </div>

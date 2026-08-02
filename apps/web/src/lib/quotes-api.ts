@@ -30,6 +30,7 @@ export interface QuoteRequestResponse {
 }
 
 export interface CreateQuoteRequestPayload {
+  garageId: string;
   vehicleId: string;
   issueSummary: string;
   diagnosisRequestId?: string;
@@ -76,6 +77,10 @@ export interface GarageStatsResponse {
 
 export async function fetchGarageStats(): Promise<GarageStatsResponse> {
   return apiClient.get('/quotes/garage/stats');
+}
+
+export async function updateBookingStatus(id: string, status: string): Promise<any> {
+  return apiClient.patch(`/bookings/${id}/status`, { status });
 }
 
 export interface GarageActiveJob {
@@ -141,4 +146,8 @@ export interface GarageCompletedJob {
 
 export async function fetchGarageCompletedJobs(): Promise<GarageCompletedJob[]> {
   return apiClient.get('/quotes/garage/completed-jobs');
+}
+
+export async function getGarageIncomingBookings(): Promise<any[]> {
+  return apiClient.get('/bookings/garage-incoming');
 }

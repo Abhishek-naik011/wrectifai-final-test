@@ -523,7 +523,17 @@ export function AIDiagnoseResultsPage() {
             <div className="flex flex-col items-start gap-1.5 lg:items-end">
               <button
                 type="button"
-                onClick={() => router.push(`/finding-quotes?issues=${selectedIssues.join(',')}`)}
+                onClick={() => {
+                  const returnGarage = sessionStorage.getItem('return_to_garage');
+                  if (returnGarage) {
+                    const diagnosisText = selectedIssues.map(id => resultIssues.find(r => r.id === id)?.title).filter(Boolean).join(', ');
+                    sessionStorage.setItem('ai_diagnose_result', `WrectifAI Diagnosis: ${diagnosisText}`);
+                    sessionStorage.removeItem('return_to_garage');
+                    router.push(`/garages/${returnGarage}?quote=true`);
+                  } else {
+                    router.push(`/finding-quotes?issues=${selectedIssues.join(',')}`);
+                  }
+                }}
                 className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-[linear-gradient(90deg,#1a46e8_0%,#245cff_100%)] px-6 text-[14.5px] font-semibold text-white shadow-[0_10px_24px_rgba(37,82,235,0.18)] transition-transform hover:scale-[1.01]"
               >
                 <Send className="h-4.5 w-4.5" />

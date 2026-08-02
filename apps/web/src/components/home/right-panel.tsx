@@ -17,69 +17,40 @@ function OverviewPanel() {
   const [vehicleDesc, setVehicleDesc] = useState<string>('No vehicles added');
   const [ordersCount, setOrdersCount] = useState<number>(0);
 
-  useEffect(() => {
+  const loadStats = () => {
     let active = true;
-
-    // Fetch Bookings
-    fetchBookings()
-      .then((data) => {
+    apiClient.get('/users/customer/stats')
+      .then((data: any) => {
         if (!active || !data) return;
-        const activeBookings = data.filter((b) => b.status === 'confirmed' || b.status === 'pendingPayment' || b.status === 'inService');
-        setBookingsCount(activeBookings.length);
+        setBookingsCount(data.bookingsCount || 0);
+        setQuotesCount(data.quotesCount || 0);
+        setVehiclesCount(data.vehiclesCount || 0);
+        setOrdersCount(data.ordersCount || 0);
         
-        // Find next booking
-        const future = data
-          .filter((b) => (b.status === 'confirmed' || b.status === 'pendingPayment') && new Date(b.scheduledAt) >= new Date())
-          .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+        if (data.vehiclesCount === 0) setVehicleDesc('No vehicles added');
+        else if (data.vehiclesCount === 1) setVehicleDesc('1 Vehicle registered');
+        else setVehicleDesc(`${data.vehiclesCount} Vehicles registered`);
         
-        if (future.length > 0) {
-          const nextDate = new Date(future[0].scheduledAt);
-          const formatted = nextDate.toLocaleDateString(undefined, {
-            day: 'numeric',
-            month: 'short',
-          }) + ', ' + nextDate.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
+        if (data.nextBooking) {
+          const nextDate = new Date(data.nextBooking);
+          const formatted = nextDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + nextDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
           setNextBooking(`Next: ${formatted}`);
         } else {
           setNextBooking('No upcoming bookings');
         }
       })
-      .catch((err) => console.error('Overview panel bookings fetch failed:', err));
-
-    // Fetch Quotes
-    fetchQuotes()
-      .then((data) => {
-        if (!active || !data) return;
-        setQuotesCount(data.length);
-      })
-      .catch((err) => console.error('Overview panel quotes fetch failed:', err));
-
-    // Fetch Vehicles
-    apiClient.get<any[]>('/vehicles')
-      .then((data) => {
-        if (!active || !data) return;
-        setVehiclesCount(data.length);
-        if (data.length > 0) {
-          setVehicleDesc(`${data[0].make} ${data[0].model} (Active)`);
-        }
-      })
-      .catch((err) => console.error('Overview panel vehicles fetch failed:', err));
-
-    // Fetch Orders
-    apiClient.get<any>('/marketplace/orders')
-      .then((data) => {
-        if (!active || !data) return;
-        setOrdersCount(data.count || 0);
-      })
       .catch((err) => {
-        console.error('Overview panel orders fetch failed:', err);
-        setOrdersCount(0);
+        console.error('Overview panel stats fetch failed:', err);
       });
+    return () => { active = false; };
+  };
 
+  useEffect(() => {
+    const cleanup = loadStats();
+    window.addEventListener('dashboard_refresh', loadStats);
     return () => {
-      active = false;
+      cleanup();
+      window.removeEventListener('dashboard_refresh', loadStats);
     };
   }, []);
 

@@ -160,12 +160,6 @@ export function Sidebar({
                   >
                     My Quotes
                   </Link>
-                  <button
-                    type="button"
-                    className="flex h-[30px] w-full items-center rounded-[8px] px-3 text-left text-[12px] font-medium text-[#5f7099] hover:bg-[#f8faff]"
-                  >
-                    Archived Quotes
-                  </button>
                 </div>
               ) : null}
             </div>

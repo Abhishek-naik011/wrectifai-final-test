@@ -133,13 +133,14 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
     async function submitRequest() {
       try {
         hasSubmitted.current = true;
-        const vehicleId = selectedVehicle?.id || 'v1';
+        const vehicleId = selectedVehicle?.id || '00000000-0000-0000-0000-000000000002';
         const issueSummary = chosenIssues.map((i) => i.title).join(', ');
         console.log('[FindingQuotes] Submitting quote request payload:', { vehicleId, issueSummary, diagnosisRequestId });
         const response = await createQuoteRequest({
           vehicleId,
           issueSummary,
           diagnosisRequestId,
+          garageId: '00000000-0000-0000-0000-000000000011' // Default/first garage for testing
         });
         console.log('[FindingQuotes] Received quote request response:', response);
         if (!isUnmounted.current) {

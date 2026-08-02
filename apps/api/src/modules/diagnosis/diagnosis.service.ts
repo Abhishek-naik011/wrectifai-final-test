@@ -150,10 +150,10 @@ export class DiagnosisService {
   ) {
     const env = getEnv();
 
-    // Verify vehicle exists (customer ownership check deferred)
+    // Verify vehicle exists and belongs to the customer
     const vehicleRes = await query(
-      'SELECT make, model, year FROM vehicles WHERE id = $1',
-      [vehicleId]
+      'SELECT make, model, year FROM vehicles WHERE id = $1 AND customer_id = $2',
+      [vehicleId, customerId]
     );
 
     if (vehicleRes.rows.length === 0) {
@@ -324,10 +324,10 @@ Output your response as a strict JSON array under a "questions" field containing
       };
     });
 
-    // 1. Fetch vehicle (customer ownership check deferred)
+    // 1. Fetch vehicle and verify customer ownership
     const vehicleRes = await query(
-      'SELECT make, model, year, mileage FROM vehicles WHERE id = $1',
-      [vehicleId]
+      'SELECT make, model, year, mileage FROM vehicles WHERE id = $1 AND customer_id = $2',
+      [vehicleId, customerId]
     );
 
     if (vehicleRes.rows.length === 0) {
@@ -483,18 +483,55 @@ Please diagnose the issue.`;
 
     const contentPayload: { type: 'text'; text: string }[] = [{ type: 'text', text: userPrompt + imageContext }];
 
-    const llmResponse = await generateObject({
-      model: modelInstance,
-      schema: diagnosisResultSchema,
-      system: finalSystemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: contentPayload,
-        },
-      ],
-    });
-
+    let llmResponse;
+    let retries = 1;
+    
+    while (retries >= 0) {
+      try {
+        llmResponse = await generateObject({
+          model: modelInstance,
+          schema: diagnosisResultSchema,
+          system: finalSystemPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: contentPayload,
+            },
+          ],
+        });
+        break; // Success, exit retry loop
+      } catch (err) {
+        console.error(`LLM generation failed (retries left: ${retries}):`, err);
+        if (retries === 0) {
+          // Fallback to a valid JSON response matching the schema
+          llmResponse = {
+            object: {
+              issues: [
+                {
+                  name: 'Undetermined Issue',
+                  confidence: 50,
+                  estimatedPriceRange: { min: 0, max: 0 },
+                  requiredParts: []
+                }
+              ],
+              confidenceScore: 50,
+              riskLevel: 'medium' as const,
+              diyAllowed: false,
+              diySteps: [
+                'Why this diagnosis?: The AI was unable to generate a conclusive diagnosis from the provided details.',
+                'Recommended Next Inspection: Please book a professional inspection.'
+              ],
+              nextAction: 'bookGarage' as const
+            }
+          };
+          break;
+        }
+        retries--;
+      }
+    }
+    if (!llmResponse) {
+      throw new Error('Failed to generate LLM response');
+    }
     result = DiagnosisService.applySafetyGuardrail(llmResponse.object, symptomText, matchedIssues);
 
     // 5. Database Transaction Persistence
@@ -577,9 +614,9 @@ Please diagnose the issue.`;
               dr.status,
               dr.id as id
        FROM diagnosis_requests dr
-       WHERE dr.id = $1`;
+       WHERE dr.id = $1 AND dr.customer_id = $2`;
     
-    const params = [diagnosisId];
+    const params = [diagnosisId, customerId];
     const reqRes = await query(queryStr, params);
 
     if (reqRes.rows.length === 0) {

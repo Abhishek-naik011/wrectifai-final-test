@@ -3,68 +3,160 @@ import { RoleGuard } from '@/components/common/role-guard';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
-import { Card } from '@/components/common/card';
+import { useEffect, useState } from 'react';
+import { getGarageIncomingBookings, updateBookingStatus } from '@/lib/quotes-api';
 
 export default function IncomingRequestsPage() {
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  async function loadBookings() {
+    setLoading(true);
+    try {
+      const data = await getGarageIncomingBookings();
+      setBookings(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    setIsUpdating(true);
+    try {
+      await updateBookingStatus(id, status);
+      setSelectedBooking(null);
+      await loadBookings();
+    } catch (err) {
+      console.error('Failed to update booking status:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const formatTime = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <RoleGuard allowedRoles={['garage']}>
       <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true} header={<DashboardHeader />}>
-        <div className="p-6 bg-slate-50 min-h-screen flex gap-6">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-[#17307a] mb-1">Incoming Requests</h1>
-            <p className="text-sm text-slate-500 mb-6">New service requests from customers looking for help.</p>
-            
-            <div className="grid grid-cols-3 gap-6">
-              {[1,2,3,4,5,6].map((i) => (
-                <Card key={i} className="p-5 border-t-4 border-t-red-500 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded">HIGH PRIORITY</span>
-                    <span className="text-[10px] text-slate-400 font-medium">2 min ago</span>
-                  </div>
-                  <div className="flex gap-3 items-center mb-4 border-b border-slate-100 pb-4">
-                     <div className="w-10 h-10 rounded-full bg-slate-200"></div>
-                     <div>
-                       <p className="font-bold text-sm text-[#17307a]">Ananya Patel</p>
-                       <p className="text-[11px] text-slate-500 font-medium">+91 98765 43210</p>
-                     </div>
-                  </div>
-                  <div className="space-y-3 mb-6">
-                    <div>
-                       <p className="text-sm font-bold text-slate-700">Toyota Innova</p>
-                       <p className="text-xs text-slate-500">TS08HK2345 • 2018</p>
-                    </div>
-                    <div>
-                       <p className="text-sm font-bold text-slate-700">AC not cooling properly</p>
-                       <p className="text-xs text-slate-500">AC & Heating</p>
-                    </div>
-                    <p className="text-xs text-green-600 font-bold">2.4 km away</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="flex-1 py-2 text-xs font-bold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50">View Details</button>
-                    <button className="flex-1 py-2 text-xs font-bold text-red-500 border border-red-200 rounded-lg hover:bg-red-50">Reject</button>
-                    <button className="flex-1 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm">Accept</button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          <div className="w-80 space-y-6">
-            <Card className="p-5">
-              <h3 className="font-bold text-[#17307a] mb-6">Requests Summary</h3>
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 rounded-full border-[10px] border-r-red-500 border-t-yellow-400 border-l-green-500 border-b-slate-100 flex items-center justify-center font-bold text-2xl text-slate-700">
-                  <div className="text-center">12<div className="text-[10px] font-medium text-slate-400 -mt-1">Total</div></div>
-                </div>
-                <div className="space-y-3 flex-1 text-xs font-bold text-slate-600">
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> High</span> <span>5</span></div>
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-400"></div> Med</span> <span>4</span></div>
-                  <div className="flex items-center justify-between"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> Low</span> <span>3</span></div>
-                </div>
-              </div>
-            </Card>
+        <div className="p-6 bg-slate-50 min-h-screen">
+          <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+             <div className="p-4 border-b border-slate-200 bg-slate-50">
+               <h1 className="text-lg font-bold text-slate-800">Incoming Bookings</h1>
+             </div>
+             
+             <div className="overflow-x-auto">
+               <table className="w-full text-left border-collapse text-sm">
+                 <thead className="bg-slate-100">
+                   <tr>
+                     <th className="p-4 font-bold text-slate-600 border-b">Booking ID</th>
+                     <th className="p-4 font-bold text-slate-600 border-b">Customer</th>
+                     <th className="p-4 font-bold text-slate-600 border-b">Vehicle</th>
+                     <th className="p-4 font-bold text-slate-600 border-b">Appointment</th>
+                     <th className="p-4 font-bold text-slate-600 border-b">Status</th>
+                     <th className="p-4 font-bold text-slate-600 border-b text-center">Action</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100">
+                   {loading ? (
+                       <tr>
+                          <td colSpan={6} className="p-8 text-center text-slate-500">Loading bookings...</td>
+                       </tr>
+                   ) : bookings.length === 0 ? (
+                       <tr>
+                          <td colSpan={6} className="p-8 text-center text-slate-500">No incoming bookings found.</td>
+                       </tr>
+                   ) : bookings.map(booking => (
+                     <tr key={booking.id} className="hover:bg-slate-50">
+                       <td className="p-4 text-slate-800 font-medium">BKG-{booking.id.substring(0,8).toUpperCase()}</td>
+                       <td className="p-4 text-slate-700">{booking.customerName || 'Customer'}</td>
+                       <td className="p-4 text-slate-700">{booking.vehicleMake} {booking.vehicleModel} {booking.vehicleYear}</td>
+                       <td className="p-4 text-slate-700 font-medium">{formatTime(booking.scheduledAt)}</td>
+                       <td className="p-4 text-slate-600 uppercase text-xs font-bold text-orange-600">Pending</td>
+                       <td className="p-4 text-center">
+                         <button 
+                           onClick={() => setSelectedBooking(booking)}
+                           className="text-blue-600 font-bold hover:underline"
+                         >
+                           View Details
+                         </button>
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
           </div>
         </div>
+
+        {/* View Details Modal */}
+        {selectedBooking && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h2 className="font-bold text-slate-800">Booking Details</h2>
+                <button onClick={() => setSelectedBooking(null)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+              </div>
+              <div className="p-6 overflow-y-auto space-y-4 text-sm">
+                <div>
+                  <span className="font-bold text-slate-600">Customer:</span>
+                  <p className="text-slate-800">{selectedBooking.customerName || 'Customer'}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Vehicle:</span>
+                  <p className="text-slate-800">{selectedBooking.vehicleMake} {selectedBooking.vehicleModel} {selectedBooking.vehicleYear}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">VIN:</span>
+                  <p className="text-slate-800">{selectedBooking.vehicleVin || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Appointment:</span>
+                  <p className="text-slate-800 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">{formatTime(selectedBooking.scheduledAt)}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Quote Amount:</span>
+                  <p className="text-green-700 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">${selectedBooking.quoteAmount || selectedBooking.totalAmount}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Notes / Details:</span>
+                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{
+                    selectedBooking.quoteDetails 
+                      ? (typeof selectedBooking.quoteDetails === 'string' ? selectedBooking.quoteDetails : JSON.stringify(selectedBooking.quoteDetails))
+                      : 'No additional notes provided'
+                  }</p>
+                </div>
+              </div>
+              <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                <button 
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus(selectedBooking.id, 'rejected')}
+                  className="px-4 py-2 border border-red-200 bg-white rounded text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  Reject
+                </button>
+                <button 
+                  disabled={isUpdating}
+                  onClick={() => handleUpdateStatus(selectedBooking.id, 'accepted')}
+                  className="px-4 py-2 bg-green-600 rounded text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  {isUpdating ? 'Updating...' : 'Accept'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardShell>
     </RoleGuard>
   );

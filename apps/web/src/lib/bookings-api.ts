@@ -8,7 +8,7 @@ export interface Booking {
   quoteId?: string | null;
   bookingType: 'instant' | 'quoteBased';
   scheduledAt: string;
-  status: 'pendingPayment' | 'confirmed' | 'inService' | 'completed' | 'cancelled';
+  status: 'pendingPayment' | 'confirmed' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
   totalAmount: number;
   currency: string;
   createdAt: string;

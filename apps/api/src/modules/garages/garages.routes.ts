@@ -29,11 +29,86 @@ function mapGarageDbRow(g: any) {
   };
 }
 
+garagesRouter.get('/', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
+              g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
+              g.starting_price as "startingPrice", g.distance_km as "distanceKm",
+              g.image, g.response_mins as "responseMins",
+              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
+       FROM garages g
+       WHERE g.approval_status = 'approved'`
+    );
+    const mapped = result.rows.map(mapGarageDbRow);
+    return success(res, mapped);
+  } catch (err) {
+    return error(res, 'Failed to fetch garages', 'DATABASE_ERROR', 500);
+  }
+});
+
+garagesRouter.get('/my-customers', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+
+    // Get unique customers who have bookings with this garage
+    const result = await query(
+      `SELECT DISTINCT u.id, u.name, u.email, u.mobile_number as "mobileNumber", NULL as "avatarUrl", b.created_at as "firstBookingDate"
+       FROM users u
+       JOIN bookings b ON u.id = b.customer_id
+       WHERE b.garage_id = $1
+       ORDER BY b.created_at DESC`,
+      [garageId]
+    );
+
+    const customers = result.rows.map(row => ({
+      id: row.id,
+      name: row.name || 'Unknown',
+      email: row.email,
+      phone: row.mobileNumber,
+      avatar: row.avatarUrl,
+      joinDate: row.firstBookingDate
+    }));
+
+    return success(res, customers);
+  } catch (err) {
+    return error(res, 'Failed to fetch customers', 'DATABASE_ERROR', 500);
+  }
+});
+
+garagesRouter.get('/my-inventory', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+
+    const result = await query(
+      `SELECT id, name, category, quantity, min_stock as "minStock", price, location, last_restocked as "lastRestocked"
+       FROM inventory
+       WHERE garage_id = $1
+       ORDER BY name ASC`,
+      [garageId]
+    ).catch(e => ({ rows: [] })); // Catch if inventory table doesn't exist yet
+
+    return success(res, result.rows);
+  } catch (err) {
+    return error(res, 'Failed to fetch inventory', 'DATABASE_ERROR', 500);
+  }
+});
+
 garagesRouter.get('/search', async (req, res) => {
   try {
     const { rating, specialization, price_range, lat, lng, distance } = req.query;
 
-    const conditions: string[] = ["g.approval_status IN ('approved', 'pending')"];
+    const conditions: string[] = ["g.approval_status = 'approved'"];
     const params: any[] = [];
 
     if (rating) {

@@ -136,6 +136,10 @@ input {
   height: 10px;
 }
 
+::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
 ::-webkit-scrollbar-thumb {
   border-radius: 999px;
   border: 2px solid transparent;

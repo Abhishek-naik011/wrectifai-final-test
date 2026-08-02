@@ -10,40 +10,7 @@ import { Card } from '@/components/common/card';
 import { resultIssues } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { cn } from '@/utils/cn';
 
-const garages = [
-  {
-    name: 'SpeedFix Auto Care',
-    image: '/assets/garage_1_1778071156220.png',
-    rating: 4.6,
-    reviews: 128,
-    distance: '2.2 km',
-    badge: 'Top Rated',
-  },
-  {
-    name: 'QuickPit Service Center',
-    image: '/assets/garage_2_1778071173295.png',
-    rating: 4.5,
-    reviews: 96,
-    distance: '3.1 km',
-    badge: 'Most Trusted',
-  },
-  {
-    name: 'AutoWorks Garage',
-    image: '/assets/garage_3_1778071191282.png',
-    rating: 4.4,
-    reviews: 110,
-    distance: '4.5 km',
-    badge: 'Best Value',
-  },
-  {
-    name: 'Five Star Automotive',
-    image: '/assets/garage_4_1778071611328.png',
-    rating: 4.3,
-    reviews: 78,
-    distance: '5.2 km',
-    badge: 'Trusted partner',
-  },
-];
+
 
 const BULLET = '\u2022';
 
@@ -114,6 +81,23 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedIssues, setSelectedIssues] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [garages, setGarages] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchGarages() {
+      try {
+        const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+        const res = await fetch(`${url}/garages`);
+        const json = await res.json();
+        if (json.data) {
+          setGarages(json.data.slice(0, 4));
+        }
+      } catch (err) {
+        console.error('Failed to load garages:', err);
+      }
+    }
+    fetchGarages();
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -218,7 +202,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
     loadData();
   }, [requestId, issues]);
 
-  const featuredGarages = garages.slice(0, 4);
+  const featuredGarages = garages;
 
   useEffect(() => {
     const pageScroller = (() => {

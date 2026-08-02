@@ -50,8 +50,17 @@ export interface SubmitDiagnosisPayload {
   stage?: 'questions' | 'final';
 }
 
-export async function submitDiagnosis(payload: SubmitDiagnosisPayload): Promise<DiagnosisResponse> {
-  return apiClient.post('/diagnosis', payload);
+export async function submitDiagnosis(payload: SubmitDiagnosisPayload): Promise<any> {
+  try {
+    return await apiClient.post('/diagnosis', payload);
+  } catch (err) {
+    console.error('Failed to submit diagnosis:', err);
+    return {
+      success: false,
+      message: "We couldn't generate the diagnosis right now. Please try again.",
+      diagnosis: null
+    };
+  }
 }
 
 export async function getDiagnosis(id: string): Promise<DiagnosisResponse> {

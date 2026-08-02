@@ -1,0 +1,151 @@
+const fs = require('fs');
+const path = require('path');
+
+const file = path.join(__dirname, '../src/app/admin/garages/page.tsx');
+let content = `
+'use client';
+import { Card } from '@/components/common/card';
+import { Search, Filter, Download, Plus, MoreVertical, Eye, Edit2, PauseCircle, CheckCircle2, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
+
+export default function AllGaragesPage() {
+  const router = useRouter();
+  const [garages, setGarages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
+        setGarages(garagesData);
+      } catch (err) {
+        console.error('Failed to load garages', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalGarages = garages.length;
+  const approvedGarages = garages.filter(g => g.approvalStatus === 'approved').length;
+  const pendingApprovals = garages.filter(g => g.approvalStatus === 'pending').length;
+  const suspendedGarages = garages.filter(g => g.approvalStatus === 'suspended').length;
+
+  const formatTime = (isoString: string) => {
+    if (!isoString) return '';
+    return new Date(isoString).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+           <h1 className="text-2xl font-bold text-[#17307a] mb-1">All Garages</h1>
+           <p className="text-sm text-slate-500">Dashboard &gt; Garage Management &gt; All Garages</p>
+        </div>
+        <Link href="/admin/garages/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4"/> Register Garage</Link>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <Card className="p-5 bg-white border border-blue-100 flex items-center gap-4 shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><div className="text-xl font-bold">G</div></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 mb-0.5">Total Garages</p>
+            <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : totalGarages}</p>
+          </div>
+        </Card>
+        <Card className="p-5 bg-white border border-green-100 flex items-center gap-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center"><CheckCircle2 className="w-6 h-6"/></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 mb-0.5">Approved Garages</p>
+            <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : approvedGarages}</p>
+          </div>
+        </Card>
+        <Card className="p-5 bg-white border border-orange-100 flex items-center gap-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center"><Clock className="w-6 h-6"/></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 mb-0.5">Pending Approvals</p>
+            <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : pendingApprovals}</p>
+          </div>
+        </Card>
+        <Card className="p-5 bg-white border border-purple-100 flex items-center gap-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center"><PauseCircle className="w-6 h-6"/></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 mb-0.5">Suspended Garages</p>
+            <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : suspendedGarages}</p>
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-0 overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
+           <div className="relative w-80">
+             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+             <input type="text" placeholder="Search by garage name, owner, email or phone..." className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-white outline-none focus:ring-1 focus:ring-blue-500" />
+           </div>
+        </div>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50">
+              <th className="p-4 text-xs font-bold text-slate-500">Garage Name</th>
+              <th className="p-4 text-xs font-bold text-slate-500">Owner</th>
+              <th className="p-4 text-xs font-bold text-slate-500">City</th>
+              <th className="p-4 text-xs font-bold text-slate-500">Status</th>
+              <th className="p-4 text-xs font-bold text-slate-500">Joined Date</th>
+              <th className="p-4 text-xs font-bold text-slate-500 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">Loading garages...</td>
+                </tr>
+            ) : garages.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">No garages registered yet.</td>
+                </tr>
+            ) : (
+                garages.map(g => (
+                <tr key={g.id} className="hover:bg-slate-50 bg-white transition-colors">
+                    <td className="p-4">
+                    <div className="flex gap-3 items-center">
+                        <div className="w-10 h-10 rounded-full border border-slate-100 bg-white flex items-center justify-center p-1 overflow-hidden flex-shrink-0 text-[10px] text-center font-bold text-blue-600">
+                            {g.name ? g.name.substring(0, 2).toUpperCase() : 'G'}
+                        </div>
+                        <div>
+                        <p className="text-sm font-bold text-[#17307a] leading-tight">{g.name}</p>
+                        </div>
+                    </div>
+                    </td>
+                    <td className="p-4">
+                        <p className="text-xs font-bold text-[#17307a] leading-tight">{g.ownerName || 'N/A'}</p>
+                    </td>
+                    <td className="p-4 text-xs text-slate-600">{g.city || 'N/A'}</td>
+                    <td className="p-4">
+                    <span className={\`px-2.5 py-1 rounded-full text-[10px] font-bold border \${g.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : g.approvalStatus === 'pending' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-purple-50 text-purple-600 border-purple-100'}\`}>
+                        {g.approvalStatus ? g.approvalStatus.charAt(0).toUpperCase() + g.approvalStatus.slice(1) : 'Unknown'}
+                    </span>
+                    </td>
+                    <td className="p-4 text-xs text-slate-600">{formatTime(g.createdAt)}</td>
+                    <td className="p-4">
+                    <div className="flex gap-1.5 justify-center">
+                        <button onClick={() => router.push('/coming-soon')} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-500 border border-slate-200 bg-white"><Eye className="w-3.5 h-3.5"/></button>
+                    </div>
+                    </td>
+                </tr>
+                ))
+            )}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+`;
+
+fs.writeFileSync(file, content, 'utf8');
+console.log('Replaced Admin Garages content successfully.');

@@ -72,14 +72,16 @@ function FeatureAside() {
 }
 
 export function FeatureComingSoonPage({
-  title,
-  description,
+  title = 'Under Construction',
+  description = 'We are currently building this section. It will be available in an upcoming update with full functionality and detailed workflows.',
+  customNavItems,
 }: {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
+  customNavItems?: any[];
 }) {
   return (
-    <DashboardShell header={<FeatureHeader title={title} />} aside={<FeatureAside />}>
+    <DashboardShell header={<FeatureHeader title={title} />} aside={<FeatureAside />} customNavItems={customNavItems}>
       <div className="flex min-h-[60vh] items-center">
         <Card className="w-full rounded-[24px] border border-[#dfe8ff] bg-[linear-gradient(135deg,#ffffff_0%,#f4f8ff_100%)] p-8 shadow-[0_18px_45px_rgba(30,58,138,0.08)] sm:p-10">
           <div className="flex max-w-2xl flex-col gap-5">

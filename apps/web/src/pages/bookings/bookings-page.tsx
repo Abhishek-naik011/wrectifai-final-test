@@ -5,16 +5,20 @@ import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
+import { Modal } from '@/components/common/modal';
 import { fetchBookings, updateBookingStatus } from '@/lib/bookings-api';
 import type { Booking } from '@/lib/bookings-api';
 import { cn } from '@/utils/cn';
-import { Calendar, Clock, Wrench, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Calendar, Clock, Wrench, XCircle, AlertTriangle, ShieldCheck, AlertCircle } from 'lucide-react';
 
-type TabKey = 'all' | 'upcoming' | 'inService' | 'completed' | 'cancelled';
+type TabKey = 'all' | 'upcoming' | 'accepted' | 'inProgress' | 'completed' | 'cancelled';
 
 export function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
@@ -44,24 +48,33 @@ export function BookingsPage() {
     };
   }, []);
 
-  const handleCancelBooking = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
+  const handleCancelBooking = (id: string) => {
+    setBookingToCancel(id);
+    setCancelModalOpen(true);
+    setCancelError(false);
+  };
+
+  const confirmCancelBooking = async () => {
+    if (!bookingToCancel) return;
     try {
-      await updateBookingStatus(id, 'cancelled');
+      await updateBookingStatus(bookingToCancel, 'cancelled');
       // Update locally
       setBookings((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: 'cancelled' as const } : b))
+        prev.map((b) => (b.id === bookingToCancel ? { ...b, status: 'cancelled' as const } : b))
       );
+      setCancelModalOpen(false);
+      setBookingToCancel(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel booking');
+      setCancelError(true);
     }
   };
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((b) => {
       if (activeTab === 'all') return true;
-      if (activeTab === 'upcoming') return b.status === 'confirmed' || b.status === 'pendingPayment';
-      if (activeTab === 'inService') return b.status === 'inService';
+      if (activeTab === 'upcoming') return b.status === 'pendingPayment';
+      if (activeTab === 'accepted') return b.status === 'confirmed' || b.status === 'accepted';
+      if (activeTab === 'inProgress') return b.status === 'in_progress';
       if (activeTab === 'completed') return b.status === 'completed';
       if (activeTab === 'cancelled') return b.status === 'cancelled';
       return true;
@@ -70,8 +83,9 @@ export function BookingsPage() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'all', label: 'All Bookings' },
-    { key: 'upcoming', label: 'Upcoming' },
-    { key: 'inService', label: 'In Service' },
+    { key: 'upcoming', label: 'Pending' },
+    { key: 'accepted', label: 'Accepted' },
+    { key: 'inProgress', label: 'In Progress' },
     { key: 'completed', label: 'Completed' },
     { key: 'cancelled', label: 'Cancelled' },
   ];
@@ -134,7 +148,7 @@ export function BookingsPage() {
           <Card className="p-8 flex flex-col items-center justify-center text-center">
             <Calendar className="h-10 w-10 text-[#8a99ad] mb-2" />
             <p className="text-[13.5px] font-bold text-[#17307a]">No bookings found</p>
-            <p className="text-[11.5px] text-[#5c6e8e] mt-1">There are no bookings matching the selected filter.</p>
+            <p className="text-slate-500 mt-2">You don't have any {activeTab !== 'all' ? activeTab : ''} bookings yet.</p>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -145,14 +159,17 @@ export function BookingsPage() {
                     <span
                       className={cn(
                         'rounded-[6px] px-2 py-0.5 text-[10px] font-bold uppercase',
-                        b.status === 'confirmed' && 'bg-[#e0f2fe] text-[#0369a1]',
                         b.status === 'pendingPayment' && 'bg-[#fef3c7] text-[#b45309]',
-                        b.status === 'inService' && 'bg-[#e0e7ff] text-[#4338ca]',
+                        (b.status === 'confirmed' || b.status === 'accepted') && 'bg-[#e0f2fe] text-[#0369a1]',
+                        b.status === 'in_progress' && 'bg-[#e0e7ff] text-[#4338ca]',
                         b.status === 'completed' && 'bg-[#dcfce7] text-[#15803d]',
                         b.status === 'cancelled' && 'bg-[#fee2e2] text-[#b91c1c]'
                       )}
                     >
-                      {b.status}
+                      {b.status === 'pendingPayment' ? 'Pending' : 
+                       b.status === 'confirmed' || b.status === 'accepted' ? 'Accepted' : 
+                       b.status === 'in_progress' ? 'In Progress' : 
+                       b.status}
                     </span>
                     <span className="text-[10px] text-[#8a96b8] font-semibold font-mono">
                       ID: {b.id.substring(0, 8)}
@@ -197,7 +214,7 @@ export function BookingsPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    {(b.status === 'confirmed' || b.status === 'pendingPayment') && (
+                    {(b.status === 'pendingPayment' || b.status === 'confirmed' || b.status === 'accepted') && (
                       <Button
                         onClick={() => handleCancelBooking(b.id)}
                         variant="outline"
@@ -213,6 +230,55 @@ export function BookingsPage() {
           </div>
         )}
       </div>
+
+      <Modal 
+        isOpen={cancelModalOpen} 
+        onClose={() => setCancelModalOpen(false)}
+        title={cancelError ? 'Unable to Cancel' : 'Cancel Booking'}
+      >
+        <div className="py-4 flex flex-col items-center text-center">
+          {cancelError ? (
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+          )}
+          
+          <h3 className="text-xl font-bold text-[#17307a] mb-2">
+            {cancelError ? 'Unable to Cancel' : 'Cancel Booking'}
+          </h3>
+          
+          <p className="text-slate-600 mb-8 max-w-sm">
+            {cancelError ? (
+              <>We couldn't cancel your booking right now.<br/><br/>Please try again in a few moments.</>
+            ) : (
+              <>Are you sure you want to cancel this booking? This action cannot be undone.</>
+            )}
+          </p>
+          
+          <div className="flex gap-3 w-full">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setCancelModalOpen(false)}
+            >
+              {cancelError ? 'Close' : 'Keep Booking'}
+            </Button>
+            {!cancelError && (
+              <Button 
+                variant="default" 
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
+                onClick={confirmCancelBooking}
+              >
+                Yes, Cancel
+              </Button>
+            )}
+          </div>
+        </div>
+      </Modal>
     </DashboardShell>
   );
 }

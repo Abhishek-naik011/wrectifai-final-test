@@ -16,8 +16,9 @@ quotesRouter.get('/', authenticate, async (req, res) => {
       `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details,
               q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.total_cost as "totalCost", q.eta_note as "etaNote",
               g.name as "garageName", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
-              qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary",
-              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
+              qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary", qr.preferred_date as "preferredDate",
+              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage",
+              EXISTS(SELECT 1 FROM bookings b WHERE b.quote_id = q.id) as "isBooked"
        FROM quotes q
        JOIN garages g ON q.garage_id = g.id
        JOIN quote_requests qr ON q.quote_request_id = qr.id
@@ -37,6 +38,7 @@ quotesRouter.get('/', authenticate, async (req, res) => {
         id: row.id,
         quoteRequestId: row.quoteRequestId,
         status: row.status || 'open',
+        isBooked: row.isBooked,
         garage: row.garageName,
         image: '/assets/garage_1_1778071156220.png',
         rating: String(row.ratingAvg || '4.5'),
@@ -50,6 +52,7 @@ quotesRouter.get('/', authenticate, async (req, res) => {
         tag: undefined,
         requestCreatedAt: row.requestCreatedAt,
         requestIssueSummary: row.requestIssueSummary,
+        preferredDate: row.preferredDate,
         vehicle: row.vehicleMake ? {
           make: row.vehicleMake,
           model: row.vehicleModel,
@@ -84,16 +87,19 @@ quotesRouter.get('/garage-requests', authenticate, async (req, res) => {
       return error(res, 'Unauthorized for garage access', 'UNAUTHORIZED', 403);
     }
     
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+
     const result = await query(
       `SELECT qr.id, qr.customer_id as "customerId", qr.vehicle_id as "vehicleId", qr.issue_summary as "issueSummary", qr.status, qr.created_at as "createdAt",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage",
-              p.avatar_url as "customerAvatar", u.name as "customerName"
+              NULL as "customerAvatar", u.name as "customerName"
        FROM quote_requests qr
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
        LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE qr.status = 'open'
-       ORDER BY qr.created_at DESC`
+       WHERE qr.garage_id = $1
+       ORDER BY qr.created_at DESC`,
+      [garageId]
     );
 
     const mapped = result.rows.map((row: any) => ({
@@ -127,19 +133,27 @@ quotesRouter.get('/garage/stats', authenticate, async (req, res) => {
       return error(res, 'Unauthorized for garage access', 'UNAUTHORIZED', 403);
     }
 
-    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
-    if (garageRes.rows.length === 0) {
+    const garageId = req.user?.garageId;
+    if (!garageId) {
       return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
     }
-    const garageId = garageRes.rows[0].id;
 
-    const incomingRes = await query(`SELECT COUNT(*) FROM quote_requests WHERE status = 'open'`);
-    const activeJobsRes = await query(`SELECT COUNT(*) FROM quotes WHERE garage_id = $1 AND status IN ('active', 'selected')`, [garageId]);
-    const generatedQuotesRes = await query(`SELECT COUNT(*) FROM quotes WHERE garage_id = $1`, [garageId]);
-    const completedRes = await query(`SELECT COUNT(*) FROM bookings b JOIN quotes q ON b.quote_id = q.id WHERE q.garage_id = $1 AND b.status = 'completed'`, [garageId]);
+    // Incoming Requests = Pending bookings (pendingPayment)
+    const incomingRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status = 'pendingPayment'`, [garageId]);
+    
+    // Active Jobs (Bookings) = Accepted, In Progress, Completed
+    const activeJobsRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status IN ('confirmed', 'accepted', 'in_progress', 'completed')`, [garageId]);
+    
+    // Generated Quotes (Pending Quote Requests) = open
+    const generatedQuotesRes = await query(`SELECT COUNT(*) FROM quote_requests WHERE garage_id = $1`, [garageId]);
+
+    
+    // Completed Jobs = COMPLETED
+    const completedRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status = 'completed'`, [garageId]);
 
     const stats = {
       incoming: Number(incomingRes.rows[0].count),
+      todaysBookings: 0,
       activeJobs: Number(activeJobsRes.rows[0].count),
       generatedQuotes: Number(generatedQuotesRes.rows[0].count),
       completed: Number(completedRes.rows[0].count)
@@ -153,13 +167,16 @@ quotesRouter.get('/garage/stats', authenticate, async (req, res) => {
 
 quotesRouter.post('/garage-requests/:id/accept', authenticate, async (req, res) => {
   try {
-    if (!req.user?.roles?.includes('garage')) {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
       return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
     }
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
     
     const result = await query(
-      `UPDATE quote_requests SET status = 'open' WHERE id = $1 AND status = 'open' RETURNING id`,
-      [req.params.id]
+      `UPDATE quote_requests SET status = 'selected' WHERE id = $1 AND status = 'open' AND garage_id = $2 RETURNING id`,
+      [req.params.id, garageId]
     );
 
     if (result.rows.length === 0) {
@@ -181,11 +198,19 @@ quotesRouter.post('/:quoteRequestId/quotes', authenticate, async (req, res) => {
 
     const { labourCost, partsCost, estimatedTime, remarks } = req.body;
     
-    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
-    if (garageRes.rows.length === 0) {
+    const garageId = req.user?.garageId;
+    if (!garageId) {
       return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
     }
-    const garageId = garageRes.rows[0].id;
+
+    const existingQuote = await query(
+      `SELECT id FROM quotes WHERE quote_request_id = $1 AND garage_id = $2`,
+      [req.params.quoteRequestId, garageId]
+    );
+
+    if (existingQuote.rows.length > 0) {
+      return error(res, 'Quote already submitted for this request', 'BAD_REQUEST', 400);
+    }
 
     const amount = Number(labourCost || 0) + Number(partsCost || 0);
 
@@ -215,9 +240,9 @@ quotesRouter.post('/:quoteRequestId/quotes', authenticate, async (req, res) => {
 
 quotesRouter.post('/requests', authenticate, async (req, res) => {
   try {
-    const { vehicleId, issueSummary, diagnosisRequestId, preferredDate } = req.body;
-    if (!vehicleId || !issueSummary) {
-      return error(res, 'Vehicle ID and Issue Summary are required', 'BAD_REQUEST', 400);
+    const { vehicleId, issueSummary, diagnosisRequestId, preferredDate, garageId } = req.body;
+    if (!vehicleId || !issueSummary || !garageId) {
+      return error(res, 'Vehicle ID, Garage ID and Issue Summary are required', 'BAD_REQUEST', 400);
     }
 
     const customerId = req.user?.userId;
@@ -234,10 +259,10 @@ quotesRouter.post('/requests', authenticate, async (req, res) => {
     }
 
     const result = await query(
-      `INSERT INTO quote_requests (customer_id, vehicle_id, diagnosis_request_id, issue_summary, preferred_date, status)
-       VALUES ($1, $2, $3, $4, $5, 'open')
+      `INSERT INTO quote_requests (customer_id, vehicle_id, diagnosis_request_id, issue_summary, preferred_date, status, garage_id)
+       VALUES ($1, $2, $3, $4, $5, 'open', $6)
        RETURNING id, customer_id as "customerId", vehicle_id as "vehicleId", diagnosis_request_id as "diagnosisRequestId", issue_summary as "issueSummary", preferred_date as "preferredDate", status, created_at as "createdAt"`,
-      [customerId, vehicleId, diagnosisRequestId || null, issueSummary, preferredDate || null]
+      [customerId, vehicleId, diagnosisRequestId || null, issueSummary, preferredDate || null, garageId]
     );
 
     return success(res, result.rows[0], 201);
@@ -298,6 +323,10 @@ quotesRouter.get('/requests', authenticate, async (req, res) => {
 
 quotesRouter.get('/requests/:requestId', authenticate, async (req, res) => {
   try {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.requestId)) {
+      return error(res, 'Invalid request ID format', 'BAD_REQUEST', 400);
+    }
+
     const result = await query(
       `SELECT qr.id, qr.customer_id as "customerId", qr.vehicle_id as "vehicleId", qr.issue_summary as "issueSummary", qr.status, qr.created_at as "createdAt",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
@@ -312,6 +341,14 @@ quotesRouter.get('/requests/:requestId', authenticate, async (req, res) => {
     }
 
     const row = result.rows[0];
+
+    // Data isolation check for quote request
+    const userId = req.user?.userId;
+    const userRoles = req.user?.roles || [];
+    if (!userRoles.includes('admin') && !userRoles.includes('garage') && row.customerId !== userId) {
+      return error(res, 'Forbidden: You do not have access to this request', 'FORBIDDEN', 403);
+    }
+
     return success(res, {
       id: row.id,
       customerId: row.customerId,
@@ -340,10 +377,10 @@ quotesRouter.get('/requests/:requestId', authenticate, async (req, res) => {
 quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
   try {
     const result = await query(
-      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details,
+      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details, q.garage_id as "quoteGarageId",
               q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.total_cost as "totalCost", q.eta_note as "etaNote",
-              g.name as "garageName", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
-              qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary",
+              g.name as "garageName", g.owner_user_id as "garageOwnerId", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
+              qr.customer_id as "requestCustomerId", qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
        FROM quotes q
        JOIN garages g ON q.garage_id = g.id
@@ -358,6 +395,14 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
     }
 
     const row = result.rows[0];
+    
+    // Data isolation check for quote
+    const userId = req.user?.userId;
+    const userRoles = req.user?.roles || [];
+    if (!userRoles.includes('admin') && row.requestCustomerId !== userId && row.garageOwnerId !== userId) {
+      return error(res, 'Forbidden: You do not have access to this quote', 'FORBIDDEN', 403);
+    }
+
     const details = row.details || {};
     const amountNum = Number(row.amount || row.totalCost || 0);
     const laborCostNum = Number(row.laborCost || 0);
@@ -412,39 +457,21 @@ quotesRouter.get('/garage/active-jobs', authenticate, async (req, res) => {
     if (!garageUserId || !req.user?.roles?.includes('garage')) {
       return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
     }
-    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
-    if (garageRes.rows.length === 0) {
-      return error(res, 'Garage not found', 'BAD_REQUEST', 400);
+    const garageId = req.user?.garageId;
+    if (!garageId) {
+      return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
     }
-    const garageId = garageRes.rows[0].id;
 
     const result = await query(
-      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.status as "quoteStatus", q.created_at as "quoteCreatedAt", q.details,
-              qr.issue_summary as "issueSummary", qr.status as "requestStatus",
+      `SELECT b.id as "id", b.quote_id as "quoteRequestId", b.total_amount as "amount", 'active' as "quoteStatus", b.created_at as "quoteCreatedAt", NULL as "details",
+              b.booking_type as "issueSummary", NULL as "requestStatus",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
-              u.name as "customerName", p.avatar_url as "customerAvatar",
-              b.status as "bookingStatus", b.scheduled_at as "bookingDate", b.service_type as "serviceType"
-       FROM quotes q
-       JOIN quote_requests qr ON q.quote_request_id = qr.id
-       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
-       LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN profiles p ON u.id = p.user_id
-       LEFT JOIN bookings b ON b.quote_id = q.id
-       WHERE q.garage_id = $1
-       
-       UNION
-       
-       SELECT b.id as "id", NULL as "quoteRequestId", b.total_amount as "amount", 'active' as "quoteStatus", b.created_at as "quoteCreatedAt", NULL as "details",
-              b.service_type as "issueSummary", NULL as "requestStatus",
-              v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
-              u.name as "customerName", p.avatar_url as "customerAvatar",
-              b.status as "bookingStatus", b.scheduled_at as "bookingDate", b.service_type as "serviceType"
+              u.name as "customerName", NULL as "customerAvatar",
+              b.status as "bookingStatus", b.scheduled_at as "bookingDate", b.booking_type as "serviceType"
        FROM bookings b
        LEFT JOIN vehicles v ON b.vehicle_id = v.id
        LEFT JOIN users u ON b.customer_id = u.id
-       LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE b.garage_id = $1 AND b.quote_id IS NULL
-       
+       WHERE b.garage_id = $1 AND b.status = 'in_progress'
        ORDER BY "quoteCreatedAt" DESC`,
       [garageId]
     );
@@ -460,20 +487,18 @@ quotesRouter.get('/garage/quotes', authenticate, async (req, res) => {
     if (!garageUserId || !req.user?.roles?.includes('garage')) {
       return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
     }
-    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
-    if (garageRes.rows.length === 0) return error(res, 'Garage not found', 'BAD_REQUEST', 400);
-    const garageId = garageRes.rows[0].id;
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
 
     const result = await query(
       `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount as "totalCost", q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.eta_days as "etaDays", q.eta_note as "etaNote", q.status as "quoteStatus", q.created_at as "createdAt", q.details,
               qr.issue_summary as "issueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
-              u.name as "customerName", p.avatar_url as "customerAvatar"
+              u.name as "customerName", NULL as "customerAvatar"
        FROM quotes q
        JOIN quote_requests qr ON q.quote_request_id = qr.id
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
        LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN profiles p ON u.id = p.user_id
        WHERE q.garage_id = $1
        ORDER BY q.created_at DESC`,
       [garageId]
@@ -490,22 +515,20 @@ quotesRouter.get('/garage/completed-jobs', authenticate, async (req, res) => {
     if (!garageUserId || !req.user?.roles?.includes('garage')) {
       return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
     }
-    const garageRes = await query('SELECT id FROM garages WHERE owner_user_id = $1 LIMIT 1', [garageUserId]);
-    if (garageRes.rows.length === 0) return error(res, 'Garage not found', 'BAD_REQUEST', 400);
-    const garageId = garageRes.rows[0].id;
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
 
     const result = await query(
       `SELECT b.id, b.status as "bookingStatus", b.created_at as "completionDate",
               q.amount as "quoteAmount", q.details,
               qr.issue_summary as "issueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
-              u.name as "customerName", u.mobile_number as "customerContact", p.avatar_url as "customerAvatar"
+              u.name as "customerName", u.mobile_number as "customerContact", NULL as "customerAvatar"
        FROM bookings b
        JOIN quotes q ON b.quote_id = q.id
        JOIN quote_requests qr ON q.quote_request_id = qr.id
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
        LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN profiles p ON u.id = p.user_id
        WHERE q.garage_id = $1 AND b.status = 'completed'
        ORDER BY b.updated_at DESC`,
       [garageId]

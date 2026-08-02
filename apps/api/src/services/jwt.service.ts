@@ -8,6 +8,7 @@ export interface UserTokenPayload {
   email?: string;
   name?: string;
   roles: string[];
+  garageId?: string;
 }
 
 export interface RefreshTokenPayload {

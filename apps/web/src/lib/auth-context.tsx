@@ -159,6 +159,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      
+      // Clear any app-specific cached data for complete session isolation
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('wrectifai_') || key === 'garage_favorites') {
+          localStorage.removeItem(key);
+        }
+      }
     }
 
     setUser(null);
@@ -173,7 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, logout }}>
-      {!isLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

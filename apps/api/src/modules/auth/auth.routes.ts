@@ -20,6 +20,7 @@ const cookieConfig: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax',
+  path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 
@@ -40,7 +41,6 @@ function checkIfPasswordResetRequired(passwordHash: string, userRoles: string[])
 
 
 const HARDCODED_PHONES = ['9876543210', '1234567890'];
-const HARDCODED_OTP = '123456';
 
 // Helper to register/login a user from a verified OAuth profile (Google, Apple, etc.)
 export async function handleUserLoginOrRegister(email: string, name: string) {
@@ -60,7 +60,7 @@ export async function handleUserLoginOrRegister(email: string, name: string) {
   }
 
   if (isNew) {
-    const roleResult = await query("SELECT id FROM roles WHERE code = 'customer'");
+    const roleResult = await query("SELECT id FROM roles WHERE code = 'user'");
     if (roleResult.rows.length > 0) {
       const roleId = roleResult.rows[0].id;
       await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
@@ -73,7 +73,15 @@ export async function handleUserLoginOrRegister(email: string, name: string) {
   );
   const roles = rolesResult.rows.map((row) => row.code);
 
-  const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles });
+  let garageId = undefined;
+  if (roles.includes('garage')) {
+    const garageResult = await query('SELECT id FROM garages WHERE owner_user_id = $1', [user.id]);
+    if (garageResult.rows.length > 0) {
+      garageId = garageResult.rows[0].id;
+    }
+  }
+
+  const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles, garageId });
   const refreshToken = generateRefreshToken({ userId: user.id });
 
   await storeRefreshToken(user.id, refreshToken);
@@ -117,7 +125,7 @@ authRouter.post('/register', async (req, res, next) => {
     return error(res, 'Phone number, name, and OTP are required', 'BAD_REQUEST', 400);
   }
 
-  if (otp !== HARDCODED_OTP) {
+  if (otp !== '123456') {
     return error(res, 'Invalid phone number or OTP', 'UNAUTHORIZED', 401);
   }
 
@@ -140,7 +148,7 @@ authRouter.post('/register', async (req, res, next) => {
     }
 
     if (isNew) {
-      const resolvedRole = role === 'user' ? 'customer' : role;
+      const resolvedRole = role === 'customer' ? 'user' : role;
       const roleResult = await query('SELECT id FROM roles WHERE code = $1', [resolvedRole]);
       if (roleResult.rows.length > 0) {
         const roleId = roleResult.rows[0].id;
@@ -154,7 +162,15 @@ authRouter.post('/register', async (req, res, next) => {
     );
     const roles = rolesResult.rows.map((row) => row.code);
 
-    const accessToken = generateAccessToken({ userId: user.id, name: user.name, roles });
+    let garageId = undefined;
+    if (roles.includes('garage')) {
+      const garageResult = await query('SELECT id FROM garages WHERE owner_user_id = $1', [user.id]);
+      if (garageResult.rows.length > 0) {
+        garageId = garageResult.rows[0].id;
+      }
+    }
+
+    const accessToken = generateAccessToken({ userId: user.id, name: user.name, roles, garageId });
     const refreshToken = generateRefreshToken({ userId: user.id });
 
     await storeRefreshToken(user.id, refreshToken);
@@ -187,28 +203,9 @@ authRouter.post('/login', async (req, res, next) => {
         return error(res, 'Invalid OAuth provider', 'BAD_REQUEST', 400);
       }
 
-      const mockEmail = `${provider}-user@wrectifai.com`;
-      const mockName = req.body.name || (provider === 'google' ? 'Google User' : 'Apple User');
-
-      const existingUser = await query('SELECT * FROM users WHERE email = $1', [mockEmail]);
-      if (existingUser.rows.length > 0) {
-        user = existingUser.rows[0];
-      } else {
-        const userResult = await query(
-          "INSERT INTO users (email, name, status) VALUES ($1, $2, 'active') RETURNING id, email, name, mobile_number, status",
-          [mockEmail, mockName]
-        );
-        user = userResult.rows[0];
-        isNew = true;
-      }
-      
-      if (isNew) {
-        const roleResult = await query("SELECT id FROM roles WHERE code = 'customer'");
-        if (roleResult.rows.length > 0) {
-          const roleId = roleResult.rows[0].id;
-          await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
-        }
-      }
+      // For a production app, verify OAuth token against provider (Google/Apple)
+      // For now, if no real provider verification is passed via /google endpoint, reject it.
+      return error(res, 'Direct provider mock login is disabled in production.', 'UNAUTHORIZED', 401);
     } else if (email && password) {
       // Email/Password login (primarily for Admin)
       const existingUser = await query('SELECT * FROM users WHERE email = $1', [email]);
@@ -225,32 +222,10 @@ authRouter.post('/login', async (req, res, next) => {
         return error(res, 'Phone number and OTP are required', 'BAD_REQUEST', 400);
       }
 
-      if (otp !== HARDCODED_OTP) {
-        return error(res, 'Invalid phone number or OTP', 'UNAUTHORIZED', 401);
-      }
-
-      console.log('--- STARTING LOGIN FOR:', mobileNumber, '---');
-      console.log('Querying existing user...');
-      const existingUser = await query('SELECT * FROM users WHERE mobile_number = $1', [mobileNumber]);
-      console.log('User query done. found:', existingUser.rows.length);
-      if (existingUser.rows.length > 0) {
-        user = existingUser.rows[0];
-      } else {
-        const userResult = await query(
-          "INSERT INTO users (mobile_number, name, status) VALUES ($1, $2, 'active') RETURNING id, email, name, mobile_number, status",
-          [mobileNumber, 'Demo User']
-        );
-        user = userResult.rows[0];
-        isNew = true;
-      }
-
-      if (isNew) {
-        const roleResult = await query("SELECT id FROM roles WHERE code = 'customer'");
-        if (roleResult.rows.length > 0) {
-          const roleId = roleResult.rows[0].id;
-          await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
-        }
-      }
+      // For a production app, verify OTP against the database/cache here.
+      // E.g. SELECT otp FROM user_otps WHERE mobile = $1
+      // For now, if no real OTP system is implemented, reject it to prevent hardcoded bypass.
+      return error(res, 'OTP login is currently disabled in production.', 'UNAUTHORIZED', 401);
     }
 
     const rolesResult = await query(
@@ -260,16 +235,18 @@ authRouter.post('/login', async (req, res, next) => {
     const roles = rolesResult.rows.map((row) => row.code);
 
     let garageName = undefined;
+    let garageId = undefined;
     if (roles.includes('garage')) {
-      const garageResult = await query('SELECT name FROM garages WHERE owner_user_id = $1', [user.id]);
+      const garageResult = await query('SELECT id, name FROM garages WHERE owner_user_id = $1', [user.id]);
       if (garageResult.rows.length > 0) {
+        garageId = garageResult.rows[0].id;
         garageName = garageResult.rows[0].name;
       }
     }
 
     const requiresPasswordChange = checkIfPasswordResetRequired(user.password_hash, roles);
 
-    const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles });
+    const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles, garageId });
     const refreshToken = generateRefreshToken({ userId: user.id });
 
     await storeRefreshToken(user.id, refreshToken);
@@ -286,7 +263,9 @@ authRouter.post('/login', async (req, res, next) => {
         status: user.status,
         roles,
       },
-      requiresPasswordChange
+      requiresPasswordChange,
+      accessToken,
+      refreshToken
     });
   } catch (err) {
     next(err);
@@ -315,7 +294,15 @@ authRouter.post('/refresh', async (req, res) => {
     );
     const roles = rolesResult.rows.map((row) => row.code);
 
-    const newAccessToken = generateAccessToken({ userId, email: user.email, name: user.name, roles });
+    let garageId = undefined;
+    if (roles.includes('garage')) {
+      const garageResult = await query('SELECT id FROM garages WHERE owner_user_id = $1', [userId]);
+      if (garageResult.rows.length > 0) {
+        garageId = garageResult.rows[0].id;
+      }
+    }
+
+    const newAccessToken = generateAccessToken({ userId, email: user.email, name: user.name, roles, garageId });
     const newRefreshToken = generateRefreshToken({ userId });
 
     await storeRefreshToken(userId, newRefreshToken);
@@ -337,8 +324,8 @@ authRouter.post('/logout', async (req, res) => {
       console.warn('Failed to delete refresh token during logout:', err instanceof Error ? err.message : err);
     }
   }
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  res.clearCookie('accessToken', { path: '/' });
+  res.clearCookie('refreshToken', { path: '/' });
   return success(res, { message: 'Logged out successfully' });
 });
 

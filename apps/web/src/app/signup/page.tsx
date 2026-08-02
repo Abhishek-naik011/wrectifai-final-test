@@ -18,12 +18,7 @@ export default function SignupPage() {
   const { isAuthenticated, login } = useAuth();
   const router = useRouter();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
+  // AuthGuard handles redirection after login automatically.
 
   // Form states
   const [name, setName] = useState('');
@@ -82,9 +77,6 @@ export default function SignupPage() {
 
       login(data.accessToken, data.refreshToken, data.user);
       setSuccessMsg('Successfully registered and logged in! Redirecting...');
-      setTimeout(() => {
-        router.push('/');
-      }, 800);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Verification failed. Please check the OTP code.';
       setErrorMsg(message);
@@ -102,9 +94,6 @@ export default function SignupPage() {
       const data = await apiClient.post<AuthResponse>('/auth/login', { provider });
       login(data.accessToken, data.refreshToken, data.user);
       setSuccessMsg(`Successfully logged in via ${provider === 'google' ? 'Google' : 'Apple'}! Redirecting...`);
-      setTimeout(() => {
-        router.push('/');
-      }, 800);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : `${provider === 'google' ? 'Google' : 'Apple'} login failed.`;
       setErrorMsg(message);

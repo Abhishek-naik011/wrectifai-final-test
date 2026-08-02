@@ -10,13 +10,17 @@ import {
   Clock,
   Shield,
   Wrench,
+  FileText,
+  Share2,
+  Heart,
+  MessageSquare,
+  AlertCircle,
   Gauge,
   Tag,
   CheckCircle2,
   Snowflake,
   ClipboardList,
   SlidersHorizontal,
-  Heart,
   Check,
   Eye,
   Sparkles,
@@ -25,6 +29,8 @@ import {
   Disc3,
 } from 'lucide-react';
 import { Card } from '@/components/common/card';
+import { RequestQuoteModal } from './request-quote-modal';
+import { BookingModal } from './booking-modal';
 import { Button } from '@/components/common/button';
 import { cn } from '@/utils/cn';
 import Image from 'next/image';
@@ -35,6 +41,7 @@ import type { QuoteItem } from '@/components/quotes/quotes-shared';
 import type { DiagnoseIssue } from '@/components/ai-diagnose/diagnose-flow-shared';
 import { createBooking } from '@/lib/bookings-api';
 import { apiClient } from '@/lib/api-client';
+import { Modal } from '@/components/common/modal';
 
 interface GarageDetailPageProps {
   garage: Garage;
@@ -92,6 +99,7 @@ export function GarageDetailPage({
   // Track garage and services separately to prevent prop-reference cycles
   const [garage, setGarage] = useState<Garage>(initialGarage);
   const [services, setServices] = useState<any[]>(initialGarage.services || []);
+  const [requestStatus, setRequestStatus] = useState<'idle' | 'quote_success' | 'quote_error' | 'booking_success' | 'booking_error'>('idle');
 
   useEffect(() => {
     setGarage(initialGarage);
@@ -117,6 +125,17 @@ export function GarageDetailPage({
     };
   }, [initialGarage.id, initialGarage.services]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('quote') === 'true') {
+        setIsQuoteModalOpen(true);
+        // Optionally remove the query param so it doesn't re-trigger on reload
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, []);
+
   const appointmentDates = useMemo(() => {
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -141,6 +160,8 @@ export function GarageDetailPage({
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string | null>(null);
   const [reviewPage, setReviewPage] = useState(0);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   const detailImageSources = [garage.image].filter((src): src is string =>
     Boolean(src)
@@ -183,78 +204,52 @@ export function GarageDetailPage({
   ];
 
   const handleBookAppointment = async () => {
-    try {
-      const timeMatch = selectedSlot.match(/(\d+):(\d+)\s*(AM|PM)/i);
-      let hour = 10;
-      let minute = 0;
-      if (timeMatch) {
-        hour = parseInt(timeMatch[1], 10);
-        minute = parseInt(timeMatch[2], 10);
-        const isPm = timeMatch[3].toUpperCase() === 'PM';
-        if (isPm && hour < 12) hour += 12;
-        if (!isPm && hour === 12) hour = 0;
-      }
-      const selectedDayObj = appointmentDates.find((d) => d.date === selectedDate) || appointmentDates[0];
-      const scheduledAt = new Date(
-        selectedDayObj.year,
-        selectedDayObj.monthIndex,
-        parseInt(selectedDayObj.date, 10),
-        hour,
-        minute
-      ).toISOString();
-      const amountStr = quoteContext?.quote?.price ? String(quoteContext.quote.price).replace(/[^\d.]/g, '') : '150';
-      const totalAmount = parseFloat(amountStr) || 150.0;
-
-      let vehicleId = '00000000-0000-0000-0000-000000000002';
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('wrectifai_selected_vehicle');
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed && parsed.id) {
-              vehicleId = parsed.id;
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      }
-
-      const response = await createBooking({
-        garageId: garage.id,
-        vehicleId,
-        scheduledAt,
-        totalAmount,
-        bookingType: isQuoteContext ? 'quoteBased' : 'instant',
-        quoteId: quoteContext?.quote?.id || null,
-      });
-
-      if (response && response.id) {
-        setConfirmedBookingId(response.id);
-      }
-      setBookingConfirmed(true);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Booking creation failed');
-    }
+    setIsBookingModalOpen(true);
   };
 
-  if (bookingConfirmed) {
-    return (
-      <BookingConfirmed
-        garage={garage}
-        selectedDate={selectedDate}
-        selectedSlot={selectedSlot}
-        quoteContext={isQuoteContext ? quoteContext : undefined}
-        bookingId={confirmedBookingId || undefined}
-        onViewBookings={() => {
-          router.push('/bookings');
-        }}
-      />
-    );
-  }
+  const handleRequestQuote = async () => {
+    setIsQuoteModalOpen(true);
+  };
+
+  // Removed bookingConfirmed full-page render to stay on page and show modal
+
 
   return (
     <>
+      <RequestQuoteModal 
+        isOpen={isQuoteModalOpen} 
+        onClose={() => setIsQuoteModalOpen(false)} 
+        garageId={garage.id || ''} 
+        onSubmitSuccess={() => setRequestStatus('quote_success')} 
+      />
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)} 
+        garageId={garage.id || ''} 
+        onSubmitSuccess={() => setRequestStatus('booking_success')} 
+      />
+
+      <Modal 
+        isOpen={requestStatus === 'quote_success' || requestStatus === 'booking_success'} 
+        onClose={() => setRequestStatus('idle')} 
+        title={requestStatus === 'quote_success' ? 'Quote Request Sent' : 'Booking Request Sent'}
+        className="max-w-md"
+      >
+        <div className="text-center py-4">
+          <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 size={32} />
+          </div>
+          <p className="text-slate-600 mb-6">
+            {requestStatus === 'quote_success' 
+              ? `Your quote request has been sent successfully to ${garage.name}. The garage will review your request and send you a quotation shortly.`
+              : `Your booking request has been sent successfully to ${garage.name}. The garage will review your request and confirm your appointment shortly.`}
+          </p>
+          <Button onClick={() => setRequestStatus('idle')} className="w-full font-bold">
+            <Check className="w-4 h-4 mr-2" /> OK
+          </Button>
+        </div>
+      </Modal>
+
       <div className="space-y-6 pb-12">
         {/* Back Button */}
         <button
@@ -310,6 +305,10 @@ export function GarageDetailPage({
               </button>
             </div>
 
+            <div className="flex gap-3">
+              <button onClick={handleRequestQuote} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-purple-700">Request Quote</button>
+            </div>
+            
             {/* Garage Details Header Row */}
             <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -607,7 +606,7 @@ export function GarageDetailPage({
                             </div>
                             <div className="text-right">
                               <div className="text-[14px] font-extrabold text-[#159a5d]">
-                                ₹{svc.price}
+                                USD {svc.price}
                               </div>
                             </div>
                           </div>
@@ -930,6 +929,55 @@ export function GarageDetailPage({
           </div>
         )}
         <PageLoader imageSources={detailImageSources} />
+
+        {/* Status Modal */}
+        <Modal 
+          isOpen={requestStatus !== 'idle'} 
+          onClose={() => setRequestStatus('idle')}
+          title={
+            requestStatus === 'quote_success' ? 'Quote Request Sent' :
+            requestStatus === 'booking_success' ? 'Booking Request Sent' :
+            requestStatus === 'booking_error' ? 'Booking Failed' : 'Unable to Send Request'
+          }
+        >
+          <div className="py-4 flex flex-col items-center text-center">
+            {requestStatus === 'quote_success' || requestStatus === 'booking_success' ? (
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                <Check className="w-8 h-8" />
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+            )}
+            
+            <h3 className="text-xl font-bold text-[#17307a] mb-2">
+              {requestStatus === 'quote_success' ? 'Quote Request Sent' : 
+               requestStatus === 'booking_success' ? 'Booking Request Sent' :
+               requestStatus === 'booking_error' ? 'Booking Failed' : 'Unable to Send Request'}
+            </h3>
+            
+            <p className="text-slate-600 mb-8 max-w-sm">
+              {requestStatus === 'quote_success' ? (
+                <>Your quote request has been sent successfully to {garage.name}.<br/><br/>The garage will review your request and send you a quotation shortly.</>
+              ) : requestStatus === 'booking_success' ? (
+                <>Your booking request has been sent successfully to {garage.name}.<br/><br/>The garage will review your request and confirm your appointment shortly.</>
+              ) : requestStatus === 'booking_error' ? (
+                <>We couldn't confirm your booking at this time.<br/><br/>Please try again or contact support.</>
+              ) : (
+                <>We couldn't send your quote request right now.<br/><br/>Please try again in a few moments.</>
+              )}
+            </p>
+            
+            <Button 
+              variant="default" 
+              className="w-full sm:w-auto min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setRequestStatus('idle')}
+            >
+              ✓ OK
+            </Button>
+          </div>
+        </Modal>
       </div>
     </>
   );

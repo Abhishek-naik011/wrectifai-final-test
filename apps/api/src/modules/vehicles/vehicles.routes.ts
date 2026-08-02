@@ -30,12 +30,22 @@ vehiclesRouter.get('/image', async (req, res) => {
 // GET /vehicles — list all active vehicles
 vehiclesRouter.get('/', authenticate, async (req, res) => {
   try {
+    const userId = req.user?.userId;
+    const userRoles = req.user?.roles || [];
+    let filterCondition = 'is_active = true';
+    let params: any[] = [];
+
+    if (!userRoles.includes('admin')) {
+      filterCondition += ' AND customer_id = $1';
+      params.push(userId);
+    }
+
     const result = await query(
       `SELECT id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt"
        FROM vehicles
-       WHERE is_active = true
+       WHERE ${filterCondition}
        ORDER BY created_at DESC`,
-      []
+      params
     );
 
     return success(res, result.rows, 200);
@@ -103,6 +113,11 @@ vehiclesRouter.get('/:vehicleId', authenticate, async (req, res) => {
 
     const vehicle = result.rows[0];
 
+    // Ownership check
+    if (!req.user?.roles?.includes('admin') && vehicle.customerId !== userId) {
+      return error(res, 'Forbidden: You do not have access to this vehicle', 'FORBIDDEN', 403);
+    }
+
 
     // Omit is_active in response matching design client
     const { is_active, ...vehicleData } = vehicle;
@@ -135,6 +150,10 @@ vehiclesRouter.patch('/:vehicleId', authenticate, async (req, res) => {
 
     if (verifyResult.rows.length === 0 || !verifyResult.rows[0].is_active) {
       return error(res, 'Vehicle not found', 'NOT_FOUND', 404);
+    }
+
+    if (!req.user?.roles?.includes('admin') && verifyResult.rows[0].customerId !== userId) {
+      return error(res, 'Forbidden: You do not have permission to modify this vehicle', 'FORBIDDEN', 403);
     }
 
 
@@ -193,6 +212,10 @@ vehiclesRouter.delete('/:vehicleId', authenticate, async (req, res) => {
 
     if (verifyResult.rows.length === 0 || !verifyResult.rows[0].is_active) {
       return error(res, 'Vehicle not found', 'NOT_FOUND', 404);
+    }
+
+    if (!req.user?.roles?.includes('admin') && verifyResult.rows[0].customerId !== userId) {
+      return error(res, 'Forbidden: You do not have permission to delete this vehicle', 'FORBIDDEN', 403);
     }
 
 

@@ -6,13 +6,8 @@ import { useEffect } from 'react';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
+  // Removed redundant router.push('/login').
+  // AuthGuard inside layout.tsx handles all unauthenticated redirects globally.
 
   if (!isAuthenticated) {
     return (

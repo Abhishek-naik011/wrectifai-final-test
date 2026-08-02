@@ -1,4 +1,4 @@
-export type QuoteStatus = 'new' | 'viewed' | 'expired' | 'open';
+export type QuoteStatus = 'new' | 'viewed' | 'expired' | 'open' | 'active' | 'selected' | 'accepted' | 'rejected' | string;
 
 export type QuoteItem = {
   id: string;
@@ -18,6 +18,7 @@ export type QuoteItem = {
   details?: any;
   requestCreatedAt?: string;
   requestIssueSummary?: string;
+  preferredDate?: string;
   vehicle?: {
     make: string;
     model: string;
@@ -25,6 +26,7 @@ export type QuoteItem = {
     vin?: string;
     mileage?: number;
   } | null;
+  isBooked?: boolean;
 };
 
 const DOLLAR = '$';
