@@ -164,12 +164,14 @@ bookingsRouter.get('/garage-incoming', authenticate, async (req, res) => {
               b.scheduled_at as "scheduledAt", b.status, b.total_amount as "totalAmount", b.created_at as "createdAt",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin",
               u.name as "customerName", p.avatar_url as "customerAvatar",
-              q.details as "quoteDetails", q.amount as "quoteAmount"
+              q.details as "quoteDetails", q.amount as "quoteAmount",
+              qr.issue_summary as "issueSummary"
        FROM bookings b
        LEFT JOIN vehicles v ON b.vehicle_id = v.id
        LEFT JOIN users u ON b.customer_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
        LEFT JOIN quotes q ON b.quote_id = q.id
+       LEFT JOIN quote_requests qr ON q.quote_request_id = qr.id
        WHERE b.garage_id = $1 AND b.status = 'pendingPayment'
        ORDER BY b.created_at DESC`,
       [garageId]

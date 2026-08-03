@@ -130,6 +130,12 @@ export default function IncomingRequestsPage() {
                   <p className="text-green-700 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">${selectedBooking.quoteAmount || selectedBooking.totalAmount}</p>
                 </div>
                 <div>
+                  <span className="font-bold text-slate-600">Issue Description:</span>
+                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">
+                    {selectedBooking.issueSummary || 'N/A'}
+                  </p>
+                </div>
+                <div>
                   <span className="font-bold text-slate-600">Notes / Details:</span>
                   <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{
                     selectedBooking.quoteDetails 

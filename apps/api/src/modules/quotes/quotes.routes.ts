@@ -141,8 +141,8 @@ quotesRouter.get('/garage/stats', authenticate, async (req, res) => {
     // Incoming Requests = Pending bookings (pendingPayment)
     const incomingRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status = 'pendingPayment'`, [garageId]);
     
-    // Active Jobs (Bookings) = Accepted, In Progress, Completed
-    const activeJobsRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status IN ('confirmed', 'accepted', 'in_progress', 'completed')`, [garageId]);
+    // Active Jobs (Bookings) = PendingPayment, Accepted, In Progress, Completed
+    const activeJobsRes = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1 AND status IN ('pendingPayment', 'confirmed', 'accepted', 'in_progress', 'completed')`, [garageId]);
     
     // Generated Quotes (Pending Quote Requests) = open
     const generatedQuotesRes = await query(`SELECT COUNT(*) FROM quote_requests WHERE garage_id = $1`, [garageId]);

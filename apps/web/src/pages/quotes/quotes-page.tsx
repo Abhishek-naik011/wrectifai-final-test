@@ -13,6 +13,36 @@ export function QuotesPage() {
   const [loading, setLoading] = useState(true);
   const [bookingQuote, setBookingQuote] = useState<QuoteItem | null>(null);
 
+  const formatStatus = (status?: string) => {
+    if (!status) return '';
+    const s = status.toLowerCase();
+    switch (s) {
+      case 'open':
+      case 'pending':
+        return 'Pending Quote';
+      case 'quoted':
+        return 'Quoted';
+      case 'selected':
+        return 'Booked';
+      case 'accepted':
+        return 'Accepted';
+      case 'in_progress':
+      case 'repairing':
+        return 'In Progress';
+      case 'ready':
+        return 'Ready';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+      case 'expired':
+        return 'Cancelled';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -71,7 +101,7 @@ export function QuotesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
-                        {quote.status?.toUpperCase()}
+                        {formatStatus(quote.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">

@@ -27,6 +27,16 @@ export interface QuoteRequestResponse {
     vin?: string;
     mileage?: number;
   } | null;
+  sentQuote?: {
+    id: string;
+    totalCost: number;
+    labourCost: number;
+    partsCost: number;
+    etaDays?: number | null;
+    etaNote?: string;
+    remarks?: string;
+    status: string;
+  } | null;
 }
 
 export interface CreateQuoteRequestPayload {
