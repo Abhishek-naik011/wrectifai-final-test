@@ -1,6 +1,13 @@
+'use client';
+import { ProfileContent } from '@/pages/profile/profile-content';
 
-import { FeatureComingSoon } from '@/components/admin/feature-coming-soon';
-
-export default function Page() {
-  return <FeatureComingSoon title="Profile" />;
+export default function ProfilePage() {
+  return (
+    <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-slate-900">Admin Profile</h1>
+      </div>
+      <ProfileContent />
+    </div>
+  );
 }

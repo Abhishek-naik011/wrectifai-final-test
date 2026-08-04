@@ -59,7 +59,7 @@ function AdminServiceRequestsContent() {
       loadData();
       setFormData({customerId: '', garageId: '', vehicleId: '', serviceType: '', priority: 'Medium', description: '', preferredDate: '', status: 'pending'});
     } catch (err) {
-      alert('Error creating request');
+      console.error('Error creating request', err);
     } finally {
       setIsSubmitting(false);
     }

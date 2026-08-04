@@ -34,7 +34,7 @@ export default function BookingsPage() {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
     } catch (err) {
       console.error(err);
-      alert('Failed to update status');
+      console.error('Failed to update status');
     }
   };
 

@@ -9,6 +9,30 @@ usersRouter.get('/', (_req, res) => {
   res.json([{ id: 'u_1', name: 'Wrectifai User' }]);
 });
 
+usersRouter.put('/profile', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const { name, email, mobileNumber } = req.body;
+    const phoneToSave = mobileNumber && mobileNumber.trim() !== '' ? mobileNumber.trim() : null;
+    
+    const result = await query(
+      'UPDATE users SET name = $1, email = $2, mobile_number = $3 WHERE id = $4 RETURNING id, email, name, mobile_number as "mobileNumber", status',
+      [name, email, phoneToSave, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return error(res, 'User not found', 'NOT_FOUND', 404);
+    }
+
+    return success(res, result.rows[0]);
+  } catch (err) {
+    console.error('Failed to update profile', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
 usersRouter.get('/customer/stats', authenticate, async (req, res) => {
   try {
     const customerId = req.user?.userId;

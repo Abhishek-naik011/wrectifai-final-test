@@ -200,9 +200,16 @@ export function TopNavbar() {
             </button>
             <div className="absolute right-0 top-full pt-2 w-48 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
               <div className="bg-white border border-[#e4ecff] rounded-xl shadow-lg p-1.5">
-                <div className="px-3 py-2 text-xs text-[#8ea0c7] border-b border-[#f2f6ff] mb-1">
-                  Role: <span className="font-semibold text-[#1a56db] capitalize">{user.roles.join(', ')}</span>
-                </div>
+                <button
+                  onClick={() => {
+                    const path = window.location.pathname;
+                    const basePath = path.startsWith('/admin') ? '/admin' : path.startsWith('/garage') ? '/garage' : '';
+                    window.location.href = `${basePath}/profile`;
+                  }}
+                  className="w-full text-left px-3 py-2 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f2f6ff] rounded-lg transition-colors border-b border-[#f2f6ff] mb-1"
+                >
+                  View Profile
+                </button>
                 <button
                   onClick={logout}
                   className="w-full text-left px-3 py-2 text-[13px] font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-colors"

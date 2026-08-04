@@ -1,15 +1,16 @@
 'use client';
 import { RoleGuard } from '@/components/common/role-guard';
+import { DashboardShell } from '@/components/home/dashboard-shell';
+import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
-import FeatureComingSoonPage from '@/pages/feature-coming-soon/feature-coming-soon-page';
+import { HelpContent } from '@/pages/help/help-content';
 
 export default function HelpPage() {
   return (
     <RoleGuard allowedRoles={['garage']}>
-      <FeatureComingSoonPage 
-        title="Help & Support" 
-        customNavItems={garageNavItems} 
-      />
+      <DashboardShell customNavItems={garageNavItems} hideBottomWidget={true} header={<DashboardHeader />}>
+        <HelpContent />
+      </DashboardShell>
     </RoleGuard>
   );
 }

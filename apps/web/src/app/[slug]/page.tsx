@@ -6,6 +6,14 @@ import { AIDiagnosePage } from '@/pages/ai-diagnose/ai-diagnose-page';
 import { QuotesPage } from '@/pages/quotes/quotes-page';
 import { VehiclesPage } from '@/pages/vehicles/vehicles-page';
 import { BookingsPage } from '@/pages/bookings/bookings-page';
+import { ProfilePage } from '@/pages/profile/profile-page';
+import { SettingsPage } from '@/pages/settings/settings-page';
+import { HelpPage } from '@/pages/help/help-page';
+import { ServicesPage } from '@/pages/services/services-page';
+import { ShopPage } from '@/pages/shop/shop-page';
+import { WalletPaymentsPage } from '@/pages/wallet-payments/wallet-payments-page';
+import { OffersPage } from '@/pages/offers/offers-page';
+import { CarTipsPage } from '@/pages/car-tips/car-tips-page';
 import { navItems } from '@/components/home/data';
 
 const featurePageCopy: Record<string, string> = {
@@ -27,12 +35,6 @@ const featurePageCopy: Record<string, string> = {
     'Educational car care articles, maintenance guidance, and preventive tips will be published here soon.',
   'wallet-payments':
     'Wallet balance, payment methods, and transaction history will be available here soon.',
-  profile:
-    'Profile details, preferences, and account-level settings are coming to this page soon.',
-  settings:
-    'Application settings, notification preferences, and personalization controls are being prepared.',
-  'help-support':
-    'Help resources, FAQs, and support escalation tools are coming to this section soon.',
 };
 
 export function generateStaticParams() {
@@ -89,6 +91,70 @@ export default async function FeaturePage({
     return (
       <Suspense fallback={null}>
         <BookingsPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'profile') {
+    return (
+      <Suspense fallback={null}>
+        <ProfilePage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'settings') {
+    return (
+      <Suspense fallback={null}>
+        <SettingsPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'help-support') {
+    return (
+      <Suspense fallback={null}>
+        <HelpPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'services') {
+    return (
+      <Suspense fallback={null}>
+        <ServicesPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'shop') {
+    return (
+      <Suspense fallback={null}>
+        <ShopPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'wallet-payments') {
+    return (
+      <Suspense fallback={null}>
+        <WalletPaymentsPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'offers') {
+    return (
+      <Suspense fallback={null}>
+        <OffersPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'car-tips') {
+    return (
+      <Suspense fallback={null}>
+        <CarTipsPage />
       </Suspense>
     );
   }
