@@ -24,15 +24,22 @@ export function BookingModal({ isOpen, onClose, garageId, onSubmitSuccess }: { i
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg('');
+
+    if (!issueDescription.trim()) {
+      setErrorMsg('Please enter the issue description before booking.');
+      setIsSubmitting(false);
+      return;
+    }
     try {
       const { createBooking } = await import('@/lib/bookings-api');
       
-      const scheduledAt = new Date(`${preferredDate}T${preferredTime}:00`).toISOString();
+      const scheduledAt = `${preferredDate}T${preferredTime}:00`;
       
       await createBooking({
         garageId,
         vehicleId: selectedVehicleId || '00000000-0000-0000-0000-000000000002',
         scheduledAt,
+        serviceType: issueDescription,
         totalAmount: 0, // Quote not established yet for direct booking
         bookingType: 'instant',
         quoteId: null
@@ -76,12 +83,13 @@ export function BookingModal({ isOpen, onClose, garageId, onSubmitSuccess }: { i
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-1">Issue Description / Notes</label>
+          <label className="block text-sm font-semibold mb-1">Issue Description / Notes <span className="text-red-500">*</span></label>
           <textarea 
             value={issueDescription} 
             onChange={e => setIssueDescription(e.target.value)}
             className="w-full p-2 border rounded h-24"
             placeholder="Describe any issues or specific instructions..."
+            required
           />
         </div>
 

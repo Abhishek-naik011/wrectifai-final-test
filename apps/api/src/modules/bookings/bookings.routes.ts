@@ -44,10 +44,20 @@ bookingsRouter.get('/', authenticate, async (req, res) => {
         g.address as "garageAddress",
         v.make as "vehicleMake",
         v.model as "vehicleModel",
-        v.year as "vehicleYear"
+        v.year as "vehicleYear",
+        v.vin as "vehicleVin",
+        q.eta_note as "estimatedDays",
+        qr.issue_summary as "issueDescription",
+        qr.preferred_date as "preferredDate",
+        u.name as "customerName",
+        u.mobile_number as "customerPhone",
+        u.email as "customerEmail"
        FROM bookings b
        JOIN garages g ON b.garage_id = g.id
        JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN quotes q ON b.quote_id = q.id
+       LEFT JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN users u ON b.customer_id = u.id
        WHERE ${filterCondition}
        ORDER BY b.scheduled_at DESC`,
       params
@@ -163,8 +173,8 @@ bookingsRouter.get('/garage-incoming', authenticate, async (req, res) => {
       `SELECT b.id, b.customer_id as "customerId", b.vehicle_id as "vehicleId", b.quote_id as "quoteId",
               b.scheduled_at as "scheduledAt", b.status, b.total_amount as "totalAmount", b.created_at as "createdAt",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin",
-              u.name as "customerName", p.avatar_url as "customerAvatar",
-              q.details as "quoteDetails", q.amount as "quoteAmount",
+              u.name as "customerName", u.mobile_number as "customerPhone", p.avatar_url as "customerAvatar",
+              q.details as "quoteDetails", q.amount as "quoteAmount", q.eta_note as "estimatedDays",
               qr.issue_summary as "issueSummary"
        FROM bookings b
        LEFT JOIN vehicles v ON b.vehicle_id = v.id
@@ -177,7 +187,13 @@ bookingsRouter.get('/garage-incoming', authenticate, async (req, res) => {
       [garageId]
     );
 
-    return success(res, result.rows, 200);
+    const formatted = result.rows.map((row) => ({
+      ...row,
+      totalAmount: Number(row.totalAmount || 0),
+      quoteAmount: row.quoteAmount != null ? Number(row.quoteAmount) : null
+    }));
+
+    return success(res, formatted, 200);
   } catch (err) {
     return error(res, 'Failed to fetch incoming bookings', 'DATABASE_ERROR', 500);
   }
@@ -227,6 +243,10 @@ bookingsRouter.post('/from-quote/:quoteId', authenticate, async (req, res) => {
     // Mark quote and quote_request as selected
     await query(`UPDATE quotes SET status = 'selected' WHERE id = $1`, [quoteId]);
     await query(`UPDATE quote_requests SET status = 'selected' WHERE id = (SELECT quote_request_id FROM quotes WHERE id = $1)`, [quoteId]);
+    
+    if (issueDescription) {
+      await query(`UPDATE quote_requests SET issue_summary = $1 WHERE id = (SELECT quote_request_id FROM quotes WHERE id = $2)`, [issueDescription, quoteId]);
+    }
     
     return createBookingInternal(req, res, {
       garageId: quoteData.garage_id,
@@ -284,10 +304,20 @@ bookingsRouter.get('/:bookingId', authenticate, async (req, res) => {
         g.address as "garageAddress",
         v.make as "vehicleMake",
         v.model as "vehicleModel",
-        v.year as "vehicleYear"
+        v.year as "vehicleYear",
+        v.vin as "vehicleVin",
+        q.eta_note as "estimatedDays",
+        qr.issue_summary as "issueDescription",
+        qr.preferred_date as "preferredDate",
+        u.name as "customerName",
+        u.mobile_number as "customerPhone",
+        u.email as "customerEmail"
        FROM bookings b
        JOIN garages g ON b.garage_id = g.id
        JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN quotes q ON b.quote_id = q.id
+       LEFT JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN users u ON b.customer_id = u.id
        WHERE b.id = $1 AND ${filterCondition}`,
       params
     );
@@ -342,7 +372,6 @@ bookingsRouter.patch('/:bookingId/status', authenticate, async (req, res) => {
     let dbStatus = status;
     if (status === 'pending') dbStatus = 'pendingPayment';
     if (status === 'accepted') dbStatus = 'confirmed';
-    if (status === 'in_progress') dbStatus = 'inService';
     if (status === 'rejected') dbStatus = 'cancelled';
 
     const result = await query(

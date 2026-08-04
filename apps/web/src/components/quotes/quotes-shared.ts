@@ -27,6 +27,13 @@ export type QuoteItem = {
     mileage?: number;
   } | null;
   isBooked?: boolean;
+  bookingDetails?: {
+    id: string;
+    status: string;
+    createdAt: string;
+    scheduledAt: string;
+  } | null;
+  customerName?: string;
 };
 
 const DOLLAR = '$';

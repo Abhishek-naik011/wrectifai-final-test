@@ -20,6 +20,7 @@ export function BookingsPage() {
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [viewDetailsBooking, setViewDetailsBooking] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
   const loadBookings = async () => {
@@ -214,6 +215,13 @@ export function BookingsPage() {
                   </div>
 
                   <div className="flex gap-2">
+                    <Button
+                      onClick={() => setViewDetailsBooking(b)}
+                      variant="outline"
+                      className="h-8 rounded-[9px] px-2.5 text-[10.5px] font-semibold border-slate-200 text-slate-700 hover:bg-slate-50"
+                    >
+                      View Details
+                    </Button>
                     {(b.status === 'pendingPayment' || b.status === 'confirmed' || b.status === 'accepted') && (
                       <Button
                         onClick={() => handleCancelBooking(b.id)}
@@ -230,6 +238,73 @@ export function BookingsPage() {
           </div>
         )}
       </div>
+
+      {viewDetailsBooking && (
+        <Modal isOpen={true} onClose={() => setViewDetailsBooking(null)} title="Booking Details" className="max-w-2xl">
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Booking ID</span>
+              <p className="font-semibold">{viewDetailsBooking.id}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Quote ID</span>
+              <p className="font-semibold">{viewDetailsBooking.quoteId || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Garage Name</span>
+              <p className="font-semibold">{viewDetailsBooking.garageName}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Vehicle</span>
+              <p className="font-semibold">
+                {viewDetailsBooking.vehicleMake ? `${viewDetailsBooking.vehicleMake} ${viewDetailsBooking.vehicleModel} ${viewDetailsBooking.vehicleYear}` : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Vehicle Number / VIN</span>
+              <p className="font-semibold">{viewDetailsBooking.vehicleVin || 'N/A'}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="block font-bold text-slate-500 mb-1">Issue Description</span>
+              <p className="bg-slate-50 p-3 rounded border border-slate-200">
+                {viewDetailsBooking.issueDescription || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Estimated Days</span>
+              <p className="font-semibold">
+                {viewDetailsBooking.estimatedDays ? (/^\d+$/.test(String(viewDetailsBooking.estimatedDays).trim()) ? `${String(viewDetailsBooking.estimatedDays).trim()} Days` : viewDetailsBooking.estimatedDays) : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Preferred Date</span>
+              <p className="font-semibold">
+                {viewDetailsBooking.preferredDate ? new Date(viewDetailsBooking.preferredDate).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Preferred Time</span>
+              <p className="font-semibold">
+                {viewDetailsBooking.preferredDate ? new Date(viewDetailsBooking.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Booking Status</span>
+              <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded uppercase">
+                {viewDetailsBooking.status}
+              </span>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button 
+              onClick={() => setViewDetailsBooking(null)}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded font-bold hover:bg-slate-200 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
+      )}
 
       <Modal 
         isOpen={cancelModalOpen} 

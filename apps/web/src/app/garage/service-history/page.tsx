@@ -162,7 +162,7 @@ export default function ServiceHistoryPage() {
               <div>
                 <span className="font-bold block mb-1">Issue Description:</span>
                 <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                   {bookingDetails.bookingType === 'quoteBased' ? bookingDetails.serviceType || bookingDetails.issueSummary || 'N/A' : bookingDetails.bookingType}
+                   {bookingDetails.bookingType === 'quoteBased' ? bookingDetails.issueDescription || bookingDetails.issueSummary || bookingDetails.serviceType || 'N/A' : bookingDetails.bookingType}
                 </div>
               </div>
               <div className="flex justify-end pt-4">

@@ -11,6 +11,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
+  const [errorModal, setErrorModal] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
@@ -45,7 +46,7 @@ export default function CustomersPage() {
         vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
       });
     } catch (err) {
-      alert('Error creating customer');
+      setErrorModal({isOpen: true, message: 'Error creating customer'});
     } finally {
       setIsSubmitting(false);
     }
@@ -174,9 +175,22 @@ export default function CustomersPage() {
 
            <div className="pt-4 flex gap-2">
              <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-2 border rounded-lg text-sm font-bold">Cancel</button>
-             <button type="submit" disabled={isSubmitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">{isSubmitting ? 'Saving...' : 'Save Customer'}</button>
-           </div>
+             <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white bg-[#1a56db] rounded-lg hover:bg-[#174ec5]">
+              {isSubmitting ? 'Saving...' : 'Save Customer'}
+            </button>
+          </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({isOpen: false, message: ''})} title="Error">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">{errorModal.message}</p>
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button onClick={() => setErrorModal({isOpen: false, message: ''})} className="px-4 py-2 text-sm font-medium text-white bg-[#1a56db] rounded-lg hover:bg-[#174ec5]">
+              Close
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -5,12 +5,16 @@ import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
 import { fetchBookings } from '@/lib/bookings-api';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/common/card';
+import { Modal } from '@/components/common/modal';
 import { updateBookingStatus } from '@/lib/bookings-api';
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
 
   useEffect(() => {
     fetchBookings()
@@ -93,14 +97,19 @@ export default function BookingsPage() {
                             </button>
                           )}
                           {b.status === 'completed' && (
-                            <button onClick={() => window.location.href = `/garage/service-history`} className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded font-semibold hover:bg-slate-200 inline-block">
+                            <button onClick={() => router.push(`/garage/service-history`)} className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded font-semibold hover:bg-slate-200 inline-block">
                               View History
                             </button>
                           )}
                           {b.status === 'cancelled' && (
-                            <span className="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded font-semibold inline-block">
+                            <button onClick={() => setSelectedBooking(b)} className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded font-semibold hover:bg-slate-200 inline-block">
                               View Details
-                            </span>
+                            </button>
+                          )}
+                          {b.status !== 'cancelled' && b.status !== 'completed' && (
+                            <button onClick={() => setSelectedBooking(b)} className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded font-semibold hover:bg-slate-200 inline-block ml-2">
+                              Details
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -111,6 +120,97 @@ export default function BookingsPage() {
             )}
           </Card>
         </div>
+
+        {selectedBooking && (
+          <Modal isOpen={true} onClose={() => setSelectedBooking(null)} title="Booking Details" className="max-w-2xl">
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Booking ID</span>
+                <p className="font-semibold">{selectedBooking.id}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Quote ID</span>
+                <p className="font-semibold">{selectedBooking.quoteId || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Garage Name</span>
+                <p className="font-semibold">{selectedBooking.garageName || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Created Date</span>
+                <p className="font-semibold">
+                  {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Customer Name</span>
+                <p className="font-semibold">{selectedBooking.customerName || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Customer Phone</span>
+                <p className="font-semibold">{selectedBooking.customerPhone || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Customer Email</span>
+                <p className="font-semibold">{selectedBooking.customerEmail || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Vehicle</span>
+                <p className="font-semibold">
+                  {selectedBooking.vehicleMake ? `${selectedBooking.vehicleMake} ${selectedBooking.vehicleModel} ${selectedBooking.vehicleYear}` : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Vehicle Number / VIN</span>
+                <p className="font-semibold">{selectedBooking.vehicleVin || 'N/A'}</p>
+              </div>
+              <div className="col-span-2">
+                <span className="block font-bold text-slate-500 mb-1">Issue Description</span>
+                <p className="bg-slate-50 p-3 rounded border border-slate-200">
+                  {selectedBooking.issueDescription || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Estimated Days</span>
+                <p className="font-semibold">
+                  {selectedBooking.estimatedDays ? (/^\d+$/.test(String(selectedBooking.estimatedDays).trim()) ? `${String(selectedBooking.estimatedDays).trim()} Days` : selectedBooking.estimatedDays) : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Quote Amount</span>
+                <p className="font-semibold text-blue-700">
+                  {selectedBooking.currency} {selectedBooking.totalAmount}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Preferred Date</span>
+                <p className="font-semibold">
+                  {selectedBooking.scheduledAt ? new Date(selectedBooking.scheduledAt).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Preferred Time</span>
+                <p className="font-semibold">
+                  {selectedBooking.scheduledAt ? new Date(selectedBooking.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="block font-bold text-slate-500 mb-1">Current Status</span>
+                <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded uppercase">
+                  {selectedBooking.status === 'pendingPayment' ? 'Pending' : selectedBooking.status === 'in_progress' ? 'In Progress' : selectedBooking.status}
+                </span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setSelectedBooking(null)}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded font-bold hover:bg-slate-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </Modal>
+        )}
       </DashboardShell>
     </RoleGuard>
   );

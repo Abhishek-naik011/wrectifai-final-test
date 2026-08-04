@@ -110,8 +110,20 @@ export default function IncomingRequestsPage() {
               </div>
               <div className="p-6 overflow-y-auto space-y-4 text-sm">
                 <div>
-                  <span className="font-bold text-slate-600">Customer:</span>
+                  <span className="font-bold text-slate-600">Customer Name:</span>
                   <p className="text-slate-800">{selectedBooking.customerName || 'Customer'}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Customer Phone:</span>
+                  <p className="text-slate-800">{selectedBooking.customerPhone || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Booking ID:</span>
+                  <p className="text-slate-800">{selectedBooking.id}</p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Quote ID:</span>
+                  <p className="text-slate-800">{selectedBooking.quoteId || 'N/A'}</p>
                 </div>
                 <div>
                   <span className="font-bold text-slate-600">Vehicle:</span>
@@ -122,8 +134,28 @@ export default function IncomingRequestsPage() {
                   <p className="text-slate-800">{selectedBooking.vehicleVin || 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="font-bold text-slate-600">Appointment:</span>
-                  <p className="text-slate-800 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">{formatTime(selectedBooking.scheduledAt)}</p>
+                  <span className="font-bold text-slate-600">Preferred Date:</span>
+                  <p className="text-slate-800 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">
+                    {selectedBooking.scheduledAt ? new Date(selectedBooking.scheduledAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Preferred Time:</span>
+                  <p className="text-slate-800 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">
+                    {selectedBooking.scheduledAt ? new Date(selectedBooking.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Estimated Days:</span>
+                  <p className="text-slate-800 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200">
+                    {selectedBooking.estimatedDays ? (/^\d+$/.test(String(selectedBooking.estimatedDays).trim()) ? `${String(selectedBooking.estimatedDays).trim()} Days` : selectedBooking.estimatedDays) : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className="font-bold text-slate-600">Current Status:</span>
+                  <p className="text-orange-600 font-bold bg-slate-50 p-2 mt-1 rounded border border-slate-200 uppercase">
+                    Pending
+                  </p>
                 </div>
                 <div>
                   <span className="font-bold text-slate-600">Quote Amount:</span>
@@ -138,9 +170,15 @@ export default function IncomingRequestsPage() {
                 <div>
                   <span className="font-bold text-slate-600">Notes / Details:</span>
                   <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{
-                    selectedBooking.quoteDetails 
-                      ? (typeof selectedBooking.quoteDetails === 'string' ? selectedBooking.quoteDetails : JSON.stringify(selectedBooking.quoteDetails))
-                      : 'No additional notes provided'
+                    (() => {
+                      if (!selectedBooking.quoteDetails) return '—';
+                      let details = selectedBooking.quoteDetails;
+                      if (typeof details === 'string') {
+                        try { details = JSON.parse(details); } catch (e) { return details || '—'; }
+                      }
+                      if (details.remarks) return details.remarks;
+                      return '—';
+                    })()
                   }</p>
                 </div>
               </div>

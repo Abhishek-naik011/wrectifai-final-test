@@ -140,7 +140,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
           vehicleId,
           issueSummary,
           diagnosisRequestId,
-          garageId: '00000000-0000-0000-0000-000000000011' // Default/first garage for testing
+          garageId: 'ALL' // Broadcast to all approved garages
         });
         console.log('[FindingQuotes] Received quote request response:', response);
         if (!isUnmounted.current) {

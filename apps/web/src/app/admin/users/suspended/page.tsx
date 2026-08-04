@@ -4,11 +4,13 @@ import { Card } from '@/components/common/card';
 import { Search, UserX, MapPin, Car, MoreVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Modal } from '@/components/common/modal';
 
 export default function SuspendedCustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -25,10 +27,15 @@ export default function SuspendedCustomersPage() {
     loadData();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this customer?')) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      await apiClient.delete(`/admin/users/${id}`);
+      await apiClient.delete(`/admin/users/${deleteId}`);
+      setDeleteId(null);
       loadData();
     } catch (err) {
       console.error('Failed to delete customer', err);
@@ -117,7 +124,7 @@ export default function SuspendedCustomersPage() {
                     </td>
                     <td className="p-4 text-sm text-slate-700">{formatTime(c.joined)}</td>
                     <td className="p-4 text-right">
-                       <button onClick={() => handleDelete(c.id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg">
+                       <button onClick={() => confirmDelete(c.id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg">
                           Delete Customer
                        </button>
                     </td>
@@ -128,6 +135,32 @@ export default function SuspendedCustomersPage() {
           </table>
         </div>
       </Card>
+
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Confirm Delete"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Are you sure you want to permanently delete this customer? This action cannot be undone.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+            <button
+              onClick={() => setDeleteId(null)}
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete Customer
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

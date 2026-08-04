@@ -10,6 +10,7 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
   const [vehicleId, setVehicleId] = useState<string>('');
   const [preferredDate, setPreferredDate] = useState(quote.preferredDate ? quote.preferredDate.split('T')[0] : '');
   const [preferredTime, setPreferredTime] = useState('');
+  const [issueDescription, setIssueDescription] = useState(quote.requestIssueSummary || '');
   const [additionalNotes, setAdditionalNotes] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,14 +35,18 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
       setErrorMsg('Please select a preferred date and time.');
       return;
     }
+    if (!issueDescription.trim()) {
+      setErrorMsg('Please enter the issue description before booking.');
+      return;
+    }
     
     setIsSubmitting(true);
     setErrorMsg('');
     try {
       await apiClient.post(`/bookings/from-quote/${quote.id}`, {
         vehicleId,
-        issueDescription: quote.requestIssueSummary || 'Quote Based Service',
-        scheduledAt: `${preferredDate}T${preferredTime}:00Z`,
+        issueDescription: issueDescription,
+        scheduledAt: `${preferredDate}T${preferredTime}:00`,
         notes: additionalNotes,
       });
       onSuccess();
@@ -56,7 +61,8 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
   const todayStr = new Date().toISOString().split('T')[0];
   const quoteAmount = quote.price || `$${(quote as any).amount || (quote as any).totalCost || 0}`;
   const garageName = (quote as any).garageName || quote.garage;
-  const estimatedDays = quote.time || (quote as any).eta_note || 'N/A';
+  const rawTime = quote.time || (quote as any).eta_note;
+  const estimatedDays = rawTime ? (/^\\d+$/.test(String(rawTime).trim()) ? `${String(rawTime).trim()} Days` : rawTime) : 'N/A';
 
   return (
     <Modal isOpen={true} onClose={onClose} title="Book Appointment" className="max-w-md">
@@ -75,12 +81,6 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
           <div className="flex justify-between">
             <span className="font-bold text-slate-600">Estimated Days:</span>
             <span className="font-bold text-slate-800">{estimatedDays}</span>
-          </div>
-          <div>
-            <span className="font-bold text-slate-600 block mb-1">Issue Description:</span>
-            <p className="bg-white p-2 rounded border border-slate-200 text-slate-700">
-              {quote.requestIssueSummary || 'N/A'}
-            </p>
           </div>
         </div>
 
@@ -121,6 +121,17 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
               required
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">Issue Description <span className="text-red-500">*</span></label>
+          <textarea
+            value={issueDescription}
+            onChange={e => setIssueDescription(e.target.value)}
+            placeholder="Describe the issue you need fixed..."
+            className="w-full p-2 border rounded border-slate-300 h-20"
+            required
+          />
         </div>
 
         <div>

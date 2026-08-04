@@ -8,9 +8,11 @@ import { Card } from '@/components/common/card';
 import { Calendar, Inbox, CheckCircle, Car, DollarSign, Plus, Calendar as CalendarIcon, Star, PenTool, Wrench, AlertTriangle, ArrowRight, FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useState, useEffect } from 'react';
-import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingRequests } from '@/lib/quotes-api';
+import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingBookings } from '@/lib/quotes-api';
+import { useRouter } from 'next/navigation';
 
 export default function GarageDashboard() {
+  const router = useRouter();
   const { user } = useAuth();
   const [stats, setStats] = useState({ incoming: 0, todaysBookings: 0, activeJobs: 0, generatedQuotes: 0, completed: 0 });
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
@@ -23,7 +25,7 @@ export default function GarageDashboard() {
         const [statsData, jobsData, requestsData, quotesData] = await Promise.all([
           fetchGarageStats().catch(() => ({ incoming: 0, todaysBookings: 0, activeJobs: 0, generatedQuotes: 0, completed: 0 })),
           fetchGarageActiveJobs().catch(() => []),
-          getGarageIncomingRequests().catch(() => []),
+          getGarageIncomingBookings().catch(() => []),
           fetchGarageQuotes().catch(() => []),
         ]);
         setStats(statsData as any);
@@ -111,7 +113,7 @@ export default function GarageDashboard() {
                          <p className="text-xs text-slate-500 text-center py-4">No pending requests</p>
                        ) : (
                          recentRequests.map(req => (
-                           <RequestCard key={req.id} name={req.customerName || 'Customer'} vehicle={`${req.vehicle?.make || ''} ${req.vehicle?.model || ''}`} issue={req.issueSummary} time={formatTime(req.createdAt)} onView={() => window.location.href = '/garage/incoming-requests'} />
+                           <RequestCard key={req.id} name={req.customerName || 'Customer'} vehicle={`${req.vehicleMake || ''} ${req.vehicleModel || ''}`} issue={req.issueSummary || 'No description'} time={formatTime(req.createdAt)} onView={() => router.push('/garage/incoming-requests')} />
                          ))
                        )}
                     </div>
@@ -129,8 +131,9 @@ export default function GarageDashboard() {
                           <div key={quote.id} className="flex items-center gap-3 bg-slate-50 p-2 rounded-lg border">
                             <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-600"><PenTool className="w-4 h-4"/></div>
                             <div className="flex-1 overflow-hidden">
-                              <p className="text-sm font-semibold truncate">Q-{quote.id.substring(0, 8).toUpperCase()}</p>
+                              <p className="text-sm font-semibold truncate">{quote.customerName || 'Customer'}</p>
                               <p className="text-xs text-slate-500 truncate">{quote.vehicleMake} {quote.vehicleModel}</p>
+                              <p className="text-xs text-slate-400 truncate">ETA: {quote.etaNote || (quote.etaDays ? `${quote.etaDays} Days` : 'N/A')}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-bold">USD {quote.totalCost?.toLocaleString()}</p>
@@ -214,7 +217,7 @@ export default function GarageDashboard() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button 
-                            onClick={() => window.location.href = `/garage/quotes`}
+                            onClick={() => router.push(`/garage/quotes`)}
                             className="text-blue-600 hover:text-blue-800 font-medium px-4 py-2 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             View

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
+import { Modal } from '@/components/common/modal';
 import { BookingDialog } from '@/components/customer/booking-dialog';
 import { fetchQuotes } from '@/lib/quotes-api';
 import type { QuoteItem } from '@/components/quotes/quotes-shared';
@@ -12,14 +13,17 @@ export function QuotesPage() {
   const [quotes, setQuotes] = useState<QuoteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingQuote, setBookingQuote] = useState<QuoteItem | null>(null);
+  const [viewQuote, setViewQuote] = useState<QuoteItem | null>(null);
+  const [viewDetailsQuote, setViewDetailsQuote] = useState<QuoteItem | null>(null);
 
   const formatStatus = (status?: string) => {
-    if (!status) return '';
+    if (!status) return 'Pending';
     const s = status.toLowerCase();
     switch (s) {
       case 'open':
       case 'pending':
-        return 'Pending Quote';
+      case 'pendingpayment':
+        return 'Pending';
       case 'quoted':
         return 'Quoted';
       case 'selected':
@@ -35,11 +39,12 @@ export function QuotesPage() {
         return 'Completed';
       case 'cancelled':
       case 'expired':
-        return 'Cancelled';
       case 'rejected':
-        return 'Rejected';
+        return 'Cancelled';
+      case 'suspended':
+        return 'Suspended';
       default:
-        return s.charAt(0).toUpperCase() + s.slice(1);
+        return 'Pending';
     }
   };
 
@@ -97,7 +102,7 @@ export function QuotesPage() {
                       {quote.price || `$${(quote as any).amount || (quote as any).totalCost || 0}`}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
-                      {quote.details?.estimatedTime || (quote as any).eta_note || 'N/A'}
+                      {quote.time || 'N/A'}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
@@ -105,16 +110,26 @@ export function QuotesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {!quote.isBooked && quote.status !== 'rejected' && (
-                        <button
-                          onClick={() => setBookingQuote(quote)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-blue-700 transition-colors"
-                        >
-                          Book Now
-                        </button>
+                      {!quote.isBooked && quote.status !== 'rejected' && quote.status !== 'cancelled' && (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setViewQuote(quote)}
+                            className="bg-slate-100 text-slate-700 px-4 py-2 rounded font-bold text-sm hover:bg-slate-200 transition-colors"
+                          >
+                            View Quote
+                          </button>
+                        </div>
                       )}
                       {quote.isBooked && (
-                        <span className="text-slate-500 font-bold text-sm px-4 py-2 bg-slate-100 rounded cursor-not-allowed">Booked ✓</span>
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-emerald-600 font-bold text-sm px-3 py-2 bg-emerald-50 rounded">Booked ✓</span>
+                          <button
+                            onClick={() => setViewDetailsQuote(quote)}
+                            className="bg-slate-100 text-slate-700 px-4 py-2 rounded font-bold text-sm hover:bg-slate-200 transition-colors"
+                          >
+                            View Details
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -131,9 +146,184 @@ export function QuotesPage() {
           onSuccess={() => {
             setBookingQuote(null);
             window.dispatchEvent(new Event('dashboard_refresh'));
-            window.location.reload();
+            const loadData = async () => {
+              setLoading(true);
+              try {
+                const quotesData = await fetchQuotes();
+                setQuotes(quotesData);
+              } catch (err) {
+                console.error('Failed to fetch data:', err);
+              } finally {
+                setLoading(false);
+              }
+            };
+            loadData();
           }}
         />
+      )}
+      {viewQuote && (
+        <Modal isOpen={true} onClose={() => setViewQuote(null)} title="Quote Details" className="max-w-2xl">
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Quote ID</span>
+              <p className="font-semibold">{viewQuote.id}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Created Date</span>
+              <p className="font-semibold">{viewQuote.requestCreatedAt ? new Date(viewQuote.requestCreatedAt).toLocaleString() : 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Garage Name</span>
+              <p className="font-semibold">{(viewQuote as any).garageName || viewQuote.garage}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Garage Address</span>
+              <p className="font-semibold">{(viewQuote as any).garageAddress || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Customer Name</span>
+              <p className="font-semibold">{viewQuote.customerName || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Vehicle</span>
+              <p className="font-semibold">
+                {viewQuote.vehicle ? `${viewQuote.vehicle.make} ${viewQuote.vehicle.model} ${viewQuote.vehicle.year}` : 'N/A'}
+              </p>
+            </div>
+            <div className="col-span-2">
+              <span className="block font-bold text-slate-500 mb-1">Issue Description</span>
+              <p className="bg-slate-50 p-3 rounded border border-slate-200">
+                {viewQuote.requestIssueSummary || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Labour Cost</span>
+              <p className="font-semibold">{viewQuote.details?.labour ? `USD ${viewQuote.details.labour}` : 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Parts Cost</span>
+              <p className="font-semibold">{viewQuote.details?.parts ? `USD ${viewQuote.details.parts}` : 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Other Charges</span>
+              <p className="font-semibold">{viewQuote.details?.other ? `USD ${viewQuote.details.other}` : 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Total Amount</span>
+              <p className="font-bold text-blue-700">{viewQuote.price || `$${(viewQuote as any).amount || (viewQuote as any).totalCost || 0}`}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Estimated Days</span>
+              <p className="font-semibold">{viewQuote.time || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Warranty</span>
+              <p className="font-semibold">{viewQuote.metaSecondary || 'N/A'}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="block font-bold text-slate-500 mb-1">Garage Notes</span>
+              <p className="bg-slate-50 p-3 rounded border border-slate-200">
+                {viewQuote.details?.remarks || 'N/A'}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button 
+              onClick={() => setViewQuote(null)}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded font-bold hover:bg-slate-200 transition-colors"
+            >
+              Close
+            </button>
+            <button 
+              onClick={() => {
+                const quoteToBook = viewQuote;
+                setViewQuote(null);
+                setBookingQuote(quoteToBook);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 transition-colors"
+            >
+              Book Now
+            </button>
+          </div>
+        </Modal>
+      )}
+      {viewDetailsQuote && (
+        <Modal isOpen={true} onClose={() => setViewDetailsQuote(null)} title="Booking Details" className="max-w-2xl">
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Booking ID</span>
+              <p className="font-semibold">{viewDetailsQuote.bookingDetails?.id || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Quote ID</span>
+              <p className="font-semibold">{viewDetailsQuote.id}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Garage Name</span>
+              <p className="font-semibold">{viewDetailsQuote.garage}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Customer Name</span>
+              <p className="font-semibold">{viewDetailsQuote.customerName || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Vehicle</span>
+              <p className="font-semibold">
+                {viewDetailsQuote.vehicle ? `${viewDetailsQuote.vehicle.make} ${viewDetailsQuote.vehicle.model} ${viewDetailsQuote.vehicle.year}` : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Vehicle Number / VIN</span>
+              <p className="font-semibold">{viewDetailsQuote.vehicle?.vin || 'N/A'}</p>
+            </div>
+            <div className="col-span-2">
+              <span className="block font-bold text-slate-500 mb-1">Issue Description</span>
+              <p className="bg-slate-50 p-3 rounded border border-slate-200">
+                {viewDetailsQuote.requestIssueSummary || 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Estimated Days</span>
+              <p className="font-semibold">{viewDetailsQuote.time || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Quote Amount</span>
+              <p className="font-semibold text-blue-700">{viewDetailsQuote.price || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Preferred Date</span>
+              <p className="font-semibold">
+                {viewDetailsQuote.bookingDetails?.scheduledAt ? new Date(viewDetailsQuote.bookingDetails.scheduledAt).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Preferred Time</span>
+              <p className="font-semibold">
+                {viewDetailsQuote.bookingDetails?.scheduledAt ? new Date(viewDetailsQuote.bookingDetails.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Booking Status</span>
+              <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded uppercase">
+                {viewDetailsQuote.bookingDetails?.status || 'N/A'}
+              </span>
+            </div>
+            <div>
+              <span className="block font-bold text-slate-500 mb-1">Booking Created Date</span>
+              <p className="font-semibold">
+                {viewDetailsQuote.bookingDetails?.createdAt ? new Date(viewDetailsQuote.bookingDetails.createdAt).toLocaleString() : 'N/A'}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button 
+              onClick={() => setViewDetailsQuote(null)}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded font-bold hover:bg-slate-200 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
     </DashboardShell>
   );

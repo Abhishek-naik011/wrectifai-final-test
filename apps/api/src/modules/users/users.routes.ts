@@ -21,16 +21,16 @@ usersRouter.get('/customer/stats', authenticate, async (req, res) => {
       WHERE customer_id = $1 AND status IN ('pendingPayment', 'confirmed', 'in_progress', 'pending', 'accepted')
     `, [customerId]);
 
-    // Pending Quotes Count (Quote requests without bookings)
+    // Pending Quotes Count (Quote requests with actual quotes that are not booked)
     const quotesRes = await query(`
-      SELECT COUNT(*) as count
-      FROM quote_requests qr
+      SELECT COUNT(DISTINCT q.id) as count
+      FROM quotes q
+      JOIN quote_requests qr ON q.quote_request_id = qr.id
       WHERE qr.customer_id = $1 AND NOT EXISTS (
-        SELECT 1 FROM quotes q
-        JOIN bookings b ON b.quote_id = q.id
-        WHERE q.quote_request_id = qr.id
-      )
+        SELECT 1 FROM bookings b WHERE b.quote_id = q.id
+      ) AND q.status NOT IN ('rejected', 'cancelled', 'expired')
     `, [customerId]);
+
 
     // Vehicles Count
     const vehiclesRes = await query(`

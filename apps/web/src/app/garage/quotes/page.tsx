@@ -4,7 +4,7 @@ import { DashboardShell } from '@/components/home/dashboard-shell';
 import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
 import { useState, useEffect } from 'react';
-import { getGarageIncomingRequests, QuoteRequestResponse, submitGarageQuote } from '@/lib/quotes-api';
+import { getGarageIncomingRequests, QuoteRequestResponse, submitGarageQuote, fetchGarageQuotes, GarageQuote } from '@/lib/quotes-api';
 
 export default function QuotesPage() {
   const [requests, setRequests] = useState<QuoteRequestResponse[]>([]);
@@ -12,8 +12,7 @@ export default function QuotesPage() {
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequestResponse | null>(null);
   
   // View Quote state
-  const [viewingQuote, setViewingQuote] = useState<QuoteRequestResponse | null>(null);
-  
+  const [viewDetailsQuote, setViewDetailsQuote] = useState<{request: QuoteRequestResponse, quote: GarageQuote} | null>(null);
   // Create Quote form states
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [labourCost, setLabourCost] = useState('');
@@ -43,6 +42,20 @@ export default function QuotesPage() {
     if (!isoString) return '';
     const date = new Date(isoString);
     return date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const handleViewQuote = async (req: QuoteRequestResponse) => {
+    try {
+      const quotes = await fetchGarageQuotes();
+      const quote = quotes.find(q => q.quoteRequestId === req.id);
+      if (quote) {
+        setViewDetailsQuote({ request: req, quote });
+      } else {
+        console.error("Quote details not found");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleSendQuote = async (e: React.FormEvent) => {
@@ -116,7 +129,7 @@ export default function QuotesPage() {
                             <button onClick={() => setSelectedRequest(req)} className="text-blue-600 font-bold hover:underline">View Details</button>
                           )}
                           {req.status === 'quoted' && (
-                            <button onClick={() => setViewingQuote(req)} className="text-blue-600 font-bold hover:underline">View Quote</button>
+                            <button onClick={() => handleViewQuote(req)} className="text-blue-600 font-bold hover:underline">View Quote</button>
                           )}
                           {req.status === 'selected' && (
                             <a href="/garage/bookings" className="text-indigo-600 font-bold hover:underline">View Booking</a>
@@ -277,43 +290,63 @@ export default function QuotesPage() {
         )}
 
         {/* View Sent Quote Modal */}
-        {viewingQuote && viewingQuote.sentQuote && (
+        {viewDetailsQuote && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
               <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                 <h2 className="font-bold text-slate-800">Sent Quote Details</h2>
-                <button onClick={() => setViewingQuote(null)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+                <button onClick={() => setViewDetailsQuote(null)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
               </div>
               <div className="p-6 overflow-y-auto space-y-4 text-sm">
                 <div>
-                  <span className="font-bold text-slate-600">Customer Name:</span>
-                  <p className="text-slate-800">{viewingQuote.customerName || 'Customer'}</p>
+                  <span className="font-bold text-slate-600 block">Quote ID:</span>
+                  <p className="text-slate-800">{viewDetailsQuote.quote.id}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-bold text-slate-600 block">Customer Name:</span>
+                    <p className="text-slate-800">{viewDetailsQuote.request.customerName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-600 block">Garage Name:</span>
+                    <p className="text-slate-800">{(viewDetailsQuote.quote as any).garageName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-600 block">Customer Phone:</span>
+                    <p className="text-slate-800">{(viewDetailsQuote.quote as any).customerPhone || (viewDetailsQuote.request as any).customerPhone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-600 block">Customer Email:</span>
+                    <p className="text-slate-800">{(viewDetailsQuote.quote as any).customerEmail || (viewDetailsQuote.request as any).customerEmail || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-bold text-slate-600 block">Vehicle:</span>
+                    <p className="text-slate-800">{viewDetailsQuote.request.vehicle?.make} {viewDetailsQuote.request.vehicle?.model} {viewDetailsQuote.request.vehicle?.year}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-600 block">Vehicle Number / VIN:</span>
+                    <p className="text-slate-800">{viewDetailsQuote.request.vehicle?.vin || 'N/A'}</p>
+                  </div>
                 </div>
                 <div>
-                  <span className="font-bold text-slate-600">Vehicle:</span>
-                  <p className="text-slate-800">{viewingQuote.vehicle?.make} {viewingQuote.vehicle?.model} {viewingQuote.vehicle?.year}</p>
+                  <span className="font-bold text-slate-600 block">Issue Description:</span>
+                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{viewDetailsQuote.request.issueSummary || 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="font-bold text-slate-600">Issue Description:</span>
-                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{viewingQuote.issueSummary || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="font-bold text-slate-600">Additional Notes:</span>
-                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{viewingQuote.sentQuote.remarks || 'None'}</p>
+                  <span className="font-bold text-slate-600 block">Garage Notes:</span>
+                  <p className="text-slate-800 bg-slate-50 p-3 mt-1 rounded border border-slate-200">{viewDetailsQuote.quote.details?.remarks || 'None'}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200">
                   <div>
                     <span className="font-bold text-slate-600 block">Labour Cost:</span>
-                    <span className="text-slate-800">${viewingQuote.sentQuote.labourCost.toFixed(2)}</span>
+                    <span className="text-slate-800">${(viewDetailsQuote.quote.laborCost || 0).toFixed(2)}</span>
                   </div>
                   <div>
                     <span className="font-bold text-slate-600 block">Parts Cost:</span>
-                    <span className="text-slate-800">${viewingQuote.sentQuote.partsCost.toFixed(2)}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-600 block">Taxes:</span>
-                    <span className="text-slate-800">$0.00</span>
+                    <span className="text-slate-800">${(viewDetailsQuote.quote.partsCost || 0).toFixed(2)}</span>
                   </div>
                   <div>
                     <span className="font-bold text-slate-600 block">Other Charges:</span>
@@ -321,28 +354,24 @@ export default function QuotesPage() {
                   </div>
                   <div className="col-span-2 bg-slate-50 p-3 rounded mt-2 border border-slate-200 flex justify-between items-center">
                     <span className="font-bold text-slate-700">Total Amount:</span>
-                    <span className="font-bold text-blue-700 text-lg">${viewingQuote.sentQuote.totalCost.toFixed(2)}</span>
+                    <span className="font-bold text-blue-700 text-lg">${(viewDetailsQuote.quote.totalCost || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <span className="font-bold text-slate-600 block">Estimated Completion:</span>
-                    <span className="text-slate-800">{viewingQuote.sentQuote.etaNote || (viewingQuote.sentQuote.etaDays ? `${viewingQuote.sentQuote.etaDays} days` : 'N/A')}</span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-slate-600 block">Quote Status:</span>
-                    <span className="text-slate-800 uppercase font-bold text-xs bg-slate-100 px-2 py-1 rounded">{viewingQuote.sentQuote.status}</span>
+                    <span className="font-bold text-slate-600 block">Estimated Days:</span>
+                    <span className="text-slate-800">{viewDetailsQuote.quote.etaNote || (viewDetailsQuote.quote.etaDays ? `${viewDetailsQuote.quote.etaDays} days` : 'N/A')}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="font-bold text-slate-600 block">Quote Created Date:</span>
-                    <span className="text-slate-800">{formatTime(viewingQuote.createdAt)}</span>
+                    <span className="text-slate-800">{formatTime(viewDetailsQuote.quote.createdAt)}</span>
                   </div>
                 </div>
               </div>
               <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
                 <button 
-                  onClick={() => setViewingQuote(null)}
+                  onClick={() => setViewDetailsQuote(null)}
                   className="px-4 py-2 bg-slate-200 rounded text-sm font-bold text-slate-700 hover:bg-slate-300"
                 >
                   Close

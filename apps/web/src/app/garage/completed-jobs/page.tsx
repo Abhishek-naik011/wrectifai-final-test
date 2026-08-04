@@ -93,7 +93,7 @@ export default function CompletedJobsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="px-2.5 py-1 rounded-full text-xs font-semibold capitalize whitespace-nowrap bg-teal-100 text-teal-700">
-                            {job.bookingStatus}
+                            {job.bookingStatus === 'pendingPayment' ? 'Pending' : job.bookingStatus === 'in_progress' ? 'In Progress' : job.bookingStatus}
                           </span>
                         </td>
                       </tr>
