@@ -263,11 +263,10 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
 
             <div>
               <h1 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#238453]">
-                Request Sent Successfully!
+                Thank you.
               </h1>
               <p className="mt-1 text-[12px] text-[#5f7099]">
-                We&apos;ve shared your issue with 12 trusted garages nearby. You
-                will start receiving quotes shortly.
+                Your request has been sent to all available garages. You will start receiving quotations shortly.
               </p>
             </div>
           </div>

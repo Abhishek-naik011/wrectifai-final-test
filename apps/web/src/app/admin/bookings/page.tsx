@@ -54,7 +54,16 @@ export default function AdminBookingsPage() {
   const statuses = ['All', 'pending', 'confirmed', 'completed', 'cancelled', 'in-progress'];
 
   const filteredBookings = bookings.filter(b => {
-    if (activeFilter !== 'All' && b.status?.toLowerCase() !== activeFilter.toLowerCase()) return false;
+    if (activeFilter !== 'All') {
+      const f = activeFilter.toLowerCase();
+      const s = (b.status || '').toLowerCase();
+      let match = false;
+      if (f === 'pending' && (s === 'pending' || s === 'pendingpayment')) match = true;
+      else if (f === 'confirmed' && (s === 'confirmed' || s === 'accepted')) match = true;
+      else if (f === 'in-progress' && s === 'in_progress') match = true;
+      else if (f === s) match = true;
+      if (!match) return false;
+    }
     
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();

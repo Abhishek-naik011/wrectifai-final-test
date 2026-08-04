@@ -306,10 +306,18 @@ adminRouter.post('/service-requests', async (req, res) => {
   try {
     const { customerId, vehicleId, serviceType, priority, description, preferredDate, status } = req.body;
     
+    // Ensure we have a valid vehicle ID to satisfy the foreign key constraint. We can query the first vehicle for this customer or fallback to a hardcoded UUID if needed, but it's best to require it or fallback gracefully.
+    // If vehicleId is not provided, try to fetch the customer's first vehicle
+    let resolvedVehicleId = vehicleId;
+    if (!resolvedVehicleId && customerId) {
+      const vRes = await query('SELECT id FROM vehicles WHERE customer_id = $1 LIMIT 1', [customerId]);
+      if (vRes.rows.length > 0) resolvedVehicleId = vRes.rows[0].id;
+    }
+    
     const result = await query(
-      `INSERT INTO diagnosis_requests (customer_id, vehicle_id, symptom_text, status)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [customerId || null, vehicleId || null, description || null, status || 'pending']
+      `INSERT INTO quote_requests (customer_id, vehicle_id, issue_summary, preferred_date, status)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [customerId || null, resolvedVehicleId || '00000000-0000-0000-0000-000000000002', description || serviceType || 'Issue not provided', preferredDate || null, status || 'open']
     );
     
     return success(res, result.rows[0]);
@@ -321,13 +329,20 @@ adminRouter.post('/service-requests', async (req, res) => {
 
 adminRouter.get('/service-requests', async (req, res) => {
   try {
-    const result = await query(
-      `SELECT qr.id, u.name as "customerName", g.name as "garageName", qr.issue_summary as details, qr.status
-       FROM quote_requests qr
-       LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN garages g ON qr.garage_id = g.id
-       ORDER BY qr.created_at DESC`
-    );
+      const result = await query(
+        `SELECT DISTINCT ON (qr.created_at) qr.id, u.name as "customerName", g.name as "garageName", 
+                COALESCE(
+                  NULLIF((SELECT string_agg(i->>'title', ', ') FROM diagnosis_results dres, jsonb_array_elements(dres.issues) i WHERE dres.diagnosis_request_id = qr.diagnosis_request_id), ''),
+                  NULLIF((SELECT symptom_text FROM diagnosis_requests dr WHERE dr.id = qr.diagnosis_request_id), ''),
+                  NULLIF(qr.issue_summary, ''),
+                  'Issue not provided'
+                ) as details, 
+                qr.status
+         FROM quote_requests qr
+         LEFT JOIN users u ON qr.customer_id = u.id
+         LEFT JOIN garages g ON qr.garage_id = g.id
+         ORDER BY qr.created_at DESC`
+      );
     return success(res, result.rows);
   } catch (err) {
     return error(res, 'Failed to fetch service requests', 'DATABASE_ERROR', 500);

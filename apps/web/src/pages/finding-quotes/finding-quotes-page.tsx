@@ -105,7 +105,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
   }, [diagnosisRequestId]);
 
   const selectedIssueIds = useMemo(() => {
-    return (issues || 'wheel-balance,wheel-alignment')
+    return (issues || '')
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean);

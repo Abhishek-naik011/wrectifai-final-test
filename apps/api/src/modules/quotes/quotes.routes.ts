@@ -317,7 +317,7 @@ quotesRouter.get('/requests', authenticate, async (req, res) => {
     }
 
     const result = await query(
-      `SELECT qr.id, qr.customer_id as "customerId", qr.vehicle_id as "vehicleId", qr.issue_summary as "issueSummary", qr.status, qr.created_at as "createdAt",
+      `SELECT DISTINCT ON (qr.created_at) qr.id, qr.customer_id as "customerId", qr.vehicle_id as "vehicleId", qr.issue_summary as "issueSummary", qr.status, qr.created_at as "createdAt",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
        FROM quote_requests qr
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
@@ -562,16 +562,16 @@ quotesRouter.get('/garage/completed-jobs', authenticate, async (req, res) => {
 
     const result = await query(
       `SELECT b.id, b.status as "bookingStatus", b.created_at as "completionDate",
-              q.amount as "quoteAmount", q.details,
-              qr.issue_summary as "issueSummary",
+              COALESCE(b.total_amount, q.amount) as "quoteAmount", q.details,
+              COALESCE(qr.issue_summary, b.booking_type) as "issueSummary",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear",
               u.name as "customerName", u.mobile_number as "customerContact", NULL as "customerAvatar"
        FROM bookings b
-       JOIN quotes q ON b.quote_id = q.id
-       JOIN quote_requests qr ON q.quote_request_id = qr.id
-       LEFT JOIN vehicles v ON qr.vehicle_id = v.id
-       LEFT JOIN users u ON qr.customer_id = u.id
-       WHERE q.garage_id = $1 AND b.status = 'completed'
+       LEFT JOIN quotes q ON b.quote_id = q.id
+       LEFT JOIN quote_requests qr ON q.quote_request_id = qr.id
+       LEFT JOIN vehicles v ON b.vehicle_id = v.id
+       LEFT JOIN users u ON b.customer_id = u.id
+       WHERE b.garage_id = $1 AND b.status = 'completed'
        ORDER BY b.updated_at DESC`,
       [garageId]
     );
