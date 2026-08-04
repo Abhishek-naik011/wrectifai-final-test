@@ -1,24 +1,21 @@
-
 'use client';
 import { RoleGuard } from '@/components/common/role-guard';
 import { Card } from '@/components/common/card';
+import { Modal } from '@/components/common/modal';
 import { Users, Building2, ClipboardCheck, CalendarRange, ChevronRight, MoreVertical, Search, Bell, MessageSquare, Plus, FileText, CheckCircle2, Activity, MapPin } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({ totalCustomers: 0, registeredGarages: 0, pendingApprovals: 0, activeBookings: 0 });
-  const [garages, setGarages] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({ totalCustomers: 0, registeredGarages: 0, pendingApprovals: 0, activeBookings: 0, quotesCount: 0, serviceRequestsCount: 0, completedJobsCount: 0, pendingGarageList: [], recentlyRegisteredGarages: [] });
+  const [actionModal, setActionModal] = useState<{isOpen: boolean, id: string, action: string, type: 'confirm' | 'error', message: string}>({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
 
   useEffect(() => {
     async function loadData() {
       try {
-        const statsData = await apiClient.get<any>('/admin/stats').catch(() => ({ totalCustomers: 0, registeredGarages: 0, pendingApprovals: 0, activeBookings: 0 }));
+        const statsData = await apiClient.get<any>('/admin/stats').catch(() => ({ totalCustomers: 0, registeredGarages: 0, pendingApprovals: 0, activeBookings: 0, quotesCount: 0, completedJobsCount: 0, pendingGarageList: [], recentlyRegisteredGarages: [] }));
         setStats(statsData);
-        
-        const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages').catch(() => []);
-        setGarages(garagesData);
       } catch (err) {
         console.error('Failed to load admin data', err);
       }
@@ -26,8 +23,8 @@ export default function AdminDashboardPage() {
     loadData();
   }, []);
 
-  const pendingGarages = garages.filter(g => g.approvalStatus === 'pending').slice(0, 3);
-  const recentGarages = garages.slice(0, 5);
+  const pendingGarages = stats.pendingGarageList || [];
+  const recentGarages = stats.recentlyRegisteredGarages || [];
 
   const formatTime = (isoString: string) => {
     if (!isoString) return '';
@@ -37,23 +34,32 @@ export default function AdminDashboardPage() {
   const handleApprove = async (id: string) => {
     try {
       await apiClient.post(`/admin/onboarding/garages/${id}/approve`, {});
-      const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
-      setGarages(garagesData);
+      const statsData = await apiClient.get<any>('/admin/stats').catch(() => stats);
+      setStats(statsData);
+      setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
     } catch (err) {
-      console.error('Failed to approve garage', err);
+      setActionModal({isOpen: true, id: '', action: '', type: 'error', message: 'Failed to approve garage.'});
     }
   };
 
   const handleAction = async (id: string, action: string) => {
     try {
       await apiClient.post(`/admin/onboarding/garages/${id}/${action}`, {});
-      const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
-      setGarages(garagesData);
+      const statsData = await apiClient.get<any>('/admin/stats').catch(() => stats);
+      setStats(statsData);
+      setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
     } catch (err) {
-      console.error('Failed to ' + action + ' garage', err);
+      setActionModal({isOpen: true, id: '', action: '', type: 'error', message: `Failed to ${action} garage.`});
     }
   };
 
+  const confirmAction = () => {
+    if (actionModal.action === 'approve') {
+      handleApprove(actionModal.id);
+    } else {
+      handleAction(actionModal.id, actionModal.action);
+    }
+  };
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -68,43 +74,71 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <Card className="p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="w-6 h-6"/></div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 mb-0.5">Total Customers</p>
-            <p className="text-2xl font-black text-[#17307a]">{stats.totalCustomers}</p>
-            <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
-          </div>
-        </Card>
-        <Card className="p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><Building2 className="w-6 h-6"/></div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 mb-0.5">Registered Garages</p>
-            <p className="text-2xl font-black text-[#17307a]">{stats.registeredGarages}</p>
-            <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
-          </div>
-        </Card>
-        <Card className="p-5 flex items-center gap-4 border-orange-200">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center"><ClipboardCheck className="w-6 h-6"/></div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 mb-0.5">Pending Approvals</p>
-            <p className="text-2xl font-black text-[#17307a]">{stats.pendingApprovals}</p>
-            {stats.pendingApprovals > 0 ? (
-              <p className="text-[10px] font-bold text-orange-500">Action Required</p>
-            ) : (
-              <p className="text-[10px] font-bold text-green-500">All caught up</p>
-            )}
-          </div>
-        </Card>
-        <Card className="p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><CalendarRange className="w-6 h-6"/></div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 mb-0.5">Active Bookings</p>
-            <p className="text-2xl font-black text-[#17307a]">{stats.activeBookings}</p>
-            <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Live</p>
-          </div>
-        </Card>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <Link href="/admin/users" className="block">
+          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Total Customers</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.totalCustomers}</p>
+              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/admin/garages" className="block">
+          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><Building2 className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Registered Garages</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.registeredGarages}</p>
+              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/admin/garages/pending-approvals" className="block">
+          <Card className="p-5 flex items-center gap-4 border-orange-200 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center"><ClipboardCheck className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Pending Approvals</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.pendingApprovals}</p>
+              {stats.pendingApprovals > 0 ? (
+                <p className="text-[10px] font-bold text-orange-500">Action Required</p>
+              ) : (
+                <p className="text-[10px] font-bold text-green-500">All caught up</p>
+              )}
+            </div>
+          </Card>
+        </Link>
+        <Link href="/admin/bookings" className="block">
+          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><CalendarRange className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Active Bookings</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.activeBookings}</p>
+              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Live</p>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/admin/quotes" className="block">
+          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Quotes</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.quotesCount}</p>
+              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Submitted</p>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/admin/service-requests?filter=completed" className="block">
+          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><CheckCircle2 className="w-6 h-6"/></div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-0.5">Completed Jobs</p>
+              <p className="text-2xl font-black text-[#17307a]">{stats.completedJobsCount}</p>
+              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Finished</p>
+            </div>
+          </Card>
+        </Link>
       </div>
 
       <div className="flex gap-6 mb-6">
@@ -114,12 +148,12 @@ export default function AdminDashboardPage() {
                 <h3 className="font-bold text-[#17307a]">Pending Garage Approvals</h3>
                 <Link href="/admin/garages/pending-approvals" className="text-xs text-blue-600 font-bold">View All</Link>
              </div>
-             <div className="flex gap-4 overflow-hidden">
-                {pendingGarages.length === 0 ? (
+             <div className="flex gap-4 overflow-x-auto pb-2">
+                {stats.pendingApprovals === 0 && pendingGarages.length === 0 ? (
                   <p className="text-sm text-slate-500 p-4">No pending garage approvals at the moment.</p>
                 ) : (
-                  pendingGarages.map((g, idx) => (
-                    <div key={g.id} className="flex-1 border rounded-xl p-4 bg-white relative">
+                  pendingGarages.map((g: any, idx: number) => (
+                    <div key={g.id} className="min-w-[280px] border rounded-xl p-4 bg-white relative">
                       {idx === 0 && <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-xl">NEW</div>}
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 rounded-full bg-slate-100"></div>
@@ -134,9 +168,9 @@ export default function AdminDashboardPage() {
                       </div>
                       <p className="text-[9px] text-slate-400 mb-3">Submitted: {formatTime(g.createdAt)}</p>
                       <div className="grid grid-cols-3 gap-2">
-                         <Link href="/coming-soon" className="border border-slate-200 text-blue-600 rounded text-[10px] font-bold py-1.5 hover:bg-slate-50 text-center">View</Link>
-                         <button onClick={() => handleApprove(g.id)} className="bg-green-50 text-green-600 rounded text-[10px] font-bold py-1.5 hover:bg-green-100">Approve</button>
-                         <button onClick={() => handleAction(g.id, 'reject')} className="bg-red-50 text-red-600 rounded text-[10px] font-bold py-1.5 hover:bg-red-100 text-center">Reject</button>
+                         <Link href={`/admin/garages`} className="border border-slate-200 text-blue-600 rounded text-[10px] font-bold py-1.5 hover:bg-slate-50 text-center flex items-center justify-center">View</Link>
+                         <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})} className="bg-green-50 text-green-600 rounded text-[10px] font-bold py-1.5 hover:bg-green-100">Approve</button>
+                         <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})} className="bg-red-50 text-red-600 rounded text-[10px] font-bold py-1.5 hover:bg-red-100 text-center">Reject</button>
                       </div>
                     </div>
                   ))
@@ -150,7 +184,17 @@ export default function AdminDashboardPage() {
                  <h3 className="font-bold text-[#17307a]">Recent Activity</h3>
                  </div>
                <div className="space-y-4 pl-4 relative before:absolute before:inset-0 before:ml-1 before:h-full before:w-px before:bg-slate-100">
-                 <p className="text-xs text-slate-500">No recent activity</p>
+                 {recentGarages.length === 0 ? (
+                   <p className="text-xs text-slate-500">No recent activity</p>
+                 ) : (
+                   recentGarages.slice(0, 3).map((g: any) => (
+                     <div key={g.id} className="relative">
+                        <div className="absolute -left-5 top-1 w-2 h-2 rounded-full bg-blue-500"></div>
+                        <p className="text-xs font-bold text-slate-800">New Garage Registered</p>
+                        <p className="text-[10px] text-slate-500">{g.name} joined the platform</p>
+                     </div>
+                   ))
+                 )}
                </div>
              </Card>
 
@@ -206,7 +250,7 @@ export default function AdminDashboardPage() {
                  <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">No garages registered yet.</td>
                </tr>
             ) : (
-               recentGarages.map((g) => (
+               recentGarages.map((g: any) => (
                  <tr key={g.id} className="hover:bg-slate-50 transition-colors">
                    <td className="p-4">
                      <div className="flex items-center gap-3">
@@ -230,12 +274,12 @@ export default function AdminDashboardPage() {
 <div className="flex gap-2">
   {g.approvalStatus === 'pending' && (
     <>
-      <button onClick={() => handleApprove(g.id)} className="text-[10px] bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100 font-bold">Approve</button>
-      <button onClick={() => handleAction(g.id, 'reject')} className="text-[10px] bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100 font-bold">Reject</button>
+      <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})} className="text-[10px] bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100 font-bold">Approve</button>
+      <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})} className="text-[10px] bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100 font-bold">Reject</button>
     </>
   )}
   {g.approvalStatus === 'approved' && (
-    <button onClick={() => handleAction(g.id, 'suspend')} className="text-[10px] bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100 font-bold">Suspend</button>
+    <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'suspend', type: 'confirm', message: `Are you sure you want to suspend ${g.name}?`})} className="text-[10px] bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100 font-bold">Suspend</button>
   )}
 </div>
 </td>
@@ -245,6 +289,23 @@ export default function AdminDashboardPage() {
           </tbody>
         </table>
       </Card>
+
+      <Modal isOpen={actionModal.isOpen} onClose={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} title={actionModal.type === 'error' ? 'Error' : 'Confirm Action'}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">{actionModal.message}</p>
+          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+            <button onClick={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} className="px-4 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">
+              {actionModal.type === 'error' ? 'Close' : 'Cancel'}
+            </button>
+            {actionModal.type === 'confirm' && (
+              <button onClick={confirmAction} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">
+                Confirm
+              </button>
+            )}
+          </div>
+        </div>
+      </Modal>
+
     </div>
     </RoleGuard>
   );

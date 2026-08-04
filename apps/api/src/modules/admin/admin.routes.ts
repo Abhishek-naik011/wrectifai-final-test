@@ -12,11 +12,30 @@ adminRouter.use(requireRole(['admin']));
 adminRouter.get('/stats', async (req, res) => {
   try {
     const customersCount = await query(`SELECT COUNT(*) FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.code = 'user'`);
-    const garagesCount = await query(`SELECT COUNT(*) FROM garages WHERE is_approved = true`);
-    const pendingCount = await query(`SELECT COUNT(*) FROM garages WHERE is_approved = false OR approval_status = 'pending'`);
+    const garagesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'approved'`);
+    const pendingCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'pending'`);
     const bookingsCount = await query(`SELECT COUNT(*) FROM bookings WHERE status IN ('confirmed', 'inService')`);
     const quotesCount = await query(`SELECT COUNT(*) FROM quotes`);
     const serviceRequestsCount = await query(`SELECT COUNT(*) FROM quote_requests`);
+    const completedJobsCount = await query(`SELECT COUNT(*) FROM bookings WHERE status = 'completed'`);
+
+    const recentGarages = await query(`
+      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", g.approval_status as "approvalStatus"
+      FROM garages g
+      LEFT JOIN users u ON g.owner_user_id = u.id
+      WHERE g.approval_status = 'approved'
+      ORDER BY g.created_at DESC
+      LIMIT 12
+    `);
+
+    const pendingGarageList = await query(`
+      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", g.approval_status as "approvalStatus"
+      FROM garages g
+      LEFT JOIN users u ON g.owner_user_id = u.id
+      WHERE g.approval_status = 'pending'
+      ORDER BY g.created_at DESC
+      LIMIT 10
+    `);
 
     return success(res, {
       totalCustomers: parseInt(customersCount.rows[0].count),
@@ -24,7 +43,10 @@ adminRouter.get('/stats', async (req, res) => {
       pendingApprovals: parseInt(pendingCount.rows[0].count),
       activeBookings: parseInt(bookingsCount.rows[0].count),
       quotesCount: parseInt(quotesCount.rows[0].count),
-      serviceRequestsCount: parseInt(serviceRequestsCount.rows[0].count)
+      serviceRequestsCount: parseInt(serviceRequestsCount.rows[0].count),
+      completedJobsCount: parseInt(completedJobsCount.rows[0].count),
+      recentlyRegisteredGarages: recentGarages.rows,
+      pendingGarageList: pendingGarageList.rows
     });
   } catch (err) {
     return error(res, 'Failed to fetch admin stats', 'DATABASE_ERROR', 500);
@@ -108,6 +130,36 @@ adminRouter.post('/onboarding/garages', async (req, res) => {
     return success(res, { id: newGarage.rows[0].id }, 201);
   } catch (err) {
     return error(res, 'Failed to register garage', 'DATABASE_ERROR', 500);
+  }
+});
+
+adminRouter.post('/onboarding/garages/:id/verify-status', async (req, res) => {
+  try {
+    const { action } = req.body;
+    if (!['verify', 'reject'].includes(action)) {
+      return error(res, 'Invalid action', 'INVALID_ACTION', 400);
+    }
+    const status = action === 'verify' ? 'approved' : 'rejected';
+    const is_approved = action === 'verify';
+    
+    const result = await query(
+      `UPDATE garages SET approval_status = $1, is_approved = $2 WHERE id = $3 RETURNING id`,
+      [status, is_approved, req.params.id]
+    );
+    
+    // Also update document status if applicable
+    await query(`UPDATE garage_documents SET verification_status = $1 WHERE garage_id = $2`, [status, req.params.id]);
+
+    if (result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    
+    return success(res, {
+      garageId: req.params.id,
+      approvalStatus: status,
+      reviewedBy: req.user?.userId,
+      reviewedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    return error(res, 'Failed to update garage', 'DATABASE_ERROR', 500);
   }
 });
 
@@ -282,34 +334,7 @@ adminRouter.get('/service-requests', async (req, res) => {
   }
 });
 
-adminRouter.get('/bookings', async (req, res) => {
-  try {
-    const result = await query(
-      `SELECT b.id, u.name as "customerName", g.name as "garageName", b.status, b.service_date as "serviceDate"
-       FROM bookings b
-       LEFT JOIN users u ON b.customer_id = u.id
-       LEFT JOIN garages g ON b.garage_id = g.id
-       ORDER BY b.created_at DESC`
-    );
-    return success(res, result.rows);
-  } catch (err) {
-    return error(res, 'Failed to fetch bookings', 'DATABASE_ERROR', 500);
-  }
-});
 
-adminRouter.post('/bookings', async (req, res) => {
-  try {
-    const { customerId, garageId, serviceDate, status } = req.body;
-    const result = await query(
-      `INSERT INTO bookings (customer_id, garage_id, service_date, status)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [customerId || null, garageId || null, serviceDate || new Date().toISOString(), status || 'pending']
-    );
-    return success(res, result.rows[0]);
-  } catch (err) {
-    return error(res, 'Failed to create booking', 'DATABASE_ERROR', 500);
-  }
-});
 
 adminRouter.get('/quotes', async (req, res) => {
   try {

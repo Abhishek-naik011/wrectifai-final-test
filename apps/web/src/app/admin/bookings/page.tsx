@@ -4,15 +4,20 @@ import { Search, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Modal } from '@/components/common/modal';
+import { formatAdminStatus } from '@/utils/admin-status';
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [errorModal, setErrorModal] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
   const [formData, setFormData] = useState({ customerId: '', garageId: '', serviceDate: '', status: 'pending' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,17 +45,26 @@ export default function AdminBookingsPage() {
       loadData();
       setFormData({ customerId: '', garageId: '', serviceDate: '', status: 'pending' });
     } catch (err) {
-      alert('Error creating booking');
+      setErrorModal({isOpen: true, message: 'Error creating booking'});
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const statuses = ['All', 'pending', 'confirmed', 'completed', 'cancelled', 'in-progress'];
+
   const filteredBookings = bookings.filter(b => {
+    if (activeFilter !== 'All' && b.status?.toLowerCase() !== activeFilter.toLowerCase()) return false;
+    
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return b.id?.toLowerCase().includes(q) || b.customerName?.toLowerCase().includes(q) || b.garageName?.toLowerCase().includes(q);
   });
+
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage) || 1;
+  const paginatedBookings = filteredBookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -62,10 +76,21 @@ export default function AdminBookingsPage() {
       </div>
 
       <Card className="shadow-sm border-slate-200">
-        <div className="p-4 border-b border-slate-100">
+        <div className="p-4 border-b border-slate-100 space-y-4">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input type="text" placeholder="Search bookings..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {statuses.map(s => (
+              <button 
+                key={s}
+                onClick={() => { setActiveFilter(s); setCurrentPage(1); }}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${activeFilter === s ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -82,10 +107,10 @@ export default function AdminBookingsPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                  <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
-              ) : filteredBookings.length === 0 ? (
+              ) : paginatedBookings.length === 0 ? (
                  <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">No Records Found</td></tr>
               ) : (
-                filteredBookings.map((b) => (
+                paginatedBookings.map((b) => (
                   <tr key={b.id} onClick={() => { setSelectedBooking(b); setIsModalOpen(true); }} className="hover:bg-slate-50/50 cursor-pointer transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-900">{b.id.substring(0,8)}</td>
                     <td className="p-4 text-sm text-slate-700">{b.customerName || 'N/A'}</td>
@@ -99,18 +124,43 @@ export default function AdminBookingsPage() {
             </tbody>
           </table>
         </div>
+        
+        <div className="p-4 border-t border-slate-100 flex justify-between items-center">
+          <span className="text-sm text-slate-500">Page {currentPage} of {totalPages}</span>
+          <div className="flex gap-2">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50">Prev</button>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50">Next</button>
+          </div>
+        </div>
       </Card>
       
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Booking Details">
          <div className="space-y-4">
-            {selectedBooking ? (
-               <div className="text-sm text-slate-600 space-y-2">
-                 <p><strong>ID:</strong> {selectedBooking.id}</p>
-                 <p><strong>Customer:</strong> {selectedBooking.customerName || 'N/A'}</p>
-                 <p><strong>Garage:</strong> {selectedBooking.garageName || 'N/A'}</p>
-                 <p><strong>Status:</strong> {selectedBooking.status}</p>
-                 <p><strong>Service Date:</strong> {selectedBooking.serviceDate ? new Date(selectedBooking.serviceDate).toLocaleDateString() : 'N/A'}</p>
-               </div>
+             {selectedBooking ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <p><strong>Booking ID:</strong> {selectedBooking.id}</p>
+                    <p><strong>Quote ID:</strong> {selectedBooking.quoteId || 'N/A'}</p>
+                    <p><strong>Status:</strong> <span className="capitalize">{formatAdminStatus(selectedBooking.status)}</span></p>
+                    <p><strong>Payment Status:</strong> <span className="capitalize">{formatAdminStatus(selectedBooking.paymentStatus || 'unpaid')}</span></p>
+                    <p><strong>Customer:</strong> {selectedBooking.customerName || 'N/A'}</p>
+                    <p><strong>Garage:</strong> {selectedBooking.garageName || 'N/A'}</p>
+                    <p><strong>Created At:</strong> {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleDateString() : 'N/A'}</p>
+                    
+                    <p className="col-span-2 border-t pt-2 mt-2"></p>
+                    
+                    <p><strong>Vehicle:</strong> {selectedBooking.vehicleMake || 'N/A'} {selectedBooking.vehicleModel || ''}</p>
+                    <p><strong>VIN / Plate:</strong> {selectedBooking.vin || 'N/A'}</p>
+                    <p><strong>Preferred Date:</strong> {selectedBooking.preferredDate ? new Date(selectedBooking.preferredDate).toLocaleDateString() : 'N/A'}</p>
+                    <p><strong>Preferred Time:</strong> {selectedBooking.preferredTime || 'N/A'}</p>
+                    <p><strong>Estimated Days:</strong> {selectedBooking.estimatedDays || 'N/A'}</p>
+                    <p><strong>Service Date:</strong> {selectedBooking.serviceDate ? new Date(selectedBooking.serviceDate).toLocaleDateString() : 'N/A'}</p>
+
+                    <p className="col-span-2 mt-2"><strong>Issue Description:</strong> <br/><span className="text-sm text-slate-600">{selectedBooking.issueDescription || 'No description provided.'}</span></p>
+
+                    <p className="col-span-2 text-lg border-t pt-3 mt-1 font-bold text-[#17307a]">
+                      Total Amount: ${selectedBooking.totalAmount && !isNaN(Number(selectedBooking.totalAmount)) ? Number(selectedBooking.totalAmount).toFixed(2) : '0.00'}
+                    </p>
+                  </div>
             ) : <p>Loading...</p>}
             <button onClick={() => setIsModalOpen(false)} className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">Close</button>
          </div>
@@ -135,6 +185,17 @@ export default function AdminBookingsPage() {
              <button type="submit" disabled={isSubmitting} className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold">{isSubmitting ? 'Saving...' : 'Create Booking'}</button>
            </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={errorModal.isOpen} onClose={() => setErrorModal({isOpen: false, message: ''})} title="Error">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">{errorModal.message}</p>
+          <div className="flex justify-end pt-4 border-t border-slate-100">
+            <button onClick={() => setErrorModal({isOpen: false, message: ''})} className="px-4 py-2 text-sm font-medium text-white bg-[#1a56db] rounded-lg hover:bg-[#174ec5]">
+              Close
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

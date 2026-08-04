@@ -14,19 +14,36 @@ export default function AllGaragesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedGarage, setSelectedGarage] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
-        setGarages(garagesData);
-      } catch (err) {
-        console.error('Failed to load garages', err);
-      } finally {
-        setLoading(false);
-      }
+  const [verificationModal, setVerificationModal] = useState<{isOpen: boolean, id: string, action: string}>({isOpen: false, id: '', action: ''});
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
+      setGarages(garagesData);
+    } catch (err) {
+      console.error('Failed to load garages', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
+
+  const handleVerify = async (id: string, action: string) => {
+    try {
+      await apiClient.post(`/admin/onboarding/garages/${id}/verify-status`, { action });
+      await loadData();
+      if (selectedGarage && selectedGarage.id === id) {
+        setSelectedGarage((prev: any) => ({ ...prev, verificationStatus: action === 'verify' ? 'verified' : 'rejected' }));
+      }
+      setVerificationModal({isOpen: false, id: '', action: ''});
+    } catch (err) {
+      console.error('Failed to verify garage', err);
+    }
+  };
 
   const totalGarages = garages.length;
   const approvedGarages = garages.filter(g => g.approvalStatus === 'approved').length;
@@ -193,24 +210,47 @@ export default function AllGaragesPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold mb-1">Status Information</p>
-                <div className="space-y-2 mt-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Approval:</span>
+                <div className="space-y-3 mt-2 border border-slate-100 rounded-lg p-3 bg-slate-50">
+                  <div className="flex justify-between items-center text-sm border-b pb-2">
+                    <span className="text-slate-600 font-bold">Approval Status:</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
                       {selectedGarage.approvalStatus || 'Pending'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">Verification:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.verificationStatus === 'verified' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-                      {selectedGarage.verificationStatus || 'Unverified'}
+                    <span className="text-slate-600 font-bold">Verification:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.verificationStatus === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : selectedGarage.verificationStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                      {selectedGarage.verificationStatus || 'Pending Verification'}
                     </span>
                   </div>
+                  
+                  {selectedGarage.verificationStatus !== 'verified' && selectedGarage.verificationStatus !== 'rejected' && (
+                    <div className="pt-2 mt-2 border-t flex justify-between gap-2">
+                       <button 
+                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'verify'})}
+                         className="flex-1 bg-green-50 text-green-700 font-bold text-xs py-1.5 rounded border border-green-100 hover:bg-green-100">
+                         Verify
+                       </button>
+                       <button 
+                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'reject'})}
+                         className="flex-1 bg-red-50 text-red-700 font-bold text-xs py-1.5 rounded border border-red-100 hover:bg-red-100">
+                         Reject
+                       </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal isOpen={verificationModal.isOpen} onClose={() => setVerificationModal({isOpen: false, id: '', action: ''})} title="Confirm Verification Action" className="max-w-md">
+        <p className="text-sm text-slate-600 mb-6">Are you sure you want to {verificationModal.action} this garage?</p>
+        <div className="flex justify-end gap-3">
+           <button onClick={() => setVerificationModal({isOpen: false, id: '', action: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
+           <button onClick={() => handleVerify(verificationModal.id, verificationModal.action)} className={`px-4 py-2 text-sm font-bold text-white rounded-lg ${verificationModal.action === 'verify' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>Confirm</button>
+        </div>
       </Modal>
     </div>
   );

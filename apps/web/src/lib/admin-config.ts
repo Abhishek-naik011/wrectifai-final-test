@@ -21,27 +21,12 @@ export const adminNavItems: AdminNavItem[] = [
       { label: 'Suspended Garages', href: '/admin/garages/suspended', slug: 'suspended-garages' },
     ]
   },
-  { 
-    label: 'Customer Management', 
-    icon: Users,
-    slug: 'users',
-    children: [
-      { label: 'All Customers', href: '/admin/users', slug: 'all-customers' },
-      { label: 'Customer Verification', href: '/admin/users/verification', slug: 'customer-verification' },
-      { label: 'Suspended Customers', href: '/admin/users/suspended', slug: 'suspended-customers' },
-    ]
-  },
+  { label: 'Customer Management', icon: Users, href: '/admin/users', slug: 'users' },
   { 
     label: 'Service Requests', 
     icon: FileText, 
-    slug: 'service-requests',
-    children: [
-      { label: 'All Requests', href: '/admin/service-requests', slug: 'all-requests' },
-      { label: 'Pending Requests', href: '/admin/service-requests/pending', slug: 'pending-requests' },
-      { label: 'In Progress', href: '/admin/service-requests/in-progress', slug: 'in-progress' },
-      { label: 'Completed Requests', href: '/admin/service-requests/completed', slug: 'completed-requests' },
-      { label: 'Cancelled Requests', href: '/admin/service-requests/cancelled', slug: 'cancelled-requests' },
-    ]
+    href: '/admin/service-requests',
+    slug: 'service-requests'
   },
   { label: 'Bookings', icon: FileSpreadsheet, href: '/admin/bookings', slug: 'bookings' },
   { label: 'Quotes', icon: FileSpreadsheet, href: '/admin/quotes', slug: 'quotes' },

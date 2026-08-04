@@ -12,6 +12,7 @@ export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [errorModal, setErrorModal] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
+  const [actionModal, setActionModal] = useState<{isOpen: boolean, id: string, action: string, type: 'confirm' | 'error', message: string}>({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
@@ -55,10 +56,16 @@ export default function CustomersPage() {
   const handleAction = async (id: string, action: string) => {
     try {
       await apiClient.post(`/admin/users/${id}/${action}`);
+      setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
       loadData();
     } catch (err) {
+      setActionModal({isOpen: true, id: '', action: '', type: 'error', message: `Failed to ${action} customer.`});
       console.error('Failed to update status', err);
     }
+  };
+
+  const confirmAction = () => {
+    handleAction(actionModal.id, actionModal.action);
   };
 
   const filtered = customers.filter(c => {
@@ -94,36 +101,45 @@ export default function CustomersPage() {
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-50/50 text-xs font-semibold text-slate-500 border-b border-slate-100">
-                <th className="p-4 font-semibold w-1/6">Name</th>
-                <th className="p-4 font-semibold w-1/6">Email</th>
-                <th className="p-4 font-semibold w-1/6">Status</th>
-                <th className="p-4 font-semibold w-1/6">Role</th>
-                <th className="p-4 font-semibold w-1/6">Created Date</th>
-                <th className="p-4 font-semibold w-1/6 text-right">Actions</th>
+                <th className="p-4 font-semibold w-1/5">Name</th>
+                <th className="p-4 font-semibold w-1/5">Email</th>
+                <th className="p-4 font-semibold w-1/5">Status</th>
+                <th className="p-4 font-semibold w-1/5">Created Date</th>
+                <th className="p-4 font-semibold w-1/5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                 <tr><td colSpan={6} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                 <tr><td colSpan={6} className="p-8 text-center text-sm text-slate-500">No Records Found.</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">No Records Found.</td></tr>
               ) : (
                 filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-900">{c.name}</td>
                     <td className="p-4 text-sm text-slate-700">{c.email}</td>
                     <td className="p-4 text-sm text-slate-700">
-                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                       <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
+                         c.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 
+                         c.status === 'suspended' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                         'bg-red-50 text-red-700 border-red-100'
+                       }`}>
                          {c.status}
                        </span>
                     </td>
-                    <td className="p-4 text-sm text-slate-700 capitalize">Customer</td>
                     <td className="p-4 text-sm text-slate-700">{new Date(c.joined).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                    <td className="p-4 text-right">
-                       {c.status !== 'active' ? (
-                         <button onClick={() => handleAction(c.id, 'activate')} className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Activate</button>
-                       ) : (
-                         <button onClick={() => handleAction(c.id, 'suspend')} className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">Suspend</button>
+                    <td className="p-4 text-right flex gap-2 justify-end">
+                       {c.status !== 'active' && (
+                         <button onClick={() => setActionModal({isOpen: true, id: c.id, action: 'verify', type: 'confirm', message: 'Are you sure you want to verify this customer?'})} className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Verify</button>
+                       )}
+                       {c.status !== 'rejected' && (
+                         <button onClick={() => setActionModal({isOpen: true, id: c.id, action: 'reject', type: 'confirm', message: 'Are you sure you want to reject this customer?'})} className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">Reject</button>
+                       )}
+                       {c.status === 'suspended' && (
+                         <button onClick={() => setActionModal({isOpen: true, id: c.id, action: 'activate', type: 'confirm', message: 'Are you sure you want to activate this customer?'})} className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Activate</button>
+                       )}
+                       {c.status === 'active' && (
+                         <button onClick={() => setActionModal({isOpen: true, id: c.id, action: 'suspend', type: 'confirm', message: 'Are you sure you want to suspend this customer?'})} className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg">Suspend</button>
                        )}
                     </td>
                   </tr>
@@ -190,6 +206,21 @@ export default function CustomersPage() {
               Close
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={actionModal.isOpen && actionModal.type === 'confirm'} onClose={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} title="Confirm Action" className="max-w-md">
+        <p className="text-sm text-slate-600 mb-6">{actionModal.message}</p>
+        <div className="flex justify-end gap-3">
+           <button onClick={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
+           <button onClick={confirmAction} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Confirm</button>
+        </div>
+      </Modal>
+      
+      <Modal isOpen={actionModal.isOpen && actionModal.type === 'error'} onClose={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} title="Error" className="max-w-md">
+        <p className="text-sm text-slate-600 mb-6">{actionModal.message}</p>
+        <div className="flex justify-end gap-3">
+           <button onClick={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Close</button>
         </div>
       </Modal>
     </div>

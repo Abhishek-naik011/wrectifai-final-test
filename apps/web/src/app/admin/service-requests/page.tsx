@@ -2,14 +2,20 @@
 'use client';
 import { Card } from '@/components/common/card';
 import { Search, Eye } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Modal } from '@/components/common/modal';
+import { formatAdminStatus } from '@/utils/admin-status';
+import { useSearchParams } from 'next/navigation';
 
-export default function AdminServiceRequestsPage() {
+function AdminServiceRequestsContent() {
+  const searchParams = useSearchParams();
+  const filterParam = searchParams?.get('filter');
+  
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -35,6 +41,15 @@ export default function AdminServiceRequestsPage() {
     loadData();
   }, []);
 
+  const filters = ['All', 'Pending', 'Quoted', 'Payment Pending', 'Booked', 'Accepted', 'In Progress', 'Ready', 'Completed', 'Cancelled'];
+
+  useEffect(() => {
+    if (filterParam) {
+      const matchedFilter = filters.find(f => f.toLowerCase() === filterParam.toLowerCase());
+      if (matchedFilter) setActiveFilter(matchedFilter);
+    }
+  }, [filterParam]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -50,7 +65,24 @@ export default function AdminServiceRequestsPage() {
     }
   };
 
+
+
   const filtered = requests.filter(r => {
+    if (activeFilter !== 'All') {
+      const dbStatus = r.status?.toLowerCase() || '';
+      const filterLower = activeFilter.toLowerCase();
+      
+      if (filterLower === 'payment pending') {
+        if (dbStatus !== 'pendingpayment') return false;
+      } else if (filterLower === 'in progress') {
+        if (dbStatus !== 'inservice' && dbStatus !== 'inprogress') return false;
+      } else if (filterLower === 'booked') {
+        if (dbStatus !== 'confirmed' && dbStatus !== 'booked') return false;
+      } else {
+        if (dbStatus !== filterLower) return false;
+      }
+    }
+    
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return r.customerName?.toLowerCase().includes(q) || r.id?.toLowerCase().includes(q);
@@ -66,10 +98,21 @@ export default function AdminServiceRequestsPage() {
       </div>
 
       <Card className="shadow-sm border-slate-200">
-        <div className="p-4 border-b border-slate-100">
+        <div className="p-4 border-b border-slate-100 space-y-4">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input type="text" placeholder="Search requests..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {filters.map(f => (
+              <button 
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${activeFilter === f ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              >
+                {f}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -93,7 +136,7 @@ export default function AdminServiceRequestsPage() {
                   <tr key={r.id} onClick={() => { setSelectedRequest(r); setIsModalOpen(true); }} className="hover:bg-slate-50/50 cursor-pointer transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-900">{r.id.substring(0,8)}</td>
                     <td className="p-4 text-sm text-slate-700">{r.customerName || 'N/A'}</td>
-                    <td className="p-4 text-sm text-slate-700">{r.status}</td>
+                    <td className="p-4 text-sm text-slate-700">{formatAdminStatus(r.status)}</td>
                     <td className="p-4 text-right">
                        <button className="text-slate-400 hover:text-blue-600 px-2"><Eye className="w-4 h-4 inline"/></button>
                     </td>
@@ -112,7 +155,7 @@ export default function AdminServiceRequestsPage() {
                <div className="text-sm text-slate-600 space-y-2">
                  <p><strong>ID:</strong> {selectedRequest.id}</p>
                  <p><strong>Customer:</strong> {selectedRequest.customerName || 'N/A'}</p>
-                 <p><strong>Status:</strong> {selectedRequest.status}</p>
+                 <p><strong>Status:</strong> {formatAdminStatus(selectedRequest.status)}</p>
                  <p><strong>Details:</strong> {selectedRequest.details || 'N/A'}</p>
                </div>
             ) : <p>Loading...</p>}
@@ -146,5 +189,13 @@ export default function AdminServiceRequestsPage() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+export default function AdminServiceRequestsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-slate-500">Loading...</div>}>
+      <AdminServiceRequestsContent />
+    </Suspense>
   );
 }
