@@ -14,6 +14,9 @@ import { ShopPage } from '@/pages/shop/shop-page';
 import { WalletPaymentsPage } from '@/pages/wallet-payments/wallet-payments-page';
 import { OffersPage } from '@/pages/offers/offers-page';
 import { CarTipsPage } from '@/pages/car-tips/car-tips-page';
+import { CartPage } from '@/pages/cart/cart-page';
+import { ShopAllPage } from '@/pages/shop-all/shop-all-page';
+import { NotificationsPage } from '@/pages/notifications/notifications-page';
 import { navItems } from '@/components/home/data';
 
 const featurePageCopy: Record<string, string> = {
@@ -155,6 +158,30 @@ export default async function FeaturePage({
     return (
       <Suspense fallback={null}>
         <CarTipsPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'cart') {
+    return (
+      <Suspense fallback={null}>
+        <CartPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'shop-all') {
+    return (
+      <Suspense fallback={null}>
+        <ShopAllPage />
+      </Suspense>
+    );
+  }
+
+  if (slug === 'notifications') {
+    return (
+      <Suspense fallback={null}>
+        <NotificationsPage />
       </Suspense>
     );
   }

@@ -145,3 +145,5 @@ export function HelpContent() {
     </div>
   );
 }
+
+export default HelpContent;

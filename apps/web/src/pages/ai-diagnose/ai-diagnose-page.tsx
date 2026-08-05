@@ -981,7 +981,7 @@ type ReasoningState = {
   nextSteps: string;
 };
 
-function extractEvidencePipeline(symptoms: string[], notes: string = ""): Observation[] {
+function extractEvidencePipeline(symptoms: string[], notes = ""): Observation[] {
   const obs: Observation[] = [];
   
   symptoms.forEach(s => {
@@ -1017,7 +1017,7 @@ function extractEvidencePipeline(symptoms: string[], notes: string = ""): Observ
 
 function evaluateCandidates(observations: Observation[]): CandidateDiagnosis[] {
   // Define initial candidates across major systems
-  let candidates: CandidateDiagnosis[] = [
+  const candidates: CandidateDiagnosis[] = [
     { id: "ac_leak", name: "A/C Compressor or Leak Fault", severity: "Medium", baseProbability: 40, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
     { id: "ac_deplete", name: "A/C Refrigerant Depletion", severity: "Low", baseProbability: 60, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },
     { id: "steer_align", name: "Wheel Alignment Issue", severity: "Low", baseProbability: 50, supportedBy: [], contradictedBy: [], eliminated: false, confidenceContribution: 0 },

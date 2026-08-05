@@ -40,3 +40,5 @@ export function SettingsPage() {
     </DashboardShell>
   );
 }
+
+export default SettingsPage;

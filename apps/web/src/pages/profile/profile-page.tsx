@@ -40,3 +40,5 @@ export function ProfilePage() {
     </DashboardShell>
   );
 }
+
+export default ProfilePage;

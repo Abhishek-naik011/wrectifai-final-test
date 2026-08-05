@@ -47,7 +47,7 @@ export function RequestQuoteModal({ isOpen, onClose, garageId, onSubmitSuccess }
     setIsSubmitting(true);
     setErrorMsg('');
     try {
-      let vId = selectedVehicleId;
+      const vId = selectedVehicleId;
       if (!vId) {
          setErrorMsg('Please select a vehicle or add a new one.');
          setIsSubmitting(false);

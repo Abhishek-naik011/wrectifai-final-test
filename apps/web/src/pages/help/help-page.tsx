@@ -40,3 +40,5 @@ export function HelpPage() {
     </DashboardShell>
   );
 }
+
+export default HelpPage;

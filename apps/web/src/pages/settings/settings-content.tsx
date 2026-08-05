@@ -140,3 +140,5 @@ export function SettingsContent() {
     </div>
   );
 }
+
+export default SettingsContent;

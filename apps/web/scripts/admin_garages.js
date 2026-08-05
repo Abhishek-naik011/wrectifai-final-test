@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = path.join(__dirname, '../src/app/admin/garages/page.tsx');
-let content = `
+const content = `
 'use client';
 import { Card } from '@/components/common/card';
 import { Search, Filter, Download, Plus, MoreVertical, Eye, Edit2, PauseCircle, CheckCircle2, Clock } from 'lucide-react';

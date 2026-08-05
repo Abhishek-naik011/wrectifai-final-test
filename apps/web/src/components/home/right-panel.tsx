@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { ChevronDown, CalendarDays, Package, FileText, Car } from 'lucide-react';
 import Image from 'next/image';
@@ -26,11 +27,11 @@ function OverviewPanel() {
         setQuotesCount(data.quotesCount || 0);
         setVehiclesCount(data.vehiclesCount || 0);
         setOrdersCount(data.ordersCount || 0);
-        
+
         if (data.vehiclesCount === 0) setVehicleDesc('No vehicles added');
         else if (data.vehiclesCount === 1) setVehicleDesc('1 Vehicle registered');
         else setVehicleDesc(`${data.vehiclesCount} Vehicles registered`);
-        
+
         if (data.nextBooking) {
           const nextDate = new Date(data.nextBooking);
           const formatted = nextDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + nextDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -116,13 +117,13 @@ function OverviewPanel() {
             >
               <Icon className="h-6 w-6" />
             </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-semibold text-[#17307a]">{title}</p>
-                <div className="mt-0.5 flex items-end gap-2">
-                  <span className="text-[14.5px] font-semibold text-[#17307a]">{value}</span>
-                </div>
-                <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">{description}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-[#17307a]">{title}</p>
+              <div className="mt-0.5 flex items-end gap-2">
+                <span className="text-[14.5px] font-semibold text-[#17307a]">{value}</span>
               </div>
+              <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">{description}</p>
+            </div>
             <a href={href} className="self-center text-[11.5px] font-semibold text-[#1a56db] cursor-pointer hover:underline">{cta}</a>
           </div>
         ))}
@@ -136,9 +137,9 @@ function EmergencyHelp() {
     <Card id="emergency" className="p-4 border-[#fff0f0] bg-[#fffbfa]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-        <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#ff3b30]">
-          Emergency Help
-        </h2>
+          <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#ff3b30]">
+            Emergency Help
+          </h2>
           <p className="mt-1 text-[11px] font-normal text-[#17307a]">Quick assistance, anytime</p>
         </div>
         <div className="rounded-full bg-[#ffeeee] px-3 py-1 text-[11.5px] font-bold text-[#ff3b30]">
@@ -155,18 +156,18 @@ function EmergencyHelp() {
               key={title}
               className="flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[14px] border border-[#f0f4ff] bg-white px-1 py-1 text-center shadow-[0_4px_12px_rgba(20,44,112,0.03)] cursor-pointer hover:border-[#ffcccc] transition-all hover:bg-[#fffdfd]"
             >
-              <div 
+              <div
                 className={cn(
                   "flex items-center justify-center",
                   isLarge ? "h-10 w-10" : "h-8 w-8"
                 )}
               >
-                <Image 
-                  src={image} 
-                  alt={title} 
+                <Image
+                  src={image}
+                  alt={title}
                   width={size}
                   height={size}
-                  className="object-contain" 
+                  className="object-contain"
                   style={{ width: `${size}px`, height: `${size}px` }}
                 />
               </div>
@@ -205,9 +206,9 @@ function OfferCard({
   const isRed = themePreset === 'red';
   const isPurple = themePreset === 'purple';
   const cardColor = theme.bgColor;
-  
+
   return (
-    <Card 
+    <Card
       className="overflow-hidden border-0 p-0 shadow-none"
       style={{ backgroundColor: cardColor }}
     >
@@ -221,20 +222,20 @@ function OfferCard({
             <span className="text-[10.5px] font-medium text-[#8a96b8] line-through">{strikePrice}</span>
           </div>
         </div>
-        <div 
+        <div
           className="relative h-full min-h-[138px] overflow-hidden flex items-center select-none"
           style={{ backgroundColor: cardColor }}
         >
           {image ? (
             <>
-              <Image 
-                src={image} 
-                alt={title} 
+              <Image
+                src={image}
+                alt={title}
                 fill
                 sizes="(max-width: 768px) 100vw, 15vw"
-                className="object-cover object-center mix-blend-multiply" 
+                className="object-cover object-center mix-blend-multiply"
               />
-              <div 
+              <div
                 className="absolute inset-y-0 left-0 w-20 pointer-events-none"
                 style={{
                   background: `linear-gradient(to right, ${cardColor} 0%, ${cardColor}e0 25%, ${cardColor}00 100%)`
@@ -246,7 +247,7 @@ function OfferCard({
               <Icon className="h-8 w-8" />
             </div>
           )}
-          
+
           <div
             className={cn(
               'absolute right-3 top-3 z-10 flex flex-col items-center justify-center rounded-[8px] px-2 py-1 text-[11px] font-bold leading-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.1)]',

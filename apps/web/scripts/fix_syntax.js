@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 function replaceLinkClosings(filePath) {
-  let content = fs.readFileSync(filePath, 'utf8');
+  const content = fs.readFileSync(filePath, 'utf8');
   // Match a Link tag and its contents until the closing </a>
   // Actually, a safer way is to just replace </a> with </Link> if the line has <Link
-  let lines = content.split('\n');
+  const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes('<Link ') && lines[i].includes('</a>')) {
       lines[i] = lines[i].replace(/<\/a>/g, '</Link>');

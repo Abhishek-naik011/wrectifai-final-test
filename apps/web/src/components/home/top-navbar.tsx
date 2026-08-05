@@ -8,6 +8,10 @@ import { Input } from '@/components/common/input';
 import { topNavIcons } from '@/components/home/data';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/lib/auth-context';
+import { Modal } from '@/components/common/modal';
+import { Button } from '@/components/common/button';
+import { Trash2, ShoppingCart, Heart } from 'lucide-react';
+import Image from 'next/image';
 
 const CITIES = [
   'Hyderabad',
@@ -28,6 +32,11 @@ export function TopNavbar() {
   const [selectedCity, setSelectedCity] = useState('Hyderabad');
   const [citySearch, setCitySearch] = useState('');
   
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Authentication context
@@ -41,13 +50,44 @@ export function TopNavbar() {
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    // Listen for cart and wishlist updates
+    const updateCart = () => {
+      const items = sessionStorage.getItem('shopCart');
+      setCartCount(items ? JSON.parse(items).length : 0);
+    };
+    const updateWishlist = () => {
+      const items = sessionStorage.getItem('shopWishlist');
+      const parsed = items ? JSON.parse(items) : [];
+      setWishlistCount(parsed.length);
+      setWishlistItems(parsed);
+    };
+    
+    // Initial load
+    updateCart();
+    updateWishlist();
+    
+    window.addEventListener('cart-updated', updateCart);
+    window.addEventListener('wishlist-updated', updateWishlist);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('cart-updated', updateCart);
+      window.removeEventListener('wishlist-updated', updateWishlist);
+    };
   }, []);
 
   const router = useRouter();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const path = window.location.pathname;
+    const isLocalSearch = ['/services', '/shop', '/shop-all', '/wallet-payments', '/offers', '/car-tips'].includes(path);
+    
+    if (isLocalSearch) {
+      return; // Handled by local pages
+    }
+    
     if (query.trim()) {
       router.push(`/garages?search=${encodeURIComponent(query.trim())}`);
     } else {
@@ -171,22 +211,31 @@ export function TopNavbar() {
 
       {/* Right Section: Notifications, Chat, Favorites, Profile */}
       <div className="flex items-center gap-[7px] sm:gap-[12px] shrink-0 ml-auto lg:ml-0">
-        {topNavIcons.map(({ icon: Icon, badge, label }) => (
-          <div
+        {topNavIcons.map(({ icon: Icon, badge, label, href }) => (
+          <button
             key={label}
             aria-label={label}
+            onClick={() => {
+              if (label === 'Wishlist') {
+                setIsWishlistOpen(true);
+              } else if (href.startsWith('#')) {
+                // If it's a hash, dispatch an event or do nothing for now since it's mock
+              } else {
+                router.push(href);
+              }
+            }}
             className={cn(
               "relative h-9 w-9 lg:h-10 lg:w-10 shrink-0 flex items-center justify-center rounded-full bg-white text-[#17307a] shadow-sm ring-1 ring-[#e5ecfb]",
               label !== 'Notifications' ? "hidden lg:flex" : "flex"
             )}
           >
             <Icon className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />
-            {badge ? (
+            {(badge && label === 'Notifications' || (label === 'Cart' && cartCount > 0) || (label === 'Wishlist' && wishlistCount > 0)) ? (
               <span className="absolute right-0 top-0 lg:right-1 flex h-4 lg:h-5 min-w-4 lg:min-w-5 items-center justify-center rounded-full bg-[#ff2f44] px-1 text-[9px] lg:text-[9.5px] font-bold text-white">
-                {badge}
+                {label === 'Cart' ? cartCount : label === 'Wishlist' ? wishlistCount : badge}
               </span>
             ) : null}
-          </div>
+          </button>
         ))}
 
         {user ? (
@@ -228,6 +277,71 @@ export function TopNavbar() {
           </Link>
         )}
       </div>
+
+      <Modal isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} title="Your Wishlist">
+        {wishlistItems.length === 0 ? (
+          <div className="py-8 text-center text-slate-500">
+            <Heart className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <p>Your wishlist is empty</p>
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
+            {wishlistItems.map((item) => (
+              <div key={item.id} className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm items-center">
+                <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0">
+                  <Image src={item.img} alt={item.name} fill className="object-contain p-2" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm text-slate-900 truncate">{item.name}</h4>
+                  <p className="text-xs text-slate-500">{item.category}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="font-bold text-slate-900 text-sm">{item.price}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 shrink-0">
+                  <Button 
+                    size="sm" 
+                    className="h-8 text-xs bg-blue-600 text-white"
+                    onClick={() => {
+                      const cart = JSON.parse(sessionStorage.getItem('shopCart') || '[]');
+                      const existing = cart.find((i: any) => i.id === item.id);
+                      let newCart;
+                      if (existing) {
+                        newCart = cart.map((i: any) => i.id === item.id ? { ...i, quantity: (i.quantity || 1) + 1 } : i);
+                      } else {
+                        newCart = [...cart, { ...item, quantity: 1 }];
+                      }
+                      sessionStorage.setItem('shopCart', JSON.stringify(newCart));
+                      window.dispatchEvent(new Event('cart-updated'));
+                      
+                      // Remove from wishlist after adding to cart
+                      const newWishlist = wishlistItems.filter((i: any) => i.id !== item.id);
+                      setWishlistItems(newWishlist);
+                      sessionStorage.setItem('shopWishlist', JSON.stringify(newWishlist));
+                      window.dispatchEvent(new Event('wishlist-updated'));
+                    }}
+                  >
+                    <ShoppingCart className="w-3 h-3 mr-1" /> Add
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 text-xs text-red-500 border-red-100 hover:bg-red-50"
+                    onClick={() => {
+                      const newWishlist = wishlistItems.filter((i: any) => i.id !== item.id);
+                      setWishlistItems(newWishlist);
+                      sessionStorage.setItem('shopWishlist', JSON.stringify(newWishlist));
+                      window.dispatchEvent(new Event('wishlist-updated'));
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </header>
   );
 }

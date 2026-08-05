@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = path.join(__dirname, '../src/app/garage/service-history/page.tsx');
-let content = `
+const content = `
 'use client';
 import { RoleGuard } from '@/components/common/role-guard';
 import { DashboardShell } from '@/components/home/dashboard-shell';

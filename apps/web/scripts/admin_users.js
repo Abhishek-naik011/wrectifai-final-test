@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = path.join(__dirname, '../src/app/admin/users/page.tsx');
-let content = `
+const content = `
 'use client';
 import { Card } from '@/components/common/card';
 import { Search, Eye, Users, UserCheck, Clock, UserX, Car, MapPin } from 'lucide-react';

@@ -1,25 +1,117 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
 import { useRouter } from 'next/navigation';
-import { Plus, Send, History, CreditCard, ChevronRight, HelpCircle, Gift, ArrowDownToLine, ArrowUpRight, Gift as GiftIcon } from 'lucide-react';
+import { Plus, Send, History, CreditCard, ChevronRight, HelpCircle, Gift, ArrowDownToLine, ArrowUpRight, Gift as GiftIcon, Download, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Modal } from '@/components/common/modal';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import jsPDF from 'jspdf';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import autoTable from 'jspdf-autotable';
 
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
-const mockTransactions = [
-  { id: 1, date: '04 Aug 2026', time: '2:19 PM', desc: 'Added Money', subdesc: 'via UPI', type: 'Credit', amount: '+ $1,000.00', status: 'Success', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50' },
-  { id: 2, date: '03 Aug 2026', time: '11:45 AM', desc: 'Payment for Booking', subdesc: 'Job-48EAEB9D', type: 'Debit', amount: '- $550.00', status: 'Success', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50' },
-  { id: 3, date: '02 Aug 2026', time: '5:30 PM', desc: 'Cashback Received', subdesc: 'Referral Bonus', type: 'Credit', amount: '+ $50.00', status: 'Success', icon: GiftIcon, color: 'text-green-600', bg: 'bg-green-50' },
-  { id: 4, date: '01 Aug 2026', time: '9:10 AM', desc: 'Payment for Quote', subdesc: 'REQ-C2FEB431', type: 'Debit', amount: '- $220.00', status: 'Success', icon: CreditCard, color: 'text-red-600', bg: 'bg-red-50' },
-  { id: 5, date: '31 Jul 2026', time: '7:22 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: '+ $500.00', status: 'Success', icon: CreditCard, color: 'text-green-600', bg: 'bg-green-50' },
+const mockInitialTransactions = [
+  { id: 1, date: '04 Aug 2026', time: '2:19 PM', desc: 'Added Money', subdesc: 'via UPI', type: 'Credit', amount: 1000.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1001', method: 'UPI (surabi@okaxis)' },
+  { id: 2, date: '03 Aug 2026', time: '11:45 AM', desc: 'Payment for Booking', subdesc: 'Job-48EAEB9D', type: 'Debit', amount: 550.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Vishnu', garage: 'Speed Car Garage', vehicle: 'Toyota Camry', invoice: 'INV-1002', method: 'Wallet Balance' },
+  { id: 3, date: '02 Aug 2026', time: '5:30 PM', desc: 'Cashback Received', subdesc: 'Referral Bonus', type: 'Credit', amount: 50.00, status: 'Completed', icon: GiftIcon, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'N/A', method: 'Promo Code' },
+  { id: 4, date: '01 Aug 2026', time: '9:10 AM', desc: 'Payment for Quote', subdesc: 'REQ-C2FEB431', type: 'Debit', amount: 220.00, status: 'Failed', icon: CreditCard, color: 'text-red-600', bg: 'bg-red-50', customer: 'Vishnu', garage: 'AutoCare Center', vehicle: 'Toyota Camry', invoice: 'INV-1004', method: 'Chase Bank **** 4242' },
+  { id: 5, date: '31 Jul 2026', time: '7:22 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: 500.00, status: 'Pending', icon: CreditCard, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1005', method: 'Chase Bank **** 4242' },
 ];
 
 export function WalletPaymentsPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [transactions, setTransactions] = useState(mockInitialTransactions);
+  const [balance, setBalance] = useState(1250.00);
+
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  
+  // Modals
+  const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
+  const [addMoneyAmount, setAddMoneyAmount] = useState('');
+  
+  const [isLearnWalletOpen, setIsLearnWalletOpen] = useState(false);
+  const [isAddMethodOpen, setIsAddMethodOpen] = useState(false);
+  const [newMethodType, setNewMethodType] = useState('Card');
+
+  const [paymentMethods, setPaymentMethods] = useState([
+    { id: 1, type: 'UPI', details: 'surabi@okaxis', isDefault: true, icon: Smartphone },
+    { id: 2, type: 'Card', details: 'Chase Bank **** 4242', expiry: '12/28', isDefault: false, icon: CreditCard },
+  ]);
+
+  useEffect(() => {
+    const handleSearch = (e: CustomEvent) => setSearchQuery(e.detail);
+    window.addEventListener('dashboard-search', handleSearch as EventListener);
+    return () => window.removeEventListener('dashboard-search', handleSearch as EventListener);
+  }, []);
+
+  const filteredTransactions = transactions.filter(tx => {
+    const matchesTab = activeTab === 'All' || tx.status === activeTab;
+    const matchesSearch = tx.desc.toLowerCase().includes(searchQuery.toLowerCase()) || tx.subdesc.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
+  const downloadReceipt = (tx: any) => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Transaction Receipt', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+    
+    autoTable(doc, {
+      startY: 35,
+      head: [['Date', 'Description', 'Type', 'Amount', 'Status']],
+      body: [[
+        tx.date,
+        tx.desc,
+        tx.type,
+        `${tx.type === 'Credit' ? '+' : '-'} $${tx.amount.toFixed(2)}`,
+        tx.status
+      ]],
+    });
+    
+    doc.save(`receipt_${tx.id}.pdf`);
+  };
+
+  const handleAddMoney = () => {
+    const amount = parseFloat(addMoneyAmount);
+    if (isNaN(amount) || amount <= 0) return;
+    
+    setBalance(prev => prev + amount);
+    setTransactions([{
+      id: Date.now(),
+      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      desc: 'Added Money',
+      subdesc: 'via Default Method',
+      type: 'Credit',
+      amount: amount,
+      status: 'Completed',
+      icon: ArrowDownToLine,
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+      customer: 'Vishnu',
+      garage: 'N/A',
+      vehicle: 'N/A',
+      invoice: `INV-${Math.floor(Math.random() * 10000)}`,
+      method: paymentMethods.find(m => m.isDefault)?.details || 'Card'
+    }, ...transactions]);
+    
+    setIsAddMoneyOpen(false);
+    setAddMoneyAmount('');
+  };
+
+  const setAsDefault = (id: number) => {
+    setPaymentMethods(methods => methods.map(m => ({ ...m, isDefault: m.id === id })));
+  };
 
   return (
     <DashboardShell header={<TopNavbar />}>
@@ -36,9 +128,9 @@ export function WalletPaymentsPage() {
             <Card className="flex-1 p-6 relative overflow-hidden bg-gradient-to-r from-blue-50 to-white shadow-sm rounded-[24px]">
               <div className="relative z-10 w-2/3">
                 <h3 className="text-slate-900 font-bold mb-1 text-sm">Wallet Balance</h3>
-                <p className="text-4xl font-extrabold text-slate-900 mb-1">$1,250.00</p>
+                <p className="text-4xl font-extrabold text-slate-900 mb-1">${balance.toFixed(2)}</p>
                 <p className="text-slate-500 text-xs mb-6">Total Balance</p>
-                <Button className="bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-sm" onClick={() => {}}><Plus className="w-4 h-4 mr-2"/> Add Money</Button>
+                <Button onClick={() => setIsAddMoneyOpen(true)} className="bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-sm"><Plus className="w-4 h-4 mr-2"/> Add Money</Button>
               </div>
               <div className="absolute right-0 bottom-0 h-full w-40 opacity-90 hidden sm:flex items-center justify-center">
                  <Image src="/assets/Electrical.png" alt="Wallet" width={140} height={140} className="object-contain" />
@@ -51,7 +143,7 @@ export function WalletPaymentsPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">Main Balance</span>
-                    <span className="font-bold text-slate-900">$1,200.00</span>
+                    <span className="font-bold text-slate-900">${(balance - 50).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">Bonus Balance</span>
@@ -64,21 +156,41 @@ export function WalletPaymentsPage() {
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-slate-100">
-                <button className="flex items-center text-blue-600 text-xs font-semibold hover:underline">
+                <button onClick={() => setIsLearnWalletOpen(true)} className="flex items-center text-blue-600 text-xs font-semibold hover:underline">
                    <HelpCircle className="w-3.5 h-3.5 mr-1" /> Learn about Wallet <ChevronRight className="w-3 h-3 ml-auto" />
                 </button>
               </div>
             </Card>
           </div>
 
+          {searchQuery && (
+            <div className="text-sm font-medium text-slate-600">
+              Searching transactions for: <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">"{searchQuery}"</span>
+            </div>
+          )}
+
           {/* Transactions Tabs */}
           <Card className="p-0 shadow-sm border-slate-100 rounded-[24px] overflow-hidden">
-             <div className="flex border-b border-slate-100">
-               <button className="px-6 py-4 border-b-2 border-blue-600 text-blue-600 font-bold text-sm">Transactions</button>
-               <button className="px-6 py-4 text-slate-500 font-medium text-sm hover:text-slate-800">Payment History</button>
+             <div className="flex justify-between items-center pr-4 border-b border-slate-100 bg-white">
+               <div className="flex overflow-x-auto">
+                 {['All', 'Completed', 'Pending', 'Failed'].map(tab => (
+                   <button 
+                     key={tab}
+                     onClick={() => setActiveTab(tab)}
+                     className={cn("px-6 py-4 font-bold text-sm border-b-2 whitespace-nowrap", activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800")}
+                   >
+                     {tab === 'All' ? 'Transactions' : tab}
+                   </button>
+                 ))}
+                 <button className="px-6 py-4 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Payment History</button>
+               </div>
+               {/* Button removed or changed if necessary, but leaving empty or disabled as per user instruction to not download full history */}
+               <Button variant="outline" size="sm" onClick={() => {}} disabled className="opacity-50">
+                 <Download className="w-4 h-4 mr-2" /> Download Receipt
+               </Button>
              </div>
              
-             <div className="p-0 overflow-x-auto">
+             <div className="p-0 overflow-x-auto bg-white">
                <table className="w-full min-w-[700px] text-sm text-left">
                  <thead className="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-100">
                    <tr>
@@ -91,8 +203,8 @@ export function WalletPaymentsPage() {
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
-                   {mockTransactions.map((tx) => (
-                     <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors group">
+                   {filteredTransactions.map((tx) => (
+                     <tr key={tx.id} onClick={() => setSelectedTransaction(tx)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                        <td className="px-6 py-4">
                          <div className="flex items-center gap-3">
                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", tx.bg, tx.color)}>
@@ -114,88 +226,54 @@ export function WalletPaymentsPage() {
                          </span>
                        </td>
                        <td className="px-6 py-4">
-                         <p className={cn("font-bold", tx.type === 'Credit' ? 'text-green-600' : 'text-slate-900')}>{tx.amount}</p>
+                         <p className={cn("font-bold", tx.type === 'Credit' ? 'text-green-600' : 'text-slate-900')}>
+                           {tx.type === 'Credit' ? '+' : '-'} ${tx.amount.toFixed(2)}
+                         </p>
                        </td>
                        <td className="px-6 py-4 text-center">
-                         <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-bold border border-green-100">{tx.status}</span>
+                         <span className={cn("px-3 py-1 rounded-full text-xs font-bold border", 
+                           tx.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                           tx.status === 'Pending' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                           'bg-red-50 text-red-600 border-red-100'
+                         )}>{tx.status}</span>
                        </td>
                        <td className="px-6 py-4 text-right">
                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 ml-auto" />
                        </td>
                      </tr>
                    ))}
+                   {filteredTransactions.length === 0 && (
+                     <tr>
+                       <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                         No transactions found.
+                       </td>
+                     </tr>
+                   )}
                  </tbody>
                </table>
-             </div>
-             
-             <div className="p-4 border-t border-slate-100 text-center">
-               <button className="text-blue-600 text-sm font-semibold hover:underline inline-flex items-center gap-1">View All Transactions <ChevronRight className="w-4 h-4" /></button>
              </div>
           </Card>
         </div>
 
         {/* Sidebar */}
         <div className="w-full lg:w-[320px] space-y-6">
-          <Card className="p-4 shadow-sm border-slate-100 rounded-[20px]">
-            <h3 className="font-bold text-slate-900 mb-4 px-2">Quick Actions</h3>
-            <div className="space-y-1">
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
-                <span className="flex items-center gap-3"><Plus className="w-4 h-4 text-blue-600" /> Add Money</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
-                <span className="flex items-center gap-3"><Send className="w-4 h-4 text-blue-600" /> Send Money</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
-                <span className="flex items-center gap-3"><History className="w-4 h-4 text-blue-600" /> Transaction History</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
-                <span className="flex items-center gap-3"><CreditCard className="w-4 h-4 text-blue-600" /> Payment History</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
-          </Card>
-
-          <Card className="p-5 shadow-sm border-blue-100 bg-blue-50/30 rounded-[20px] relative overflow-hidden">
-            <div className="relative z-10 w-2/3">
-               <h3 className="font-bold text-blue-900 mb-1">Get 5% Cashback!</h3>
-               <p className="text-xs text-blue-700 mb-4">Add money to your wallet and get 5% cashback up to $100</p>
-               <Button className="bg-blue-600 text-white shadow-sm text-xs py-1.5 h-8">Add Money Now</Button>
-            </div>
-            <div className="absolute right-0 bottom-0 top-0 w-1/3 flex items-center justify-center">
-               <div className="w-16 h-16 bg-white/50 backdrop-blur rounded-full flex items-center justify-center">
-                 <Gift className="w-8 h-8 text-red-500" />
-               </div>
-            </div>
-          </Card>
-
-          <Card className="p-5 shadow-sm border-slate-100 rounded-[20px]">
+          <Card className="p-5 shadow-sm border-slate-100 rounded-[20px] bg-white">
             <h3 className="font-bold text-slate-900 mb-4">Saved Payment Methods</h3>
             <div className="space-y-4">
-               <div className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:border-blue-200 cursor-pointer transition-colors bg-white">
-                  <div className="w-10 h-10 bg-slate-50 rounded flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-slate-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-900">UPI ID</p>
-                    <p className="text-xs text-slate-500">user@bank</p>
-                  </div>
-                  <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded">Default</span>
-               </div>
+               {paymentMethods.map(method => (
+                 <div key={method.id} onClick={() => setAsDefault(method.id)} className={cn("flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors", method.isDefault ? "border-blue-500 bg-blue-50/30" : "border-slate-100 hover:border-blue-200 bg-white")}>
+                    <div className="w-10 h-10 bg-slate-50 rounded flex items-center justify-center">
+                      <method.icon className={cn("w-5 h-5", method.isDefault ? "text-blue-600" : "text-slate-500")} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-900">{method.type === 'Card' ? method.details : 'UPI ID'}</p>
+                      <p className="text-xs text-slate-500">{method.type === 'Card' ? `Expires ${method.expiry}` : method.details}</p>
+                    </div>
+                    {method.isDefault && <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded">Default</span>}
+                 </div>
+               ))}
                
-               <div className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl hover:border-blue-200 cursor-pointer transition-colors bg-white">
-                  <div className="w-10 h-10 bg-slate-50 rounded flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-blue-900" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-900">VISA Bank **** 4242</p>
-                    <p className="text-xs text-slate-500">Expires 12/28</p>
-                  </div>
-               </div>
-               
-               <Button variant="outline" className="w-full text-blue-600 border-dashed border-slate-300 hover:bg-slate-50">
+               <Button variant="outline" className="w-full text-blue-600 border-dashed border-slate-300 hover:bg-slate-50" onClick={() => setIsAddMethodOpen(true)}>
                  <Plus className="w-4 h-4 mr-2" /> Add New Card / UPI
                </Button>
             </div>
@@ -210,6 +288,107 @@ export function WalletPaymentsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Modals */}
+      <Modal isOpen={isAddMoneyOpen} onClose={() => setIsAddMoneyOpen(false)} title="Add Money to Wallet">
+        <div className="space-y-4 py-2">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Enter Amount ($)</label>
+            <input type="number" className="w-full border border-slate-200 rounded-lg p-3 text-lg font-bold focus:outline-none focus:border-blue-500" placeholder="100.00" value={addMoneyAmount} onChange={(e) => setAddMoneyAmount(e.target.value)} />
+          </div>
+          <Button className="w-full bg-blue-600 text-white" onClick={handleAddMoney}>Confirm & Add</Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isLearnWalletOpen} onClose={() => setIsLearnWalletOpen(false)} title="About Your Wallet">
+        <div className="space-y-4 py-2 text-sm text-slate-600">
+          <p><strong className="text-slate-900">Main Balance:</strong> The actual money you have added via cards or UPI.</p>
+          <p><strong className="text-slate-900">Bonus Balance:</strong> Promotional credits or cashback. Cannot be withdrawn, only used for bookings.</p>
+          <p><strong className="text-slate-900">Pending Refunds:</strong> Refunds currently processing back to your original payment method.</p>
+          <p><strong className="text-slate-900">Wallet Usage:</strong> Your wallet balance is automatically prioritized during checkout for services and parts.</p>
+          <Button className="w-full mt-4" onClick={() => setIsLearnWalletOpen(false)}>Got it</Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isAddMethodOpen} onClose={() => setIsAddMethodOpen(false)} title="Add Payment Method">
+        <div className="space-y-4 py-2">
+          <div className="flex border-b border-slate-200 mb-4">
+            <button className={cn("flex-1 py-2 text-sm font-bold border-b-2", newMethodType === 'Card' ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500")} onClick={() => setNewMethodType('Card')}>Credit/Debit Card</button>
+            <button className={cn("flex-1 py-2 text-sm font-bold border-b-2", newMethodType === 'UPI' ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500")} onClick={() => setNewMethodType('UPI')}>UPI</button>
+          </div>
+          
+          {newMethodType === 'Card' ? (
+            <div className="space-y-3">
+              <input type="text" placeholder="Card Number" className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500" />
+              <div className="flex gap-3">
+                <input type="text" placeholder="MM/YY" className="w-1/2 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500" />
+                <input type="text" placeholder="CVV" className="w-1/2 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500" />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <input type="text" placeholder="UPI ID (e.g. name@bank)" className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500" />
+            </div>
+          )}
+          
+          <Button className="w-full mt-4 bg-blue-600 text-white" onClick={() => {
+            setPaymentMethods([...paymentMethods, { id: Date.now(), type: newMethodType, details: newMethodType === 'Card' ? 'New Bank **** 1234' : 'new@upi', expiry: '11/29', isDefault: false, icon: newMethodType === 'Card' ? CreditCard : Smartphone }]);
+            setIsAddMethodOpen(false);
+          }}>Save Method</Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={!!selectedTransaction} onClose={() => setSelectedTransaction(null)} title="Transaction Details">
+        {selectedTransaction && (
+          <div className="space-y-6 py-4">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mb-4", selectedTransaction.bg, selectedTransaction.color)}>
+                 <selectedTransaction.icon className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">{selectedTransaction.type === 'Credit' ? '+' : '-'} ${selectedTransaction.amount.toFixed(2)}</h2>
+              <p className="text-slate-500">{selectedTransaction.status}</p>
+            </div>
+            
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3 text-sm">
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Customer</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.customer}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Garage</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.garage}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Vehicle</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.vehicle}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Booking ID</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.subdesc}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Invoice</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.invoice}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Payment Method</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.method}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Date</span>
+                <span className="font-bold text-slate-900">{selectedTransaction.date} {selectedTransaction.time}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+               <Button className="flex-1" variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+               <Button className="flex-1 bg-blue-600 text-white" onClick={() => downloadReceipt(selectedTransaction)}>Download PDF</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </DashboardShell>
   );
 }
+
+export default WalletPaymentsPage;

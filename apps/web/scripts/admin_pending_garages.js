@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const file = path.join(__dirname, '../src/app/admin/garages/pending-approvals/page.tsx');
-let content = `
+const content = `
 'use client';
 import { Card } from '@/components/common/card';
 import { Search, MapPin, Download, CheckCircle2, XCircle, FileText, ChevronRight } from 'lucide-react';
