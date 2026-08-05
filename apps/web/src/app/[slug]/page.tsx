@@ -41,9 +41,10 @@ const featurePageCopy: Record<string, string> = {
 };
 
 export function generateStaticParams() {
-  return navItems
+  const dynamicSlugs = navItems
     .filter((item) => item.href !== '/')
     .map((item) => ({ slug: item.slug }));
+  return [...dynamicSlugs, { slug: 'cart' }, { slug: 'notifications' }, { slug: 'shop-all' }];
 }
 
 export default async function FeaturePage({
@@ -54,7 +55,7 @@ export default async function FeaturePage({
   const { slug } = await params;
   const item = navItems.find((entry) => entry.slug === slug && entry.href !== '/');
 
-  if (!item) {
+  if (!item && !['cart', 'notifications', 'shop-all'].includes(slug)) {
     notFound();
   }
 
@@ -188,7 +189,7 @@ export default async function FeaturePage({
 
   return (
     <FeatureComingSoonPage
-      title={`${item.label} Feature Coming Soon`}
+      title={`${item?.label ?? slug} Feature Coming Soon`}
       description={featurePageCopy[slug] ?? 'This feature is currently under development and will be available soon.'}
     />
   );

@@ -17,11 +17,21 @@ import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
 const mockInitialTransactions = [
-  { id: 1, date: '04 Aug 2026', time: '2:19 PM', desc: 'Added Money', subdesc: 'via UPI', type: 'Credit', amount: 1000.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1001', method: 'UPI (surabi@okaxis)' },
-  { id: 2, date: '03 Aug 2026', time: '11:45 AM', desc: 'Payment for Booking', subdesc: 'Job-48EAEB9D', type: 'Debit', amount: 550.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Vishnu', garage: 'Speed Car Garage', vehicle: 'Toyota Camry', invoice: 'INV-1002', method: 'Wallet Balance' },
-  { id: 3, date: '02 Aug 2026', time: '5:30 PM', desc: 'Cashback Received', subdesc: 'Referral Bonus', type: 'Credit', amount: 50.00, status: 'Completed', icon: GiftIcon, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'N/A', method: 'Promo Code' },
-  { id: 4, date: '01 Aug 2026', time: '9:10 AM', desc: 'Payment for Quote', subdesc: 'REQ-C2FEB431', type: 'Debit', amount: 220.00, status: 'Failed', icon: CreditCard, color: 'text-red-600', bg: 'bg-red-50', customer: 'Vishnu', garage: 'AutoCare Center', vehicle: 'Toyota Camry', invoice: 'INV-1004', method: 'Chase Bank **** 4242' },
-  { id: 5, date: '31 Jul 2026', time: '7:22 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: 500.00, status: 'Pending', icon: CreditCard, color: 'text-green-600', bg: 'bg-green-50', customer: 'Vishnu', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1005', method: 'Chase Bank **** 4242' },
+  { id: 1, date: '04 Aug 2026', time: '2:19 PM', desc: 'Added Money', subdesc: 'via UPI', type: 'Credit', amount: 1000.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1001', method: 'UPI (surabi@okaxis)' },
+  { id: 2, date: '03 Aug 2026', time: '11:45 AM', desc: 'Payment for Booking', subdesc: 'Job-48EAEB9D', type: 'Debit', amount: 550.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Speed Car Garage', vehicle: 'Toyota Camry', invoice: 'INV-1002', method: 'Wallet Balance' },
+  { id: 3, date: '02 Aug 2026', time: '5:30 PM', desc: 'Cashback Received', subdesc: 'Referral Bonus', type: 'Credit', amount: 50.00, status: 'Completed', icon: GiftIcon, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'N/A', method: 'Promo Code' },
+  { id: 4, date: '01 Aug 2026', time: '9:10 AM', desc: 'Payment for Quote', subdesc: 'REQ-C2FEB431', type: 'Debit', amount: 220.00, status: 'Failed', icon: CreditCard, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Metro Auto Bay', vehicle: 'Toyota Camry', invoice: 'INV-1004', method: 'Chase Bank **** 4242' },
+  { id: 5, date: '31 Jul 2026', time: '7:22 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: 500.00, status: 'Pending', icon: CreditCard, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1005', method: 'Chase Bank **** 4242' },
+  { id: 6, date: '28 Jul 2026', time: '10:15 AM', desc: 'Payment for Service', subdesc: 'General Maintenance', type: 'Debit', amount: 120.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Prime Auto Care', vehicle: 'Toyota Camry', invoice: 'INV-1006', method: 'Wallet Balance' },
+  { id: 7, date: '25 Jul 2026', time: '4:40 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: 200.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1007', method: 'Chase Bank **** 4242' },
+  { id: 8, date: '22 Jul 2026', time: '1:20 PM', desc: 'Payment for Repair', subdesc: 'Brake Pad Replacement', type: 'Debit', amount: 310.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'AutoFix Garage', vehicle: 'Toyota Camry', invoice: 'INV-1008', method: 'Wallet Balance' },
+  { id: 9, date: '19 Jul 2026', time: '9:00 AM', desc: 'Refund', subdesc: 'Overcharged Service', type: 'Credit', amount: 45.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'Speed Car Garage', vehicle: 'Toyota Camry', invoice: 'INV-1009', method: 'Wallet Balance' },
+  { id: 10, date: '15 Jul 2026', time: '11:11 AM', desc: 'Payment for Tires', subdesc: '2x Michelin Pilot Sport', type: 'Debit', amount: 450.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Tyre Hub', vehicle: 'Toyota Camry', invoice: 'INV-1010', method: 'Chase Bank **** 4242' },
+  { id: 11, date: '10 Jul 2026', time: '3:30 PM', desc: 'Added Money', subdesc: 'via UPI', type: 'Credit', amount: 800.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1011', method: 'UPI (surabi@okaxis)' },
+  { id: 12, date: '05 Jul 2026', time: '2:45 PM', desc: 'Payment for Diagnostics', subdesc: 'Engine Check Light', type: 'Debit', amount: 85.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Metro Auto Bay', vehicle: 'Toyota Camry', invoice: 'INV-1012', method: 'Wallet Balance' },
+  { id: 13, date: '01 Jul 2026', time: '10:00 AM', desc: 'Cashback Received', subdesc: 'July Promo', type: 'Credit', amount: 20.00, status: 'Completed', icon: GiftIcon, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'N/A', method: 'Promo Code' },
+  { id: 14, date: '28 Jun 2026', time: '4:15 PM', desc: 'Payment for Wash', subdesc: 'Premium Detailing', type: 'Debit', amount: 150.00, status: 'Completed', icon: ArrowUpRight, color: 'text-red-600', bg: 'bg-red-50', customer: 'Surabi N', garage: 'Prime Auto Care', vehicle: 'Toyota Camry', invoice: 'INV-1014', method: 'Wallet Balance' },
+  { id: 15, date: '25 Jun 2026', time: '12:30 PM', desc: 'Added Money', subdesc: 'via Card', type: 'Credit', amount: 300.00, status: 'Completed', icon: ArrowDownToLine, color: 'text-green-600', bg: 'bg-green-50', customer: 'Surabi N', garage: 'N/A', vehicle: 'N/A', invoice: 'INV-1015', method: 'Chase Bank **** 4242' },
 ];
 
 export function WalletPaymentsPage() {
@@ -47,6 +57,52 @@ export function WalletPaymentsPage() {
     { id: 2, type: 'Card', details: 'Chase Bank **** 4242', expiry: '12/28', isDefault: false, icon: CreditCard },
   ]);
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedBalance = localStorage.getItem('wallet_balance');
+    const savedTransactions = localStorage.getItem('wallet_transactions');
+    const savedMethods = localStorage.getItem('wallet_methods');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (savedBalance) setBalance(parseFloat(savedBalance));
+    if (savedTransactions) {
+      // Re-map string icons to lucide components
+      const parsed = JSON.parse(savedTransactions);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped = parsed.map((t: any) => ({
+        ...t,
+        icon: t.type === 'Credit' ? (t.desc.includes('Cashback') ? GiftIcon : ArrowDownToLine) : (t.status === 'Failed' ? CreditCard : ArrowUpRight)
+      }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTransactions(mapped);
+    }
+    if (savedMethods) {
+      const parsed = JSON.parse(savedMethods);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped = parsed.map((m: any) => ({
+        ...m,
+        icon: m.type === 'UPI' ? Smartphone : CreditCard
+      }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPaymentMethods(mapped);
+    }
+  }, []);
+
+  // Save to localStorage when state changes
+  useEffect(() => {
+    localStorage.setItem('wallet_balance', balance.toString());
+  }, [balance]);
+
+  useEffect(() => {
+    // Avoid serializing the React component icon
+    const toSave = transactions.map(({ icon, ...rest }) => rest);
+    localStorage.setItem('wallet_transactions', JSON.stringify(toSave));
+  }, [transactions]);
+
+  useEffect(() => {
+    const toSave = paymentMethods.map(({ icon, ...rest }) => rest);
+    localStorage.setItem('wallet_methods', JSON.stringify(toSave));
+  }, [paymentMethods]);
+
   useEffect(() => {
     const handleSearch = (e: CustomEvent) => setSearchQuery(e.detail);
     window.addEventListener('dashboard-search', handleSearch as EventListener);
@@ -54,6 +110,9 @@ export function WalletPaymentsPage() {
   }, []);
 
   const filteredTransactions = transactions.filter(tx => {
+    if (activeTab === 'Payment History') {
+      return tx.type === 'Debit' && (tx.desc.toLowerCase().includes(searchQuery.toLowerCase()) || tx.subdesc.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
     const matchesTab = activeTab === 'All' || tx.status === activeTab;
     const matchesSearch = tx.desc.toLowerCase().includes(searchQuery.toLowerCase()) || tx.subdesc.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
@@ -165,7 +224,7 @@ export function WalletPaymentsPage() {
 
           {searchQuery && (
             <div className="text-sm font-medium text-slate-600">
-              Searching transactions for: <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">"{searchQuery}"</span>
+              Searching transactions for: <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">&quot;{searchQuery}&quot;</span>
             </div>
           )}
 
@@ -173,7 +232,7 @@ export function WalletPaymentsPage() {
           <Card className="p-0 shadow-sm border-slate-100 rounded-[24px] overflow-hidden">
              <div className="flex justify-between items-center pr-4 border-b border-slate-100 bg-white">
                <div className="flex overflow-x-auto">
-                 {['All', 'Completed', 'Pending', 'Failed'].map(tab => (
+                 {['All', 'Completed', 'Pending', 'Failed', 'Payment History'].map(tab => (
                    <button 
                      key={tab}
                      onClick={() => setActiveTab(tab)}
@@ -182,12 +241,7 @@ export function WalletPaymentsPage() {
                      {tab === 'All' ? 'Transactions' : tab}
                    </button>
                  ))}
-                 <button className="px-6 py-4 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">Payment History</button>
                </div>
-               {/* Button removed or changed if necessary, but leaving empty or disabled as per user instruction to not download full history */}
-               <Button variant="outline" size="sm" onClick={() => {}} disabled className="opacity-50">
-                 <Download className="w-4 h-4 mr-2" /> Download Receipt
-               </Button>
              </div>
              
              <div className="p-0 overflow-x-auto bg-white">
@@ -281,7 +335,7 @@ export function WalletPaymentsPage() {
           
           <Card className="p-5 shadow-sm border-slate-100 bg-white rounded-[20px]">
             <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-slate-500 mb-4">Facing issues with payments? We're here to help you.</p>
+            <p className="text-sm text-slate-500 mb-4">Facing issues with payments? We&apos;re here to help you.</p>
             <Button variant="outline" className="w-full border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => router.push('/help-support')}>
               <HelpCircle className="w-4 h-4 mr-2" /> Contact Support
             </Button>
