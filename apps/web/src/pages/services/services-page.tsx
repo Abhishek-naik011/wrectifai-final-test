@@ -11,7 +11,7 @@ import { Modal } from '@/components/common/modal';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
-const mockServices = [
+export const initialMockServices = [
   { id: 1, name: 'Oil Change', category: 'Maintenance', desc: 'Engine oil replacement with premium quality oil for better performance.', price: '$10 onwards', img: '/assets/engine_oil_bottle.png' },
   { id: 2, name: 'Brake Service', category: 'Repairs', desc: 'Complete brake inspection and maintenance for your safety.', price: '$20 onwards', img: '/assets/brake_disc_1778070670609.png' },
   { id: 3, name: 'Tyre Services', category: 'Maintenance', desc: 'Tyre rotation, balancing and alignment for smooth driving.', price: '$15 onwards', img: '/assets/clean_tire.png' },
@@ -37,14 +37,36 @@ export function ServicesPage() {
   const [selectedCategory, setSelectedCategory] = useState('All Services');
   const [selectedService, setSelectedService] = useState<any>(null);
   const [isGarageModalOpen, setIsGarageModalOpen] = useState(false);
+  const [services, setServices] = useState(initialMockServices);
 
   useEffect(() => {
     const handleSearch = (e: CustomEvent) => setSearchQuery(e.detail);
+    
+    const loadServices = () => {
+      const stored = localStorage.getItem('wrectifai_services');
+      if (stored) {
+        setServices(JSON.parse(stored));
+      } else {
+        localStorage.setItem('wrectifai_services', JSON.stringify(initialMockServices));
+        setServices(initialMockServices);
+      }
+    };
+    
+    loadServices();
+    
     window.addEventListener('dashboard-search', handleSearch as EventListener);
-    return () => window.removeEventListener('dashboard-search', handleSearch as EventListener);
+    window.addEventListener('services-updated', loadServices);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_services') loadServices();
+    });
+    
+    return () => {
+      window.removeEventListener('dashboard-search', handleSearch as EventListener);
+      window.removeEventListener('services-updated', loadServices);
+    };
   }, []);
 
-  const filteredServices = mockServices.filter(s => {
+  const filteredServices = services.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All Services' || s.category === selectedCategory;
     return matchesSearch && matchesCategory;

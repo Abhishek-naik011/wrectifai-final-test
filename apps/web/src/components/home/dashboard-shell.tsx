@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/home/sidebar';
 import type { NavItem } from '@/components/home/data';
 import { cn } from '@/utils/cn';
+import { usePathname } from 'next/navigation';
 
 export function DashboardShell({
   header,
@@ -21,6 +22,12 @@ export function DashboardShell({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  
+  const pathname = usePathname() || '';
+  const basePath = pathname.startsWith('/admin') ? '/admin' : pathname.startsWith('/garage') ? '/garage' : '';
+  const roleKey = basePath === '/admin' ? 'admin' : basePath === '/garage' ? 'garage' : 'customer';
+
+  const [theme, setTheme] = useState('light');
 
   const handleToggle = () => {
     setCollapsed((current) => !current);
@@ -29,12 +36,23 @@ export function DashboardShell({
   useEffect(() => {
     const handleToggleMobile = () => setMobileOpen((curr) => !curr);
     window.addEventListener('toggle-mobile-sidebar', handleToggleMobile);
-    return () =>
+    
+    const stored = localStorage.getItem(`theme-${roleKey}`);
+    if (stored) setTheme(stored);
+
+    const onThemeChange = (e: any) => {
+      if (e.detail.role === roleKey) setTheme(e.detail.theme);
+    };
+    window.addEventListener('theme-change', onThemeChange);
+
+    return () => {
       window.removeEventListener('toggle-mobile-sidebar', handleToggleMobile);
-  }, []);
+      window.removeEventListener('theme-change', onThemeChange);
+    };
+  }, [roleKey]);
 
   return (
-    <main id="top" className="min-h-screen bg-[#f6f8fe]">
+    <main id="top" className={cn("min-h-screen bg-[#f6f8fe]", theme === 'dark' ? 'dark text-foreground' : '')}>
       <div className="mx-auto max-w-[1600px] px-3 py-3 sm:px-4 lg:px-5 lg:h-screen lg:overflow-hidden lg:py-4">
         <div
           className={cn(

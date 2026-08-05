@@ -134,6 +134,59 @@ export class DiagnosisService {
     }
   }
 
+  static async chatWithLLM(customerId: string, vehicleId: string, conversationHistory: { role: string, content: string }[]) {
+    const env = getEnv();
+
+    const vehicleRes = await query(
+      'SELECT make, model, year FROM vehicles WHERE id = $1 AND customer_id = $2',
+      [vehicleId, customerId]
+    );
+
+    if (vehicleRes.rows.length === 0) {
+      throw new Error('Vehicle not found or does not belong to the user');
+    }
+    const vehicle = vehicleRes.rows[0];
+
+    const { generateObject } = await import('ai');
+    const { createOpenAI } = await import('@ai-sdk/openai');
+    
+    let aiProvider;
+    if (env.llmProvider === 'groq') {
+      if (!env.groqApiKey) throw new Error('GROQ_API_KEY is not defined');
+      aiProvider = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: env.groqApiKey, fetch });
+    } else {
+      if (!env.openaiApiKey) throw new Error('OPENAI_API_KEY is not defined');
+      aiProvider = createOpenAI({ apiKey: env.openaiApiKey, fetch });
+    }
+    const modelInstance = aiProvider(env.llmModel);
+
+    const systemPrompt = `You are WrectifAI, an expert automotive diagnostic assistant.
+The user is driving a ${vehicle.year} ${vehicle.make} ${vehicle.model}.
+Your goal is to gather enough symptoms and operating conditions to diagnose the car's issue.
+Ask exactly ONE concise clarifying question based on the conversation history.
+If you determine that you have enough information (a clear symptom and its operating conditions/context) to perform a diagnosis, set "sufficient" to true and leave "followUpQuestion" empty.
+Do NOT ask generic questions. Do NOT repeat questions.`;
+
+    try {
+      const llmResponse = await generateObject({
+        model: modelInstance,
+        schema: z.object({
+          sufficient: z.boolean(),
+          followUpQuestion: z.string().optional(),
+        }),
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...conversationHistory.map(msg => ({ role: msg.role as 'user' | 'assistant', content: msg.content }))
+        ],
+      });
+      return llmResponse.object;
+    } catch (err) {
+      console.error('LLM chat failed:', err);
+      // Fallback
+      return { sufficient: true }; 
+    }
+  }
+
   /**
    * Stage 1: Generate dynamic intake questions based on database matches
    */

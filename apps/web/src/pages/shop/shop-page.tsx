@@ -4,22 +4,22 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
 import { useRouter } from 'next/navigation';
-import { Search, ChevronDown, Filter, ShoppingBag, Heart, CheckCircle, Clock, Shield, Star, ShoppingCart } from 'lucide-react';
+import { Heart, CheckCircle, Clock, Shield, Star, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
-const mockProducts = [
-  { id: 1, name: 'Mobil 1 5W-30 Fully Synthetic Engine Oil', category: 'Oils & Fluids', price: '$12.99', oldPrice: 1599, discount: '19% OFF', rating: '4.6', reviews: 128, img: '/assets/engine_oil_bottle.png' },
-  { id: 2, name: 'Bosch Car Air Filter', category: 'Engine Parts', price: '$5.99', oldPrice: 799, discount: '25% OFF', rating: '4.5', reviews: 96, img: '/assets/Parts and components.png' },
-  { id: 3, name: 'Amaron Pro Rider Battery 42B20L', category: 'Batteries', price: '$42.99', oldPrice: 4999, discount: '14% OFF', rating: '4.7', reviews: 78, img: '/assets/car_battery.png' },
-  { id: 4, name: 'Brembo Front Brake Pads', category: 'Brakes', price: '$18.99', oldPrice: 2299, discount: '17% OFF', rating: '4.6', reviews: 64, img: '/assets/brake_disc_1778070670609.png' },
-  { id: 5, name: 'Philips H7 LED Headlight Bulb', category: 'Electrical', price: '$14.99', oldPrice: 1899, discount: '21% OFF', rating: '4.4', reviews: 54, img: '/assets/Electrical.png' },
-  { id: 6, name: 'Bosch Aerotwin Wiper Blade Set', category: 'Accessories', price: '$8.99', oldPrice: 1199, discount: '25% OFF', rating: '4.5', reviews: 112, img: '/assets/wiper_blade_1778070781712.png' },
-  { id: 7, name: 'Bosch Oil Filter', category: 'Engine Parts', price: '$2.99', oldPrice: 399, discount: '25% OFF', rating: '4.6', reviews: 88, img: '/assets/Accessories (2).png' },
-  { id: 8, name: 'Liqui Moly Coolant Ready Mix 1L', category: 'Oils & Fluids', price: '$4.99', oldPrice: 649, discount: '23% OFF', rating: '4.3', reviews: 46, img: '/assets/oil_pour_1778070767058.png' },
+export const initialMockProducts: any[] = [
+  { id: 1, name: 'Mobil 1 5W-30 Fully Synthetic Engine Oil', category: 'Oils & Fluids', price: '$12.99', oldPrice: 1599, discount: '19% OFF', rating: '4.6', reviews: 128, img: '/assets/engine_oil_bottle.png', status: 'approved' },
+  { id: 2, name: 'Bosch Car Air Filter', category: 'Engine Parts', price: '$5.99', oldPrice: 799, discount: '25% OFF', rating: '4.5', reviews: 96, img: '/assets/Parts and components.png', status: 'approved' },
+  { id: 3, name: 'Amaron Pro Rider Battery 42B20L', category: 'Batteries', price: '$42.99', oldPrice: 4999, discount: '14% OFF', rating: '4.7', reviews: 78, img: '/assets/car_battery.png', status: 'approved' },
+  { id: 4, name: 'Brembo Front Brake Pads', category: 'Brakes', price: '$18.99', oldPrice: 2299, discount: '17% OFF', rating: '4.6', reviews: 64, img: '/assets/brake_disc_1778070670609.png', status: 'approved' },
+  { id: 5, name: 'Philips H7 LED Headlight Bulb', category: 'Electrical', price: '$14.99', oldPrice: 1899, discount: '21% OFF', rating: '4.4', reviews: 54, img: '/assets/Electrical.png', status: 'approved' },
+  { id: 6, name: 'Bosch Aerotwin Wiper Blade Set', category: 'Accessories', price: '$8.99', oldPrice: 1199, discount: '25% OFF', rating: '4.5', reviews: 112, img: '/assets/wiper_blade_1778070781712.png', status: 'approved' },
+  { id: 7, name: 'Bosch Oil Filter', category: 'Engine Parts', price: '$2.99', oldPrice: 399, discount: '25% OFF', rating: '4.6', reviews: 88, img: '/assets/Accessories (2).png', status: 'approved' },
+  { id: 8, name: 'Liqui Moly Coolant Ready Mix 1L', category: 'Oils & Fluids', price: '$4.99', oldPrice: 649, discount: '23% OFF', rating: '4.3', reviews: 46, img: '/assets/oil_pour_1778070767058.png', status: 'approved' },
 ];
 
 export function ShopPage() {
@@ -28,6 +28,7 @@ export function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+  const [products, setProducts] = useState(initialMockProducts);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (message: string) => {
@@ -46,8 +47,29 @@ export function ShopPage() {
     const handleSearch = (e: CustomEvent) => {
       setSearchQuery(e.detail);
     };
+
+    const loadProducts = () => {
+      const stored = localStorage.getItem('wrectifai_products');
+      if (stored) {
+        setProducts(JSON.parse(stored));
+      } else {
+        localStorage.setItem('wrectifai_products', JSON.stringify(initialMockProducts));
+        setProducts(initialMockProducts);
+      }
+    };
+
+    loadProducts();
+
     window.addEventListener('dashboard-search', handleSearch as EventListener);
-    return () => window.removeEventListener('dashboard-search', handleSearch as EventListener);
+    window.addEventListener('products-updated', loadProducts);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_products') loadProducts();
+    });
+
+    return () => {
+      window.removeEventListener('dashboard-search', handleSearch as EventListener);
+      window.removeEventListener('products-updated', loadProducts);
+    };
   }, []);
 
   const toggleWishlist = (product: any) => {
@@ -72,7 +94,8 @@ export function ShopPage() {
     showToast('Added to Cart');
   };
 
-  const filteredProducts = mockProducts.filter(p => 
+  const filteredProducts = products.filter(p => 
+    p.status !== 'rejected' &&
     (selectedCategory === 'All' || p.category === selectedCategory) &&
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -118,7 +141,6 @@ export function ShopPage() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-900">Popular Products</h3>
-              <span className="text-sm font-semibold text-blue-600 cursor-pointer" onClick={() => router.push('/shop-all')}>View All {'>'}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (

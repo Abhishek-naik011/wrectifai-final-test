@@ -146,6 +146,12 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
         if (!isUnmounted.current) {
           console.log('[FindingQuotes] Setting requestId to:', response.id);
           setRequestId(response.id);
+          // Dispatch Notifications for Broadcast Quote
+          const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+          notifs.unshift({ id: Date.now(), type: 'Quote', title: 'New Quote Request', desc: `Customer requested a quote from all garages for: ${issueSummary}.`, time: 'Just now', read: false, icon: 'FileText', color: 'text-purple-500', bg: 'bg-purple-50', audience: 'Admin' });
+          notifs.unshift({ id: Date.now() + 1, type: 'Quote', title: 'New Quote Request', desc: `You received a new quote request from a customer.`, time: 'Just now', read: false, icon: 'FileText', color: 'text-purple-500', bg: 'bg-purple-50', audience: 'Garage' });
+          localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+          window.dispatchEvent(new Event('notifications-updated'));
         } else {
           console.log('[FindingQuotes] API completed but page was unmounted.');
         }

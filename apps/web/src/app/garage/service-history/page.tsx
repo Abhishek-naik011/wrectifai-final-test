@@ -16,6 +16,7 @@ import { Button } from '@/components/common/button';
 export default function ServiceHistoryPage() {
   const [history, setHistory] = useState<GarageCompletedJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -52,8 +53,20 @@ export default function ServiceHistoryPage() {
     loadData();
   }, []);
 
-  const totalServices = history.length;
-  const completedServices = history.filter(h => h.bookingStatus === 'completed').length;
+  const filteredHistory = history.filter((h) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (h.customerName || '').toLowerCase().includes(q) ||
+      (h.vehicleMake || '').toLowerCase().includes(q) ||
+      (h.vehicleModel || '').toLowerCase().includes(q) ||
+      (h.id || '').toLowerCase().includes(q) ||
+      (h.issueSummary || '').toLowerCase().includes(q)
+    );
+  });
+
+  const totalServices = filteredHistory.length;
+  const completedServices = filteredHistory.filter(h => h.bookingStatus === 'completed').length;
   
   const formatTime = (isoString: string) => {
     if (!isoString) return { date: '', time: '' };
@@ -78,7 +91,13 @@ export default function ServiceHistoryPage() {
              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
                <div className="relative w-80">
                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                 <input type="text" placeholder="Search by customer, vehicle, invoice..." className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-slate-50 outline-none focus:ring-1 focus:ring-blue-500" />
+                 <input 
+                   type="text" 
+                   value={searchQuery}
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                   placeholder="Search by customer, vehicle, invoice..." 
+                   className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-slate-50 outline-none focus:ring-1 focus:ring-blue-500" 
+                 />
                </div>
              </div>
              <div className="flex-1 overflow-auto">
@@ -98,11 +117,11 @@ export default function ServiceHistoryPage() {
                        <tr>
                           <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">Loading service history...</td>
                        </tr>
-                   ) : history.length === 0 ? (
+                   ) : filteredHistory.length === 0 ? (
                        <tr>
                           <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">No service history found.</td>
                        </tr>
-                   ) : history.map(h => (
+                   ) : filteredHistory.map(h => (
                      <tr key={h.id} className="hover:bg-slate-50 transition-colors">
                        <td className="p-4 align-top"><p className="text-xs font-bold text-blue-600">JOB-{h.id.substring(0,8).toUpperCase()}</p></td>
                        <td className="p-4 align-top">

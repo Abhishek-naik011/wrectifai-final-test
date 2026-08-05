@@ -39,8 +39,26 @@ export function WalletPaymentsPage() {
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const [transactions, setTransactions] = useState(mockInitialTransactions);
-  const [balance, setBalance] = useState(1250.00);
+  const [transactions, setTransactions] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('wallet_transactions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((t: any) => ({
+          ...t,
+          icon: t.type === 'Credit' ? (t.desc.includes('Cashback') ? GiftIcon : ArrowDownToLine) : (t.status === 'Failed' ? CreditCard : ArrowUpRight)
+        }));
+      }
+    }
+    return mockInitialTransactions;
+  });
+  const [balance, setBalance] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('wallet_balance');
+      if (saved) return parseFloat(saved);
+    }
+    return 1250.00;
+  });
 
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   
@@ -52,40 +70,24 @@ export function WalletPaymentsPage() {
   const [isAddMethodOpen, setIsAddMethodOpen] = useState(false);
   const [newMethodType, setNewMethodType] = useState('Card');
 
-  const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, type: 'UPI', details: 'surabi@okaxis', isDefault: true, icon: Smartphone },
-    { id: 2, type: 'Card', details: 'Chase Bank **** 4242', expiry: '12/28', isDefault: false, icon: CreditCard },
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('wallet_methods');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((m: any) => ({
+          ...m,
+          icon: m.type === 'UPI' ? Smartphone : CreditCard
+        }));
+      }
+    }
+    return [
+      { id: 1, type: 'UPI', details: 'surabi@okaxis', isDefault: true, icon: Smartphone },
+      { id: 2, type: 'Card', details: 'Chase Bank **** 4242', expiry: '12/28', isDefault: false, icon: CreditCard },
+    ];
+  });
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedBalance = localStorage.getItem('wallet_balance');
-    const savedTransactions = localStorage.getItem('wallet_transactions');
-    const savedMethods = localStorage.getItem('wallet_methods');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (savedBalance) setBalance(parseFloat(savedBalance));
-    if (savedTransactions) {
-      // Re-map string icons to lucide components
-      const parsed = JSON.parse(savedTransactions);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mapped = parsed.map((t: any) => ({
-        ...t,
-        icon: t.type === 'Credit' ? (t.desc.includes('Cashback') ? GiftIcon : ArrowDownToLine) : (t.status === 'Failed' ? CreditCard : ArrowUpRight)
-      }));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTransactions(mapped);
-    }
-    if (savedMethods) {
-      const parsed = JSON.parse(savedMethods);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mapped = parsed.map((m: any) => ({
-        ...m,
-        icon: m.type === 'UPI' ? Smartphone : CreditCard
-      }));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPaymentMethods(mapped);
-    }
-  }, []);
+  // Hydration fallback removed since states are lazily initialized
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -94,12 +96,13 @@ export function WalletPaymentsPage() {
 
   useEffect(() => {
     // Avoid serializing the React component icon
-    const toSave = transactions.map(({ icon, ...rest }) => rest);
+    const toSave = transactions.map(({ icon, ...rest }: any) => rest);
     localStorage.setItem('wallet_transactions', JSON.stringify(toSave));
   }, [transactions]);
 
   useEffect(() => {
-    const toSave = paymentMethods.map(({ icon, ...rest }) => rest);
+    // Avoid serializing the React component icon
+    const toSave = paymentMethods.map(({ icon, ...rest }: any) => rest);
     localStorage.setItem('wallet_methods', JSON.stringify(toSave));
   }, [paymentMethods]);
 
@@ -109,7 +112,7 @@ export function WalletPaymentsPage() {
     return () => window.removeEventListener('dashboard-search', handleSearch as EventListener);
   }, []);
 
-  const filteredTransactions = transactions.filter(tx => {
+  const filteredTransactions = transactions.filter((tx: any) => {
     if (activeTab === 'Payment History') {
       return tx.type === 'Debit' && (tx.desc.toLowerCase().includes(searchQuery.toLowerCase()) || tx.subdesc.toLowerCase().includes(searchQuery.toLowerCase()));
     }
@@ -161,7 +164,7 @@ export function WalletPaymentsPage() {
       garage: 'N/A',
       vehicle: 'N/A',
       invoice: `INV-${Math.floor(Math.random() * 10000)}`,
-      method: paymentMethods.find(m => m.isDefault)?.details || 'Card'
+      method: paymentMethods.find((m: any) => m.isDefault)?.details || 'Card'
     }, ...transactions]);
     
     setIsAddMoneyOpen(false);
@@ -169,7 +172,7 @@ export function WalletPaymentsPage() {
   };
 
   const setAsDefault = (id: number) => {
-    setPaymentMethods(methods => methods.map(m => ({ ...m, isDefault: m.id === id })));
+    setPaymentMethods((methods: any[]) => methods.map((m: any) => ({ ...m, isDefault: m.id === id })));
   };
 
   return (
@@ -257,7 +260,7 @@ export function WalletPaymentsPage() {
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
-                   {filteredTransactions.map((tx) => (
+                   {filteredTransactions.map((tx: any) => (
                      <tr key={tx.id} onClick={() => setSelectedTransaction(tx)} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                        <td className="px-6 py-4">
                          <div className="flex items-center gap-3">
@@ -314,7 +317,7 @@ export function WalletPaymentsPage() {
           <Card className="p-5 shadow-sm border-slate-100 rounded-[20px] bg-white">
             <h3 className="font-bold text-slate-900 mb-4">Saved Payment Methods</h3>
             <div className="space-y-4">
-               {paymentMethods.map(method => (
+               {paymentMethods.map((method: any) => (
                  <div key={method.id} onClick={() => setAsDefault(method.id)} className={cn("flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors", method.isDefault ? "border-blue-500 bg-blue-50/30" : "border-slate-100 hover:border-blue-200 bg-white")}>
                     <div className="w-10 h-10 bg-slate-50 rounded flex items-center justify-center">
                       <method.icon className={cn("w-5 h-5", method.isDefault ? "text-blue-600" : "text-slate-500")} />

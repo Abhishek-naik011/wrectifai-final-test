@@ -49,17 +49,34 @@ export function QuotesPage() {
   };
 
   useEffect(() => {
+    let active = true;
     async function loadData() {
       try {
         const quotesData = await fetchQuotes();
-        setQuotes(quotesData);
+        if (active) setQuotes(quotesData);
       } catch (err) {
         console.error('Failed to fetch data:', err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     loadData();
+
+    const handleSync = () => {
+      if (active) loadData();
+    };
+
+    window.addEventListener('quote-updated', handleSync);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_sync_quotes') {
+        handleSync();
+      }
+    });
+
+    return () => {
+      active = false;
+      window.removeEventListener('quote-updated', handleSync);
+    };
   }, []);
 
   return (

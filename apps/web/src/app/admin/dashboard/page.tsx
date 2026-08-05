@@ -7,6 +7,78 @@ import { apiClient } from '@/lib/api-client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+function AdminProductModeration() {
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadProducts = () => {
+      const stored = localStorage.getItem('wrectifai_products');
+      if (stored) {
+        setProducts(JSON.parse(stored));
+      }
+    };
+    loadProducts();
+    window.addEventListener('products-updated', loadProducts);
+    return () => window.removeEventListener('products-updated', loadProducts);
+  }, []);
+
+  const handleStatusUpdate = (id: number, status: 'approved' | 'rejected') => {
+    const updated = products.map(p => p.id === id ? { ...p, status } : p);
+    setProducts(updated);
+    localStorage.setItem('wrectifai_products', JSON.stringify(updated));
+    window.dispatchEvent(new Event('products-updated'));
+    // Notify Garage
+    const storedNotifs = localStorage.getItem('wrectifai_notifications');
+    const notifs = storedNotifs ? JSON.parse(storedNotifs) : [];
+    notifs.unshift({ id: Date.now(), type: 'System', title: 'Product Moderated', desc: `Your product was ${status} by admin.`, time: 'Just now', read: false, icon: 'FileText', color: status === 'approved' ? 'text-green-500' : 'text-red-500', bg: status === 'approved' ? 'bg-green-50' : 'bg-red-50', audience: 'Garage' });
+    localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+    window.dispatchEvent(new Event('notifications-updated'));
+  };
+
+  const handleDelete = (id: number) => {
+    const updated = products.filter(p => p.id !== id);
+    setProducts(updated);
+    localStorage.setItem('wrectifai_products', JSON.stringify(updated));
+    window.dispatchEvent(new Event('products-updated'));
+    // Notify Garage
+    const storedNotifs = localStorage.getItem('wrectifai_notifications');
+    const notifs = storedNotifs ? JSON.parse(storedNotifs) : [];
+    notifs.unshift({ id: Date.now(), type: 'System', title: 'Product Deleted', desc: 'Your product was deleted by admin.', time: 'Just now', read: false, icon: 'Trash2', color: 'text-red-500', bg: 'bg-red-50', audience: 'Garage' });
+    localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+    window.dispatchEvent(new Event('notifications-updated'));
+  };
+
+  return (
+    <Card className="p-5 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-bold text-[#17307a]">Garage Products Moderation</h3>
+      </div>
+      {products.length === 0 ? (
+         <p className="text-sm text-slate-500 py-4 text-center border border-dashed rounded-lg">No products submitted by garages.</p>
+      ) : (
+         <div className="divide-y divide-slate-100">
+           {products.map((p, idx) => (
+             <div key={idx} className="flex items-center justify-between py-3">
+               <div>
+                 <p className="text-sm font-bold text-slate-900 line-clamp-1">{p.name}</p>
+                 <p className="text-xs text-slate-500">{p.category} • {p.price}</p>
+                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${p.status === 'approved' ? 'bg-green-50 text-green-600' : p.status === 'rejected' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
+                   {p.status || 'pending'}
+                 </span>
+               </div>
+               <div className="flex gap-2">
+                 <button onClick={() => handleStatusUpdate(p.id, 'approved')} className="text-xs font-bold text-green-600 border border-green-200 bg-green-50 px-2 py-1 rounded hover:bg-green-100">Approve</button>
+                 <button onClick={() => handleStatusUpdate(p.id, 'rejected')} className="text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 px-2 py-1 rounded hover:bg-orange-100">Reject</button>
+                 <button onClick={() => handleDelete(p.id)} className="text-xs font-bold text-red-600 border border-red-200 bg-red-50 px-2 py-1 rounded hover:bg-red-100">Delete</button>
+               </div>
+             </div>
+           ))}
+         </div>
+      )}
+    </Card>
+  );
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<any>({ totalCustomers: 0, registeredGarages: 0, pendingApprovals: 0, activeBookings: 0, quotesCount: 0, serviceRequestsCount: 0, completedJobsCount: 0, pendingGarageList: [], recentlyRegisteredGarages: [] });
   const [actionModal, setActionModal] = useState<{isOpen: boolean, id: string, action: string, type: 'confirm' | 'error', message: string}>({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
@@ -37,6 +109,12 @@ export default function AdminDashboardPage() {
       const statsData = await apiClient.get<any>('/admin/stats').catch(() => stats);
       setStats(statsData);
       setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
+      
+      // Dispatch Notifications
+      const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+      notifs.unshift({ id: Date.now(), type: 'System', title: 'Garage Approved', desc: `Your garage has been approved by admin.`, time: 'Just now', read: false, icon: 'CheckCircle2', color: 'text-green-500', bg: 'bg-green-50', audience: 'Garage' });
+      localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
       setActionModal({isOpen: true, id: '', action: '', type: 'error', message: 'Failed to approve garage.'});
     }
@@ -48,6 +126,12 @@ export default function AdminDashboardPage() {
       const statsData = await apiClient.get<any>('/admin/stats').catch(() => stats);
       setStats(statsData);
       setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
+      
+      // Dispatch Notifications
+      const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+      notifs.unshift({ id: Date.now(), type: 'System', title: `Garage ${action.charAt(0).toUpperCase() + action.slice(1)}`, desc: `Your garage has been ${action} by admin.`, time: 'Just now', read: false, icon: action === 'approve' ? 'CheckCircle2' : 'ShieldAlert', color: action === 'approve' ? 'text-green-500' : 'text-red-500', bg: action === 'approve' ? 'bg-green-50' : 'bg-red-50', audience: 'Garage' });
+      localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+      window.dispatchEvent(new Event('notifications-updated'));
     } catch (err) {
       setActionModal({isOpen: true, id: '', action: '', type: 'error', message: `Failed to ${action} garage.`});
     }
@@ -141,7 +225,7 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="flex gap-6 mb-6">
+      <div className="flex flex-col gap-6 mb-6">
         <div className="flex-1 w-full max-w-full">
            <Card className="p-5 mb-6">
              <div className="flex justify-between items-center mb-4">
@@ -178,7 +262,10 @@ export default function AdminDashboardPage() {
              </div>
            </Card>
            
-           <div className="grid grid-cols-3 gap-6">
+           <AdminProductModeration />
+
+         </div>
+         <div className="w-96 max-w-[384px] shrink-0">
              <Card className="p-5 col-span-1">
                <div className="flex justify-between items-center mb-4">
                  <h3 className="font-bold text-[#17307a]">Recent Activity</h3>
@@ -225,7 +312,6 @@ export default function AdminDashboardPage() {
                 </div>
              </Card>
            </div>
-        </div>
       </div>
       
       <Card className="p-0 overflow-hidden">

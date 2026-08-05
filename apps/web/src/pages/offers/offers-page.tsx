@@ -12,13 +12,15 @@ import { Modal } from '@/components/common/modal';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
-const featuredOffers = [
-  { id: 1, type: 'HOT DEAL', title: '25% OFF', subtitle: 'On Full Car Service', desc: 'Complete car service with engine check-up, scan & more.', garage: 'Metro Auto Bay', rating: 4.8, reviews: 120, validTill: '15 Aug 2025', img: '/assets/garage_1_1778071156220.png', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-50', category: 'Service' },
-  { id: 2, type: 'BEST PRICE', title: '30% OFF', subtitle: 'On Brake Pads', desc: 'High performance brake pads for maximum safety.', garage: 'SpeedCare Garage', rating: 4.6, reviews: 98, validTill: '10 Aug 2025', img: '/assets/brake_disc_1778070670609.png', icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50', category: 'Parts' },
-  { id: 3, type: 'COMBO OFFER', title: '15% OFF', subtitle: 'On Tyres & Wheel Alignment', desc: 'Get discount on premium tyres + wheel alignment', garage: 'Tyre Hub', rating: 4.7, reviews: 76, img: '/assets/clean_tire.png', validTill: '20 Aug 2025', icon: Package, color: 'text-purple-500', bg: 'bg-purple-50', category: 'Combo' },
+const iconMap: Record<string, any> = { Flame, CheckCircle, Package, Percent };
+
+export const initialFeaturedOffers = [
+  { id: 1, type: 'HOT DEAL', title: '25% OFF', subtitle: 'On Full Car Service', desc: 'Complete car service with engine check-up, scan & more.', garage: 'Metro Auto Bay', rating: 4.8, reviews: 120, validTill: '15 Aug 2025', img: '/assets/garage_1_1778071156220.png', icon: 'Flame', color: 'text-orange-500', bg: 'bg-orange-50', category: 'Service' },
+  { id: 2, type: 'BEST PRICE', title: '30% OFF', subtitle: 'On Brake Pads', desc: 'High performance brake pads for maximum safety.', garage: 'SpeedCare Garage', rating: 4.6, reviews: 98, validTill: '10 Aug 2025', img: '/assets/brake_disc_1778070670609.png', icon: 'CheckCircle', color: 'text-green-500', bg: 'bg-green-50', category: 'Parts' },
+  { id: 3, type: 'COMBO OFFER', title: '15% OFF', subtitle: 'On Tyres & Wheel Alignment', desc: 'Get discount on premium tyres + wheel alignment', garage: 'Tyre Hub', rating: 4.7, reviews: 76, img: '/assets/clean_tire.png', validTill: '20 Aug 2025', icon: 'Package', color: 'text-purple-500', bg: 'bg-purple-50', category: 'Combo' },
 ];
 
-const allOffers = [
+export const initialAllOffers = [
   { id: 101, title: '20% OFF on Engine Oil', desc: 'Premium engine oil for better performance and mileage.', garage: 'AutoFix Pro', rating: 4.5, reviews: 63, validTill: '05 Aug 2025', img: '/assets/engine_oil_bottle.png', color: 'text-red-500', bg: 'bg-red-50', category: 'Parts' },
   { id: 102, title: 'Free Battery Check-up', desc: 'Get free battery health check and performance report.', garage: 'Battery Zone', rating: 4.4, reviews: 51, validTill: '08 Aug 2025', img: '/assets/car_battery.png', color: 'text-green-500', bg: 'bg-green-50', category: 'Service' },
   { id: 103, title: '10% OFF on AC Service', desc: 'Keep your AC cool and clean this summer.', garage: 'Cool Ride Garage', rating: 4.6, reviews: 88, validTill: '12 Aug 2025', img: '/assets/ac_vent_1778070688367.png', color: 'text-blue-500', bg: 'bg-blue-50', category: 'Service' },
@@ -31,11 +33,44 @@ export function OffersPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [featuredOffers, setFeaturedOffers] = useState(initialFeaturedOffers);
+  const [allOffers, setAllOffers] = useState(initialAllOffers);
 
   useEffect(() => {
     const handleSearch = (e: CustomEvent) => setSearchQuery(e.detail);
+    
+    const loadOffers = () => {
+      const storedFeatured = localStorage.getItem('wrectifai_featured_offers');
+      if (storedFeatured) {
+        setFeaturedOffers(JSON.parse(storedFeatured));
+      } else {
+        localStorage.setItem('wrectifai_featured_offers', JSON.stringify(initialFeaturedOffers));
+        setFeaturedOffers(initialFeaturedOffers);
+      }
+      
+      const storedAll = localStorage.getItem('wrectifai_all_offers');
+      if (storedAll) {
+        setAllOffers(JSON.parse(storedAll));
+      } else {
+        localStorage.setItem('wrectifai_all_offers', JSON.stringify(initialAllOffers));
+        setAllOffers(initialAllOffers);
+      }
+    };
+    
+    loadOffers();
+    
     window.addEventListener('dashboard-search', handleSearch as EventListener);
-    return () => window.removeEventListener('dashboard-search', handleSearch as EventListener);
+    window.addEventListener('offers-updated', loadOffers);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_featured_offers' || e.key === 'wrectifai_all_offers') {
+        loadOffers();
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('dashboard-search', handleSearch as EventListener);
+      window.removeEventListener('offers-updated', loadOffers);
+    };
   }, []);
 
   const filterOffer = (offer: any) => {
@@ -98,7 +133,10 @@ export function OffersPage() {
                 <Card key={offer.id} className="flex flex-col group relative rounded-[20px] border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-gradient-to-br from-orange-50/50 to-white">
                    <div className="p-5 flex-1 relative z-10">
                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded font-bold text-[10px] mb-3 ${offer.bg} ${offer.color}`}>
-                        <offer.icon className="w-3 h-3" /> {offer.type}
+                        {(() => {
+                          const Icon = iconMap[offer.icon] || Percent;
+                          return <Icon className="w-3 h-3" />;
+                        })()} {offer.type}
                      </div>
                      <h4 className="text-3xl font-extrabold text-slate-900 mb-1">{offer.title}</h4>
                      <p className="font-bold text-slate-900 text-sm mb-2">{offer.subtitle}</p>
@@ -175,6 +213,12 @@ export function OffersPage() {
       <Modal isOpen={!!selectedOffer} onClose={() => setSelectedOffer(null)} title="Offer Details">
         {selectedOffer && (
           <div className="space-y-4">
+             <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${selectedOffer.bg} ${selectedOffer.color}`}>
+                {(() => {
+                  const Icon = selectedOffer.icon ? iconMap[selectedOffer.icon] : Percent;
+                  return <Icon className="w-5 h-5" />;
+                })()}
+             </div>
              <div className={cn("w-full h-40 rounded-xl flex items-center justify-center relative overflow-hidden", selectedOffer.bg)}>
                 <Image src={selectedOffer.img} alt={selectedOffer.title} width={120} height={120} className="object-contain relative z-10" />
              </div>

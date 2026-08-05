@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/common/modal';
-import { useTheme } from 'next-themes';
+
 
 export function SettingsContent() {
   const { logout } = useAuth();
@@ -15,11 +15,15 @@ export function SettingsContent() {
   const basePath = pathname.startsWith('/admin') ? '/admin' : pathname.startsWith('/garage') ? '/garage' : '';
 
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
-  
-  // Create a display theme value to avoid hydration mismatch
+  const roleKey = basePath === '/admin' ? 'admin' : basePath === '/garage' ? 'garage' : 'customer';
+  const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    setMounted(true);
+    const stored = localStorage.getItem(`theme-${roleKey}`);
+    if (stored) setTheme(stored);
+  }, [roleKey]);
 
   const displayTheme = mounted ? (theme === 'dark' ? 'Dark Mode' : 'Light Mode') : 'Light Mode';
 
@@ -27,7 +31,10 @@ export function SettingsContent() {
     if (item.link) {
       router.push(`${basePath}${item.link}`);
     } else if (item.title === 'Appearance') {
-      setTheme(theme === 'dark' ? 'light' : 'dark');
+      const next = theme === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+      localStorage.setItem(`theme-${roleKey}`, next);
+      window.dispatchEvent(new CustomEvent('theme-change', { detail: { role: roleKey, theme: next }}));
     } else if (item.title === 'About WrectifAI') {
       setIsAboutModalOpen(true);
     }
@@ -39,7 +46,7 @@ export function SettingsContent() {
     { icon: Shield, title: 'Security Settings', desc: 'Change your password and manage account security.', action: 'Manage' },
     { icon: CreditCard, title: 'Payment & Wallet Settings', desc: 'Manage saved cards, UPI and payment preferences.', action: 'Manage', link: '/wallet-payments' },
     { icon: Globe, title: 'Language & Region', desc: 'Choose your preferred language and region.', actionText: 'English (India)', hasDropdown: true },
-    { icon: theme === 'Light Mode' ? Sun : Moon, title: 'Appearance', desc: 'Customize the look and feel of the application.', actionText: theme, hasDropdown: true },
+    { icon: displayTheme === 'Light Mode' ? Sun : Moon, title: 'Appearance', desc: 'Customize the look and feel of the application.', actionText: displayTheme, hasDropdown: true },
     { icon: Info, title: 'About WrectifAI', desc: 'App version, terms of service and privacy policy.', action: 'View Details' },
   ];
 
@@ -74,7 +81,10 @@ export function SettingsContent() {
         <Card className="p-6 shadow-sm border-slate-100 rounded-[20px]">
           <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
           <p className="text-sm text-slate-500 mb-4">We're here to help you with any issues or questions.</p>
-          <Button variant="outline" className="w-full font-bold text-blue-600 border-blue-200" onClick={() => router.push(`${basePath}/help-support`)}>
+          <Button variant="outline" className="w-full font-bold text-blue-600 border-blue-200" onClick={() => {
+             const helpPath = basePath === '/admin' ? '/admin/support' : basePath === '/garage' ? '/garage/help' : '/help-support';
+             router.push(helpPath);
+          }}>
              <HelpCircle className="w-4 h-4 mr-2" /> Contact Support
           </Button>
         </Card>

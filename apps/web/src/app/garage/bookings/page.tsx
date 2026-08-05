@@ -32,6 +32,39 @@ export default function BookingsPage() {
     try {
       await updateBookingStatus(id, newStatus);
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
+      localStorage.setItem('wrectifai_sync_bookings', Date.now().toString());
+      
+      // Dispatch Notifications
+      const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+      let title = '';
+      let desc = '';
+      let icon = 'CheckCircle2';
+      let color = 'text-green-500';
+      let bg = 'bg-green-50';
+      
+      if (newStatus === 'accepted') {
+        title = 'Booking Confirmed';
+        desc = `Your booking ${id.substring(0, 8)} has been confirmed by the garage.`;
+      } else if (newStatus === 'rejected') {
+        title = 'Booking Rejected';
+        desc = `Your booking ${id.substring(0, 8)} was rejected by the garage.`;
+        icon = 'ShieldAlert'; color = 'text-red-500'; bg = 'bg-red-50';
+      } else if (newStatus === 'in_progress') {
+        title = 'Service Started';
+        desc = `The garage has started working on your vehicle for booking ${id.substring(0, 8)}.`;
+        icon = 'Wrench'; color = 'text-indigo-500'; bg = 'bg-indigo-50';
+      } else if (newStatus === 'completed') {
+        title = 'Service Completed';
+        desc = `The garage has completed the service for booking ${id.substring(0, 8)}.`;
+        icon = 'CheckCircle2'; color = 'text-emerald-500'; bg = 'bg-emerald-50';
+      }
+      
+      if (title) {
+        notifs.unshift({ id: Date.now(), type: 'Booking', title, desc, time: 'Just now', read: false, icon, color, bg, audience: 'Customer' });
+        notifs.unshift({ id: Date.now() + 1, type: 'Booking', title: `Booking: ${title}`, desc: `Garage updated booking ${id.substring(0, 8)} to ${newStatus}.`, time: 'Just now', read: false, icon, color, bg, audience: 'Admin' });
+        localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+        window.dispatchEvent(new Event('notifications-updated'));
+      }
     } catch (err) {
       console.error(err);
       console.error('Failed to update status');

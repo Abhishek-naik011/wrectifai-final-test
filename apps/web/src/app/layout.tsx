@@ -4,7 +4,6 @@ import { AuthProvider } from '@/lib/auth-context';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthGuard } from '@/components/common/auth-guard';
 import { FavoritesProvider } from '@/lib/favorites-context';
-import { ThemeProvider } from '@/components/common/theme-provider';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -31,17 +30,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={plusJakartaSans.variable} suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <GoogleOAuthProvider clientId={googleClientId}>
-            <AuthProvider>
-              <FavoritesProvider>
-                <AuthGuard>
-                  {children}
-                </AuthGuard>
-              </FavoritesProvider>
-            </AuthProvider>
-          </GoogleOAuthProvider>
-        </ThemeProvider>
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <AuthProvider>
+            <FavoritesProvider>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
+            </FavoritesProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

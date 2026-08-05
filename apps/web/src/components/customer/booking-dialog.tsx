@@ -49,6 +49,13 @@ export function BookingDialog({ quote, onClose, onSuccess }: { quote: QuoteItem,
         scheduledAt: `${preferredDate}T${preferredTime}:00`,
         notes: additionalNotes,
       });
+      // Dispatch Notifications
+      const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+      const garageName = (quote as any).garageName || quote.garage || 'A Garage';
+      notifs.unshift({ id: Date.now(), type: 'Booking', title: 'New Booking', desc: `Customer booked a service at ${garageName}.`, time: 'Just now', read: false, icon: 'Calendar', color: 'text-blue-500', bg: 'bg-blue-50', audience: 'Admin' });
+      notifs.unshift({ id: Date.now() + 1, type: 'Booking', title: 'New Booking', desc: `You received a new booking for ${preferredDate} at ${preferredTime}.`, time: 'Just now', read: false, icon: 'Calendar', color: 'text-blue-500', bg: 'bg-blue-50', audience: 'Garage' });
+      localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+      window.dispatchEvent(new Event('notifications-updated'));
       onSuccess();
     } catch (err: any) {
       console.error(err);

@@ -63,6 +63,18 @@ export async function submitDiagnosis(payload: SubmitDiagnosisPayload): Promise<
   }
 }
 
+export async function chatDiagnosis(payload: { vehicleId: string, conversationHistory: { role: string, content: string }[] }): Promise<any> {
+  try {
+    return await apiClient.post('/diagnosis/chat', payload);
+  } catch (err) {
+    console.error('Failed to chat diagnosis:', err);
+    return {
+      success: false,
+      message: "We couldn't connect right now. Please try again.",
+    };
+  }
+}
+
 export async function getDiagnosis(id: string): Promise<DiagnosisResponse> {
   return apiClient.get(`/diagnosis/${id}`);
 }

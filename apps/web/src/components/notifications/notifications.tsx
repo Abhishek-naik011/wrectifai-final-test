@@ -1,24 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
+import { Input } from '@/components/common/input';
 import { Bell, Calendar, Wallet, FileText, CheckCircle2, Clock, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
-const initialNotifications = [
-  { id: 1, type: 'Booking', title: 'Booking Confirmed', desc: 'Your service appointment at Metro Auto Bay is confirmed for Tomorrow, 10:00 AM.', time: '10 mins ago', read: false, icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { id: 2, type: 'Payment', title: 'Payment Successful', desc: 'Payment of $120.00 for Oil Change has been processed successfully.', time: '2 hours ago', read: false, icon: Wallet, color: 'text-green-500', bg: 'bg-green-50' },
-  { id: 3, type: 'Quote', title: 'New Quote Received', desc: 'SpeedCare Garage has sent a quote for Brake Pad Replacement.', time: '5 hours ago', read: true, icon: FileText, color: 'text-purple-500', bg: 'bg-purple-50' },
-  { id: 4, type: 'System', title: 'Welcome to WrectifAI', desc: 'Complete your profile to get personalized service recommendations.', time: '1 day ago', read: true, icon: Bell, color: 'text-amber-500', bg: 'bg-amber-50' },
-  { id: 5, type: 'Booking', title: 'Service Completed', desc: 'Your vehicle is ready for pickup from Tyre Hub.', time: '2 days ago', read: true, icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50' },
-  { id: 6, type: 'Reminder', title: 'Upcoming Service', desc: 'Your AC Service is due in 3 days. Book now to avoid rush.', time: '3 days ago', read: true, icon: Clock, color: 'text-orange-500', bg: 'bg-orange-50' },
-  { id: 7, type: 'System', title: 'Security Alert', desc: 'New login detected from Chrome on Windows.', time: '1 week ago', read: true, icon: ShieldAlert, color: 'text-red-500', bg: 'bg-red-50' },
+const iconMap: Record<string, any> = { Calendar, Wallet, FileText, Bell, CheckCircle2, Clock, ShieldAlert };
+
+export const initialNotifications: any[] = [
+  { id: 1, type: 'Booking', title: 'Booking Confirmed', desc: 'Your service appointment at Metro Auto Bay is confirmed for Tomorrow, 10:00 AM.', time: '10 mins ago', read: false, icon: 'Calendar', color: 'text-blue-500', bg: 'bg-blue-50', audience: 'All' },
+  { id: 2, type: 'Payment', title: 'Payment Successful', desc: 'Payment of $120.00 for Oil Change has been processed successfully.', time: '2 hours ago', read: false, icon: 'Wallet', color: 'text-green-500', bg: 'bg-green-50', audience: 'All' },
+  { id: 3, type: 'Quote', title: 'New Quote Received', desc: 'SpeedCare Garage has sent a quote for Brake Pad Replacement.', time: '5 hours ago', read: true, icon: 'FileText', color: 'text-purple-500', bg: 'bg-purple-50', audience: 'All' },
+  { id: 4, type: 'System', title: 'Welcome to WrectifAI', desc: 'Complete your profile to get personalized service recommendations.', time: '1 day ago', read: true, icon: 'Bell', color: 'text-amber-500', bg: 'bg-amber-50', audience: 'All' },
+  { id: 5, type: 'Booking', title: 'Service Completed', desc: 'Your vehicle is ready for pickup from Tyre Hub.', time: '2 days ago', read: true, icon: 'CheckCircle2', color: 'text-green-500', bg: 'bg-green-50', audience: 'All' },
+  { id: 6, type: 'Reminder', title: 'Upcoming Service', desc: 'Your AC Service is due in 3 days. Book now to avoid rush.', time: '3 days ago', read: true, icon: 'Clock', color: 'text-orange-500', bg: 'bg-orange-50', audience: 'All' },
+  { id: 7, type: 'System', title: 'Security Alert', desc: 'New login detected from Chrome on Windows.', time: '1 week ago', read: true, icon: 'ShieldAlert', color: 'text-red-500', bg: 'bg-red-50', audience: 'All' },
 ];
 
 export function Notifications() {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const pathname = usePathname();
+
+  const [notifications, setNotificationsState] = useState(initialNotifications);
   const [filter, setFilter] = useState('All');
+  
+
+
+  const setNotifications = (newNotifications: any[]) => {
+    setNotificationsState(newNotifications);
+    localStorage.setItem('wrectifai_notifications', JSON.stringify(newNotifications));
+    window.dispatchEvent(new Event('notifications-updated'));
+  };
+
+  useEffect(() => {
+    const stored = localStorage.getItem('wrectifai_notifications');
+    if (stored) {
+      setNotificationsState(JSON.parse(stored));
+    } else {
+      localStorage.setItem('wrectifai_notifications', JSON.stringify(initialNotifications));
+      setNotificationsState(initialNotifications);
+    }
+  }, []);
 
   const filteredNotifications = notifications.filter(n => filter === 'All' || n.type === filter);
   
@@ -82,7 +106,10 @@ export function Notifications() {
                   onClick={() => markAsRead(notification.id)}
                 >
                   <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-1", notification.bg, notification.color)}>
-                    <notification.icon className="w-5 h-5" />
+                    {(() => {
+                      const Icon = iconMap[notification.icon as string] || Bell;
+                      return <Icon className="w-5 h-5" />;
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
                     <div className="flex justify-between items-start mb-1">

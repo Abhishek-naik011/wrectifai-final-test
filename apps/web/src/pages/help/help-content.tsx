@@ -88,7 +88,10 @@ export function HelpContent() {
         <Card className="p-6 shadow-sm border-slate-100 bg-blue-50/50 rounded-[20px]">
           <h3 className="font-bold text-slate-900 mb-2">Need Immediate Help?</h3>
           <p className="text-sm text-slate-500 mb-4">Our support team is ready to assist you.</p>
-          <button className="w-full py-2 bg-white border border-blue-200 text-blue-600 font-bold rounded-lg flex justify-center items-center gap-2 hover:bg-blue-50 transition-colors mb-3" onClick={() => router.push(`${basePath}/help-support`)}>
+          <button className="w-full py-2 bg-white border border-blue-200 text-blue-600 font-bold rounded-lg flex justify-center items-center gap-2 hover:bg-blue-50 transition-colors mb-3" onClick={() => {
+             const helpPath = basePath === '/admin' ? '/admin/support' : basePath === '/garage' ? '/garage/help' : '/help-support';
+             router.push(helpPath);
+          }}>
              <Headset className="w-4 h-4" /> Contact Support
           </button>
           <div className="flex items-center justify-center gap-2 text-xs font-semibold text-green-600">

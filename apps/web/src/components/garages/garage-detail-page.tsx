@@ -220,13 +220,27 @@ export function GarageDetailPage({
         isOpen={isQuoteModalOpen} 
         onClose={() => setIsQuoteModalOpen(false)} 
         garageId={garage.id || ''} 
-        onSubmitSuccess={() => setRequestStatus('quote_success')} 
+        onSubmitSuccess={() => {
+          setRequestStatus('quote_success');
+          const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+          notifs.unshift({ id: Date.now(), type: 'Quote', title: 'New Quote Request', desc: `Customer requested a quote from ${garage.name}.`, time: 'Just now', read: false, icon: 'FileText', color: 'text-purple-500', bg: 'bg-purple-50', audience: 'Admin' });
+          notifs.unshift({ id: Date.now() + 1, type: 'Quote', title: 'New Quote Request', desc: `You received a new quote request from a customer.`, time: 'Just now', read: false, icon: 'FileText', color: 'text-purple-500', bg: 'bg-purple-50', audience: 'Garage' });
+          localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+          window.dispatchEvent(new Event('notifications-updated'));
+        }} 
       />
       <BookingModal 
         isOpen={isBookingModalOpen} 
         onClose={() => setIsBookingModalOpen(false)} 
         garageId={garage.id || ''} 
-        onSubmitSuccess={() => setRequestStatus('booking_success')} 
+        onSubmitSuccess={() => {
+          setRequestStatus('booking_success');
+          const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+          notifs.unshift({ id: Date.now(), type: 'Booking', title: 'New Booking', desc: `Customer booked an appointment at ${garage.name}.`, time: 'Just now', read: false, icon: 'Calendar', color: 'text-blue-500', bg: 'bg-blue-50', audience: 'Admin' });
+          notifs.unshift({ id: Date.now() + 1, type: 'Booking', title: 'New Booking', desc: `You received a new booking from a customer.`, time: 'Just now', read: false, icon: 'Calendar', color: 'text-blue-500', bg: 'bg-blue-50', audience: 'Garage' });
+          localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+          window.dispatchEvent(new Event('notifications-updated'));
+        }} 
       />
 
       <Modal 

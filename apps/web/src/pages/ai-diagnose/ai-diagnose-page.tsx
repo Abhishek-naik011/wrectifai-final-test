@@ -90,7 +90,7 @@ import { TopNavbar } from '@/components/home/top-navbar';
 import { Card } from '@/components/common/card';
 import { cn } from '@/utils/cn';
 import { VehicleSelector } from '@/components/common/vehicle-selector';
-import { submitDiagnosis, type DiagnosisResponse } from '../../lib/diagnosis-api';
+import { submitDiagnosis, chatDiagnosis, type DiagnosisResponse } from '../../lib/diagnosis-api';
 import { getVehicleImage } from '@/lib/vehicle-image-catalog';
 
 function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
@@ -2611,7 +2611,7 @@ export function AIDiagnosePage() {
     setAttachedMedia((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (isAnalyzingResults) return;
     if (!selectedVehicleId) return;
     const inputMsg = typedMessage.trim();
@@ -2635,36 +2635,51 @@ export function AIDiagnosePage() {
     // If we haven't started the session yet, this input is the initial symptom!
     if (!hasStartedDiagnose) {
       const combinedContext = accumulatedIntakeContext ? `${accumulatedIntakeContext} ${inputMsg}` : inputMsg;
-      const normalized = normalizeInput(combinedContext);
-      const entities = extractEntities(normalized);
-      const { isSufficient, missing } = determineMissingContext(entities, clarificationTurns);
-      
       setAccumulatedIntakeContext(combinedContext);
 
-      if (!isSufficient) {
-        const followUp = generateContextAwareFollowUp(missing, entities);
-        setClarificationTurns(prev => prev + 1);
+      setIsTyping(true);
+      setTypingText('WrectifAI is thinking...');
+
+      const chatHistory = messages
+        .filter(m => m.kind === 'message' || m.kind === 'reply')
+        .map(m => ({
+          role: m.sender,
+          content: m.kind === 'message' ? m.text : (m.kind === 'reply' ? m.text : '')
+        }))
+        .filter(m => m.content);
+
+      chatHistory.push({ role: 'user', content: inputMsg });
+
+      try {
+        const response = await chatDiagnosis({ vehicleId: selectedVehicleId, conversationHistory: chatHistory });
         
-        setIsTyping(true);
-        setTypingText('WrectifAI is thinking...');
-        setTimeout(() => {
-          setIsTyping(false);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `bot-clarification-${Date.now()}`,
-              sender: 'assistant',
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              kind: 'message',
-              text: followUp,
-            },
-          ]);
-        }, 1000);
-        return;
+        setIsTyping(false);
+
+        if (response?.sufficient) {
+          setIssueText(combinedContext);
+          startDiagnoseSession(selectedVehicleId, combinedContext);
+          return;
+        }
+
+        const followUp = response?.followUpQuestion || "Could you provide more details about the symptoms you're experiencing?";
+        
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `bot-clarification-${Date.now()}`,
+            sender: 'assistant',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            kind: 'message',
+            text: followUp,
+          },
+        ]);
+      } catch (err) {
+        setIsTyping(false);
+        console.error('Chat error:', err);
+        // Fallback to start diagnose session if chat fails
+        setIssueText(combinedContext);
+        startDiagnoseSession(selectedVehicleId, combinedContext);
       }
-      
-      setIssueText(combinedContext);
-      startDiagnoseSession(selectedVehicleId, combinedContext);
       return;
     }
 

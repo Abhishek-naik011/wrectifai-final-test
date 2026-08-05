@@ -227,11 +227,11 @@ function GarageCard({
   verified,
   image,
   compact = false,
+  isWishlisted,
   onClick,
-}: Garage & { compact?: boolean; onClick?: () => void }) {
+}: Garage & { compact?: boolean; isWishlisted?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
     <Card
-      onClick={onClick}
       className="overflow-hidden rounded-[18px] border-[#e7eefc] shadow-[0_14px_34px_rgba(21,48,122,0.08)] cursor-pointer hover:border-[#1a56db]/20 transition-all duration-300 hover:scale-[1.01]"
     >
       <div
@@ -261,8 +261,10 @@ function GarageCard({
             {badge}
           </div>
         ) : null}
-        <div className="absolute right-4 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md">
-          <Heart className="h-5 w-5" />
+        <div 
+          onClick={onClick}
+          className="absolute right-4 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md hover:scale-110 transition-transform cursor-pointer z-10">
+          <Heart className="h-5 w-5" fill={isWishlisted ? "currentColor" : "none"} />
         </div>
         <div className="absolute inset-x-4 bottom-4 flex items-end justify-between">
           <div className="text-[11.5px] font-bold tracking-[0.01em] text-white/92">
@@ -468,6 +470,50 @@ function GaragesContent() {
 
     return () => window.removeEventListener('dashboard-search', handleSearch);
   }, [searchParams]);
+
+  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const savedWishlist = sessionStorage.getItem('shopWishlist');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (savedWishlist) setWishlistItems(JSON.parse(savedWishlist));
+    
+    const handleUpdate = () => {
+      const updated = sessionStorage.getItem('shopWishlist');
+      if (updated) setWishlistItems(JSON.parse(updated));
+    };
+    window.addEventListener('wishlist-updated', handleUpdate);
+    return () => window.removeEventListener('wishlist-updated', handleUpdate);
+  }, []);
+
+  const toggleWishlist = (e: React.MouseEvent, garage: any) => {
+    e.stopPropagation();
+    const id = garage.id || garage.name;
+    const exists = wishlistItems.find(i => (i.id === id || i.name === id));
+    let newItems;
+    if (exists) {
+      newItems = wishlistItems.filter(i => (i.id !== id && i.name !== id));
+      setToastMessage('Garage removed from Wishlist');
+    } else {
+      newItems = [...wishlistItems, { 
+        id, 
+        name: garage.facade || garage.name, 
+        img: garage.image, 
+        category: garage.location,
+        type: 'garage' 
+      }];
+      setToastMessage('Garage added to Wishlist');
+    }
+    
+    setWishlistItems(newItems);
+    sessionStorage.setItem('shopWishlist', JSON.stringify(newItems));
+    window.dispatchEvent(new Event('wishlist-updated'));
+    
+    setIsToastVisible(true);
+    setTimeout(() => setIsToastVisible(false), 3000);
+  };
 
   const filteredGarages = useMemo(() => {
     const filtered = garagesList.filter((garage) => {
@@ -862,12 +908,15 @@ function GaragesContent() {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-2">
             {paginatedGarages.map((garage) => (
-              <GarageCard
-                key={garage.name}
-                {...garage}
-                compact
-                onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
-              />
+              <div key={garage.name} className="relative group">
+                <div className="absolute inset-0 z-0" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
+                <GarageCard
+                  {...garage}
+                  compact
+                  isWishlisted={wishlistItems.some((i: any) => i.id === garage.name || i.name === garage.name)}
+                  onClick={(e) => toggleWishlist(e, garage)}
+                />
+              </div>
             ))}
           </div>
           <Card className="sticky top-0 flex min-h-[720px] flex-col overflow-hidden rounded-[18px] border-[#e7eefc] bg-[linear-gradient(180deg,#edf5ff_0%,#dfefff_100%)] shadow-[0_14px_34px_rgba(21,48,122,0.08)]">
@@ -910,11 +959,14 @@ function GaragesContent() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {paginatedGarages.map((garage) => (
-            <GarageCard
-              key={garage.name}
-              {...garage}
-              onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
-            />
+            <div key={garage.name} className="relative group">
+              <div className="absolute inset-0 z-0 cursor-pointer" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
+              <GarageCard
+                {...garage}
+                isWishlisted={wishlistItems.some((i: any) => i.id === garage.name || i.name === garage.name)}
+                onClick={(e) => toggleWishlist(e, garage)}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -970,6 +1022,13 @@ function GaragesContent() {
           Showing {startIndex} - {endIndex} of {filteredGarages.length} garages
         </div>
       </div>
+
+      {isToastVisible && (
+        <div className="fixed bottom-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-in slide-in-from-bottom-5 flex items-center gap-2 bg-slate-900">
+          <BadgeCheck className="w-4 h-4 text-green-400" />
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }

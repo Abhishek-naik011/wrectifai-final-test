@@ -44,8 +44,21 @@ export function BookingsPage() {
         loadBookings();
       }
     });
+
+    const handleSync = () => {
+      if (active) loadBookings();
+    };
+
+    window.addEventListener('booking-updated', handleSync);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_sync_bookings') {
+        handleSync();
+      }
+    });
+
     return () => {
       active = false;
+      window.removeEventListener('booking-updated', handleSync);
     };
   }, []);
 
@@ -63,6 +76,12 @@ export function BookingsPage() {
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingToCancel ? { ...b, status: 'cancelled' as const } : b))
       );
+      // Dispatch Notifications
+      const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
+      notifs.unshift({ id: Date.now(), type: 'System', title: 'Booking Cancelled', desc: `Customer cancelled booking ${bookingToCancel.substring(0, 8)}.`, time: 'Just now', read: false, icon: 'ShieldAlert', color: 'text-red-500', bg: 'bg-red-50', audience: 'Admin' });
+      notifs.unshift({ id: Date.now() + 1, type: 'System', title: 'Booking Cancelled', desc: `A customer cancelled their booking.`, time: 'Just now', read: false, icon: 'ShieldAlert', color: 'text-red-500', bg: 'bg-red-50', audience: 'Garage' });
+      localStorage.setItem('wrectifai_notifications', JSON.stringify(notifs));
+      window.dispatchEvent(new Event('notifications-updated'));
       setCancelModalOpen(false);
       setBookingToCancel(null);
     } catch (err) {

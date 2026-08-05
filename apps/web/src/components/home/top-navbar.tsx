@@ -34,6 +34,7 @@ export function TopNavbar() {
   
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(3);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   
@@ -62,18 +63,31 @@ export function TopNavbar() {
       setWishlistCount(parsed.length);
       setWishlistItems(parsed);
     };
+    const updateNotifications = () => {
+      const items = localStorage.getItem('wrectifai_notifications');
+      if (items) {
+        const parsed = JSON.parse(items);
+        setNotificationCount(parsed.filter((n: any) => !n.read).length);
+      }
+    };
     
     // Initial load
     updateCart();
     updateWishlist();
+    updateNotifications();
     
     window.addEventListener('cart-updated', updateCart);
     window.addEventListener('wishlist-updated', updateWishlist);
+    window.addEventListener('notifications-updated', updateNotifications);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'wrectifai_notifications') updateNotifications();
+    });
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('cart-updated', updateCart);
       window.removeEventListener('wishlist-updated', updateWishlist);
+      window.removeEventListener('notifications-updated', updateNotifications);
     };
   }, []);
 
@@ -230,9 +244,9 @@ export function TopNavbar() {
             )}
           >
             <Icon className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />
-            {(badge && label === 'Notifications' || (label === 'Cart' && cartCount > 0) || (label === 'Wishlist' && wishlistCount > 0)) ? (
+            {((label === 'Notifications' && notificationCount > 0) || (label === 'Cart' && cartCount > 0) || (label === 'Wishlist' && wishlistCount > 0)) ? (
               <span className="absolute right-0 top-0 lg:right-1 flex h-4 lg:h-5 min-w-4 lg:min-w-5 items-center justify-center rounded-full bg-[#ff2f44] px-1 text-[9px] lg:text-[9.5px] font-bold text-white">
-                {label === 'Cart' ? cartCount : label === 'Wishlist' ? wishlistCount : badge}
+                {label === 'Cart' ? cartCount : label === 'Wishlist' ? wishlistCount : label === 'Notifications' ? notificationCount : badge}
               </span>
             ) : null}
           </button>
@@ -285,8 +299,50 @@ export function TopNavbar() {
             <p>Your wishlist is empty</p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-            {wishlistItems.map((item) => (
+          <div className="space-y-6 max-h-[60vh] overflow-y-auto p-1">
+            <div>
+              <h3 className="font-bold text-slate-900 mb-3 border-b border-slate-100 pb-2">Saved Garages</h3>
+              {wishlistItems.filter((i) => i.type === 'garage').length === 0 ? (
+                <p className="text-slate-500 text-sm py-2">No saved garages yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {wishlistItems.filter((i) => i.type === 'garage').map((item) => (
+                    <div key={item.id || item.name} className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm items-center">
+                      <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0">
+                        {item.img && <Image src={item.img} alt={item.name} fill className="object-cover" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm text-slate-900 truncate">{item.name}</h4>
+                        <p className="text-xs text-slate-500">{item.category}</p>
+                      </div>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs text-red-500 border-red-100 hover:bg-red-50"
+                          onClick={() => {
+                            const newWishlist = wishlistItems.filter((i: any) => i.id !== item.id);
+                            setWishlistItems(newWishlist);
+                            sessionStorage.setItem('shopWishlist', JSON.stringify(newWishlist));
+                            window.dispatchEvent(new Event('wishlist-updated'));
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-bold text-slate-900 mb-3 border-b border-slate-100 pb-2">Saved Products</h3>
+              {wishlistItems.filter((i) => i.type !== 'garage').length === 0 ? (
+                <p className="text-slate-500 text-sm py-2">No saved products yet.</p>
+              ) : (
+                <div className="space-y-3">
+            {wishlistItems.filter((i) => i.type !== 'garage').map((item) => (
               <div key={item.id} className="flex gap-4 p-3 bg-white rounded-xl border border-slate-100 shadow-sm items-center">
                 <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center relative overflow-hidden shrink-0">
                   <Image src={item.img} alt={item.name} fill className="object-contain p-2" />
@@ -339,6 +395,9 @@ export function TopNavbar() {
                 </div>
               </div>
             ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>

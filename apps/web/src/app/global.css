@@ -54,17 +54,17 @@
 }
 
 /* Backgrounds - Main & Secondary */
-.dark .bg-slate-50, .dark .bg-slate-100, .dark .bg-\[\#fcfdff\], .dark .bg-\[\#f2f6ff\], .dark .bg-\[\#f6f8fe\], .dark .bg-\[\#f5f8fe\] {
+.dark .bg-slate-50, .dark .bg-slate-100, .dark .bg-\[\#fcfdff\], .dark .bg-\[\#f2f6ff\], .dark .bg-\[\#f6f8fe\], .dark .bg-\[\#f5f8fe\], .dark .bg-\[\#f8fbff\], .dark .bg-\[\#f4f7ff\] {
   background-color: #121826 !important;
 }
 
 /* Cards & Surfaces */
-.dark .bg-white {
+.dark .bg-white, .dark .bg-white\/50, .dark .bg-white\/70, .dark .bg-white\/80, .dark .bg-white\/90 {
   background-color: #1A2233 !important;
 }
 
 /* Borders */
-.dark .border-slate-100, .dark .border-slate-200, .dark .border-slate-300, .dark .border-\[\#dbe6ff\], .dark .border-\[\#e4ecff\], .dark .border-\[\#f2f6ff\] {
+.dark .border-slate-100, .dark .border-slate-200, .dark .border-slate-300, .dark .border-\[\#dbe6ff\], .dark .border-\[\#e4ecff\], .dark .border-\[\#f2f6ff\], .dark .border-\[\#edf1fa\], .dark .border-\[\#e8edf8\], .dark .border-\[\#e6ecfb\], .dark .border-\[\#e7edfd\], .dark .border-\[\#ebf0fb\], .dark .border-\[\#dde6ff\], .dark .border-\[\#dce7ff\], .dark .border-\[\#dae6ff\], .dark .border-\[\#e3ebff\], .dark .border-\[\#e8eefc\], .dark .border-\[\#ffe4e2\], .dark .border-white\/70, .dark .border-white\/80 {
   border-color: #2A3446 !important;
 }
 
@@ -74,7 +74,7 @@
 }
 
 /* Text - Secondary */
-.dark .text-slate-700, .dark .text-slate-600, .dark .text-slate-500, .dark .text-\[\#8ea0c7\], .dark .text-\[\#6b7aa5\] {
+.dark .text-slate-700, .dark .text-slate-600, .dark .text-slate-500, .dark .text-\[\#8ea0c7\], .dark .text-\[\#6b7aa5\], .dark .text-\[\#4b63a0\], .dark .text-\[\#7d8bb0\], .dark .text-\[\#52658f\], .dark .text-\[\#707ab3\], .dark .text-\[\#7d85ba\] {
   color: #94A3B8 !important;
 }
 

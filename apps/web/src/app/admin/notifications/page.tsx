@@ -1,11 +1,9 @@
-import { AdminDashboardShell } from '@/components/admin/admin-dashboard-shell';
-import { DashboardHeader } from '@/components/common/dashboard-header';
 import { Notifications } from '@/components/notifications/notifications';
 
 export default function Page() {
   return (
-    <AdminDashboardShell hideBottomWidget={false} header={<DashboardHeader />}>
+    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       <Notifications />
-    </AdminDashboardShell>
+    </div>
   );
 }
