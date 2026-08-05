@@ -3,9 +3,11 @@
 import { ChevronDown } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/utils/cn';
+import { useRouter } from 'next/navigation';
 
 export function DashboardHeader({ title }: { title?: string }) {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   return (
     <header className="flex w-full items-center justify-between gap-4">
@@ -44,7 +46,7 @@ export function DashboardHeader({ title }: { title?: string }) {
                   onClick={() => {
                     const path = window.location.pathname;
                     const basePath = path.startsWith('/admin') ? '/admin' : path.startsWith('/garage') ? '/garage' : '';
-                    window.location.href = `${basePath}/profile`;
+                    router.push(`${basePath}/profile`);
                   }}
                   className="w-full text-left px-3 py-2 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f2f6ff] rounded-lg transition-colors border-b border-[#f2f6ff] mb-1"
                 >

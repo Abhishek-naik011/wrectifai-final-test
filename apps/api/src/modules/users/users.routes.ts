@@ -15,11 +15,19 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
     if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
 
     const { name, email, mobileNumber } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return error(res, 'Name is required', 'VALIDATION_ERROR', 400);
+    }
+    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return error(res, 'A valid email is required', 'VALIDATION_ERROR', 400);
+    }
+
     const phoneToSave = mobileNumber && mobileNumber.trim() !== '' ? mobileNumber.trim() : null;
     
     const result = await query(
       'UPDATE users SET name = $1, email = $2, mobile_number = $3 WHERE id = $4 RETURNING id, email, name, mobile_number as "mobileNumber", status',
-      [name, email, phoneToSave, userId]
+      [name.trim(), email.trim().toLowerCase(), phoneToSave, userId]
     );
 
     if (result.rowCount === 0) {
@@ -27,8 +35,17 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
     }
 
     return success(res, result.rows[0]);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to update profile', err);
+    if (err.code === '23505') {
+      if (err.constraint?.includes('email')) {
+        return error(res, 'Email is already in use', 'CONFLICT', 409);
+      }
+      if (err.constraint?.includes('mobile_number')) {
+        return error(res, 'Mobile number is already in use', 'CONFLICT', 409);
+      }
+      return error(res, 'Resource already exists', 'CONFLICT', 409);
+    }
     return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
   }
 });

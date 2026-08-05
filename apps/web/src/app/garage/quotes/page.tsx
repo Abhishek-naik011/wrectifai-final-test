@@ -5,6 +5,7 @@ import { DashboardHeader } from '@/components/common/dashboard-header';
 import { garageNavItems } from '@/lib/garage-config';
 import { useState, useEffect } from 'react';
 import { getGarageIncomingRequests, QuoteRequestResponse, submitGarageQuote, fetchGarageQuotes, GarageQuote } from '@/lib/quotes-api';
+import Link from 'next/link';
 
 export default function QuotesPage() {
   const [requests, setRequests] = useState<QuoteRequestResponse[]>([]);
@@ -139,10 +140,10 @@ export default function QuotesPage() {
                             <button onClick={() => handleViewQuote(req)} className="text-blue-600 font-bold hover:underline">View Quote</button>
                           )}
                           {req.status === 'selected' && (
-                            <a href="/garage/bookings" className="text-indigo-600 font-bold hover:underline">View Booking</a>
+                            <Link href="/garage/bookings" className="text-indigo-600 font-bold hover:underline">View Booking</Link>
                           )}
                           {req.status === 'completed' && (
-                            <a href="/garage/service-history" className="text-green-600 font-bold hover:underline">View History</a>
+                            <Link href="/garage/service-history" className="text-green-600 font-bold hover:underline">View History</Link>
                           )}
                           {req.status === 'expired' || req.status === 'cancelled' ? (
                              <span className="text-slate-400 font-bold">Cancelled</span>

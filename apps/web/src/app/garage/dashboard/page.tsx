@@ -7,6 +7,7 @@ import { GarageStatCard, GarageSummaryCard, WorkshopCard, RequestCard } from '@/
 import { Card } from '@/components/common/card';
 import { Calendar, Inbox, CheckCircle, Car, DollarSign, Plus, Calendar as CalendarIcon, Star, PenTool, Wrench, AlertTriangle, ArrowRight, FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingBookings } from '@/lib/quotes-api';
 import { useRouter } from 'next/navigation';
@@ -71,12 +72,12 @@ export default function GarageDashboard() {
               <p className="text-sm text-slate-500">Here's what's happening in your garage today.</p>
             </div>
             <div className="flex gap-3">
-              <a href="/garage/quotes" className="bg-[#17307a] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 text-sm hover:bg-[#12245c] transition-colors">
+              <Link href="/garage/quotes" className="bg-[#17307a] text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 text-sm hover:bg-[#12245c] transition-colors">
                 <Plus className="w-4 h-4"/> View Requests
-              </a>
-              <a href="/garage/bookings" className="bg-white border text-[#17307a] px-4 py-2 rounded-lg font-medium flex items-center gap-2 text-sm hover:bg-slate-50 transition-colors">
+              </Link>
+              <Link href="/garage/bookings" className="bg-white border text-[#17307a] px-4 py-2 rounded-lg font-medium flex items-center gap-2 text-sm hover:bg-slate-50 transition-colors">
                 <CalendarIcon className="w-4 h-4"/> View Bookings
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -92,7 +93,7 @@ export default function GarageDashboard() {
               <Card className="p-5">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold text-[#17307a]">Active Workshop Floor</h2>
-                  <a href="/garage/bookings" className="text-sm text-blue-600 hover:underline">View All Jobs</a>
+                  <Link href="/garage/bookings" className="text-sm text-blue-600 hover:underline">View All Jobs</Link>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   <WorkshopCard title={`ACCEPTED (${getActiveJobsForStatus('accepted').length})`} status="accepted" items={getActiveJobsForStatus('accepted')} />
@@ -106,7 +107,7 @@ export default function GarageDashboard() {
                  <Card className="p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="font-bold text-[#17307a]">Pending Service Requests</h3>
-                      <a href="/garage/incoming-requests" className="text-xs text-blue-600">View All</a>
+                      <Link href="/garage/incoming-requests" className="text-xs text-blue-600">View All</Link>
                     </div>
                     <div className="space-y-3">
                        {recentRequests.length === 0 ? (
@@ -121,7 +122,7 @@ export default function GarageDashboard() {
                  <Card className="p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="font-bold text-[#17307a]">Recent Quotes</h3>
-                      <a href="/garage/quotes" className="text-xs text-blue-600">View All</a>
+                      <Link href="/garage/quotes" className="text-xs text-blue-600">View All</Link>
                     </div>
                     <div className="space-y-3">
                       {recentQuotes.length === 0 ? (

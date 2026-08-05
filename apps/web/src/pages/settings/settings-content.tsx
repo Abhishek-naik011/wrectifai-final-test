@@ -80,7 +80,7 @@ export function SettingsContent() {
       <div className="w-full lg:w-80 flex flex-col gap-6">
         <Card className="p-6 shadow-sm border-slate-100 rounded-[20px]">
           <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
-          <p className="text-sm text-slate-500 mb-4">We're here to help you with any issues or questions.</p>
+          <p className="text-sm text-slate-500 mb-4">We&apos;re here to help you with any issues or questions.</p>
           <Button variant="outline" className="w-full font-bold text-blue-600 border-blue-200" onClick={() => {
              const helpPath = basePath === '/admin' ? '/admin/support' : basePath === '/garage' ? '/garage/help' : '/help-support';
              router.push(helpPath);
@@ -89,34 +89,7 @@ export function SettingsContent() {
           </Button>
         </Card>
 
-        <Card className="p-5 shadow-sm border-slate-100 rounded-[20px]">
-          <h3 className="font-bold text-slate-900 mb-4">Quick Actions</h3>
-          <div className="space-y-4">
-             <div className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-2 -mx-2 rounded" onClick={() => {}}>
-               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded bg-blue-50 text-blue-600 flex justify-center items-center"><MonitorSmartphone className="w-4 h-4"/></div>
-                 <div><p className="text-sm font-bold">Clear Cache</p><p className="text-[10px] text-slate-500">Free up space and improve performance</p></div>
-               </div>
-               <ChevronRight className="w-4 h-4 text-slate-400" />
-             </div>
-             <div className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-2 -mx-2 rounded" onClick={() => {}}>
-               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded bg-blue-50 text-blue-600 flex justify-center items-center"><Monitor className="w-4 h-4"/></div>
-                 <div><p className="text-sm font-bold">Manage Devices</p><p className="text-[10px] text-slate-500">See and manage your active devices</p></div>
-               </div>
-               <ChevronRight className="w-4 h-4 text-slate-400" />
-             </div>
-          </div>
-        </Card>
 
-        <Card className="p-6 shadow-sm border-slate-100 rounded-[20px] text-center">
-          <h3 className="font-bold text-slate-900 mb-4 text-left">Secure Your Account</h3>
-          <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4 relative">
-             <ShieldCheck className="w-8 h-8 text-blue-600" />
-          </div>
-          <p className="text-xs text-slate-500 mb-4">Keep your account safe and enjoy a worry-free experience.</p>
-          <Button className="w-full bg-blue-600 text-white font-bold" onClick={() => {}}>Enable Two-Factor Auth</Button>
-        </Card>
 
         <Card className="p-6 shadow-sm border-slate-100 rounded-[20px]">
            <h3 className="font-bold text-slate-900 mb-2">Log Out</h3>

@@ -65,20 +65,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsAuthenticated(true);
           }
         } else {
-          // Fallback check for token in localStorage
-          const storedToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
-          if (storedToken && mounted) {
-            const decoded = decodeJwt(storedToken);
-            if (decoded) {
-              setUser({
-                id: decoded.userId,
-                email: decoded.email,
-                roles: decoded.roles,
-                name: decoded.name || (decoded.email ? decoded.email.split('@')[0] : 'User'),
-              });
-              setToken(storedToken);
-              setIsAuthenticated(true);
-            }
+          // No fallback to localStorage since we use HttpOnly cookies.
+          if (mounted) {
+            setUser(null);
+            setToken(null);
+            setIsAuthenticated(false);
           }
         }
       } catch (err) {
@@ -130,16 +121,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(accessToken);
     setIsAuthenticated(true);
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('token', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
-      if (resolvedUser) {
-        localStorage.setItem('user', JSON.stringify(resolvedUser));
-      }
-    }
+    // Tokens are securely stored as HttpOnly cookies by the backend.
+    // We intentionally avoid exposing them to localStorage or client JS.
   }, []);
 
   const logout = useCallback(async () => {
@@ -154,11 +137,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.warn('Logout API failed', err);
       }
-      
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
       
       // Clear any app-specific cached data for complete session isolation
       for (const key of Object.keys(localStorage)) {
