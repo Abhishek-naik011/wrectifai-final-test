@@ -19,7 +19,7 @@ export const authRouter = Router();
 const cookieConfig: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  sameSite: 'none',
   path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
@@ -110,9 +110,9 @@ authRouter.post('/google', async (req, res) => {
   try {
     const googlePayload = await verifyGoogleIdToken(token);
     const authResult = await handleUserLoginOrRegister(googlePayload.email, googlePayload.name);
-    
+
     setTokensInCookies(res, authResult.accessToken, authResult.refreshToken);
-    
+
     return success(res, { user: authResult.user }, 200);
   } catch (err) {
     return error(res, err instanceof Error ? err.message : 'Google authentication failed', 'UNAUTHORIZED', 401);
@@ -133,7 +133,7 @@ authRouter.post('/register', async (req, res, next) => {
     const existingUser = await query('SELECT * FROM users WHERE mobile_number = $1', [mobileNumber]);
     let user;
     let isNew = false;
-    
+
     if (existingUser.rows.length > 0) {
       user = existingUser.rows[0];
       await query('UPDATE users SET name = $1 WHERE id = $2', [name, user.id]);
@@ -213,7 +213,7 @@ authRouter.post('/login', async (req, res, next) => {
         return error(res, 'Invalid email or password', 'UNAUTHORIZED', 401);
       }
       user = existingUser.rows[0];
-      
+
       if (!user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
         return error(res, 'Invalid email or password', 'UNAUTHORIZED', 401);
       }
@@ -224,46 +224,46 @@ authRouter.post('/login', async (req, res, next) => {
 
       const DEMO_OTP = '123456';
 
-const demoPhones = new Set([
-  '9876543210',
-  '0000000000',
-  '9999999901',
-  '9999999902',
-  '9999999903',
-  '9999999904',
-  '9999999905',
-  '9999999906',
-  '9999999907',
-  '9999999908',
-  '9999999909',
-  '9999999910',
-  '9999999911',
-  '9999999912',
-]);
+      const demoPhones = new Set([
+        '9876543210',
+        '0000000000',
+        '9999999901',
+        '9999999902',
+        '9999999903',
+        '9999999904',
+        '9999999905',
+        '9999999906',
+        '9999999907',
+        '9999999908',
+        '9999999909',
+        '9999999910',
+        '9999999911',
+        '9999999912',
+      ]);
 
-if (otp !== DEMO_OTP) {
-  return error(res, 'Invalid OTP', 'UNAUTHORIZED', 401);
-}
+      if (otp !== DEMO_OTP) {
+        return error(res, 'Invalid OTP', 'UNAUTHORIZED', 401);
+      }
 
-if (!demoPhones.has(mobileNumber)) {
-  return error(
-    res,
-    'Invalid mobile number for demo OTP login',
-    'UNAUTHORIZED',
-    401
-  );
-}
+      if (!demoPhones.has(mobileNumber)) {
+        return error(
+          res,
+          'Invalid mobile number for demo OTP login',
+          'UNAUTHORIZED',
+          401
+        );
+      }
 
-const userResult = await query(
-  'SELECT * FROM users WHERE mobile_number = $1',
-  [mobileNumber]
-);
+      const userResult = await query(
+        'SELECT * FROM users WHERE mobile_number = $1',
+        [mobileNumber]
+      );
 
-if (userResult.rows.length === 0) {
-  return error(res, 'User not found', 'NOT_FOUND', 404);
-}
+      if (userResult.rows.length === 0) {
+        return error(res, 'User not found', 'NOT_FOUND', 404);
+      }
 
-user = userResult.rows[0];
+      user = userResult.rows[0];
     }
 
     const rolesResult = await query(
