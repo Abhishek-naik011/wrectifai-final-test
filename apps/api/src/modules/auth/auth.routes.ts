@@ -282,7 +282,7 @@ authRouter.post('/login', async (req, res, next) => {
       }
     }
 
-    const requiresPasswordChange = checkIfPasswordResetRequired(user.password_hash, roles);
+    const requiresPasswordChange = false;
 
     const accessToken = generateAccessToken({ userId: user.id, email: user.email, name: user.name, roles, garageId });
     const refreshToken = generateRefreshToken({ userId: user.id });
