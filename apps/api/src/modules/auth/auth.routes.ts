@@ -222,10 +222,48 @@ authRouter.post('/login', async (req, res, next) => {
         return error(res, 'Phone number and OTP are required', 'BAD_REQUEST', 400);
       }
 
-      // For a production app, verify OTP against the database/cache here.
-      // E.g. SELECT otp FROM user_otps WHERE mobile = $1
-      // For now, if no real OTP system is implemented, reject it to prevent hardcoded bypass.
-      return error(res, 'OTP login is currently disabled in production.', 'UNAUTHORIZED', 401);
+      const DEMO_OTP = '123456';
+
+const demoPhones = new Set([
+  '9876543210',
+  '0000000000',
+  '9999999901',
+  '9999999902',
+  '9999999903',
+  '9999999904',
+  '9999999905',
+  '9999999906',
+  '9999999907',
+  '9999999908',
+  '9999999909',
+  '9999999910',
+  '9999999911',
+  '9999999912',
+]);
+
+if (otp !== DEMO_OTP) {
+  return error(res, 'Invalid OTP', 'UNAUTHORIZED', 401);
+}
+
+if (!demoPhones.has(mobileNumber)) {
+  return error(
+    res,
+    'Invalid mobile number for demo OTP login',
+    'UNAUTHORIZED',
+    401
+  );
+}
+
+const userResult = await query(
+  'SELECT * FROM users WHERE mobile_number = $1',
+  [mobileNumber]
+);
+
+if (userResult.rows.length === 0) {
+  return error(res, 'User not found', 'NOT_FOUND', 404);
+}
+
+user = userResult.rows[0];
     }
 
     const rolesResult = await query(

@@ -163,9 +163,10 @@ export function GarageDetailPage({
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  const detailImageSources = [garage.image].filter((src): src is string =>
-    Boolean(src)
-  );
+  const detailImageSources = ((garage as any).photos && (garage as any).photos.length > 0
+    ? (garage as any).photos
+    : [garage.image]
+  ).filter((src: any): src is string => Boolean(src));
   const isQuoteContext = mode === 'quote-context' && Boolean(quoteContext);
 
   const reviews = [

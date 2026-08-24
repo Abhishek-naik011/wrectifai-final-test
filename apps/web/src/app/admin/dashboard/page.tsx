@@ -49,14 +49,16 @@ function AdminProductModeration() {
   };
 
   return (
-    <Card className="p-5 mt-6">
+    <Card className="p-5 border border-slate-100 shadow-sm flex-1 flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-[#17307a]">Garage Products Moderation</h3>
       </div>
       {products.length === 0 ? (
-         <p className="text-sm text-slate-500 py-4 text-center border border-dashed rounded-lg">No products submitted by garages.</p>
+         <div className="flex-1 flex items-center justify-center border border-dashed rounded-lg py-4">
+           <p className="text-sm text-slate-500 text-center">No products submitted by garages.</p>
+         </div>
       ) : (
-         <div className="divide-y divide-slate-100">
+         <div className="divide-y divide-slate-100 flex-1 overflow-auto">
            {products.map((p, idx) => (
              <div key={idx} className="flex items-center justify-between py-3">
                <div>
@@ -147,234 +149,317 @@ export default function AdminDashboardPage() {
 
   return (
     <RoleGuard allowedRoles={['admin']}>
-      <div className="p-6 bg-slate-50 min-h-screen">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6 flex justify-between items-center bg-gradient-to-r from-blue-50 to-white">
-        <div>
-           <h1 className="text-2xl font-bold text-[#17307a] mb-1 flex items-center gap-2">Welcome back, Admin!</h1>
-           <p className="text-sm text-slate-500">Here's what's happening on WrectifAI today.</p>
+      <div className="space-y-6 pb-6">
+        {/* Welcome Header */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-gradient-to-r from-blue-50 to-white">
+          <div>
+            <h1 className="text-2xl font-bold text-[#17307a] mb-1 flex items-center gap-2">Welcome back, Admin!</h1>
+            <p className="text-sm text-slate-500">Here's what's happening on WrectifAI today.</p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <Link href="/admin/garages/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4"/> Register Garage
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-4">
-           <Link href="/admin/garages/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4"/> Register Garage</Link>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Link href="/admin/users" className="block">
-          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Total Customers</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.totalCustomers}</p>
-              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/admin/garages" className="block">
-          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><Building2 className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Registered Garages</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.registeredGarages}</p>
-              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/admin/garages/pending-approvals" className="block">
-          <Card className="p-5 flex items-center gap-4 border-orange-200 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center"><ClipboardCheck className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Pending Approvals</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.pendingApprovals}</p>
-              {stats.pendingApprovals > 0 ? (
-                <p className="text-[10px] font-bold text-orange-500">Action Required</p>
-              ) : (
-                <p className="text-[10px] font-bold text-green-500">All caught up</p>
-              )}
-            </div>
-          </Card>
-        </Link>
-        <Link href="/admin/bookings" className="block">
-          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center"><CalendarRange className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Active Bookings</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.activeBookings}</p>
-              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Live</p>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/admin/quotes" className="block">
-          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><FileText className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Quotes</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.quotesCount}</p>
-              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Submitted</p>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/admin/service-requests?filter=completed" className="block">
-          <Card className="p-5 flex items-center gap-4 h-full hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><CheckCircle2 className="w-6 h-6"/></div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 mb-0.5">Completed Jobs</p>
-              <p className="text-2xl font-black text-[#17307a]">{stats.completedJobsCount}</p>
-              <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Finished</p>
-            </div>
-          </Card>
-        </Link>
-      </div>
+        {/* Top 6 KPI Metric Cards in a uniform responsive grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <Link href="/admin/users" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-slate-100 hover:border-blue-200">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Total Customers</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.totalCustomers}</p>
+                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
+              </div>
+            </Card>
+          </Link>
 
-      <div className="flex flex-col gap-6 mb-6">
-        <div className="flex-1 w-full max-w-full">
-           <Card className="p-5 mb-6">
-             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-[#17307a]">Pending Garage Approvals</h3>
-                <Link href="/admin/garages/pending-approvals" className="text-xs text-blue-600 font-bold">View All</Link>
-             </div>
-             <div className="flex gap-4 overflow-x-auto pb-2">
-                {stats.pendingApprovals === 0 && pendingGarages.length === 0 ? (
-                  <p className="text-sm text-slate-500 p-4">No pending garage approvals at the moment.</p>
+          <Link href="/admin/garages" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-slate-100 hover:border-green-200">
+              <div className="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Registered Garages</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.registeredGarages}</p>
+                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">↑ Active</p>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/garages/pending-approvals" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-orange-200 hover:border-orange-300">
+              <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+                <ClipboardCheck className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Pending Approvals</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.pendingApprovals}</p>
+                {stats.pendingApprovals > 0 ? (
+                  <p className="text-[10px] font-bold text-orange-500">Action Required</p>
                 ) : (
-                  pendingGarages.map((g: any, idx: number) => (
-                    <div key={g.id} className="min-w-[280px] border rounded-xl p-4 bg-white relative">
-                      {idx === 0 && <div className="absolute top-0 right-0 bg-orange-100 text-orange-600 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-xl">NEW</div>}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100"></div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800 leading-tight">{g.name}</p>
-                          <p className="text-[10px] text-slate-500">Owner: {g.ownerName || 'N/A'}</p>
+                  <p className="text-[10px] font-bold text-green-500">All caught up</p>
+                )}
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/bookings" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-slate-100 hover:border-purple-200">
+              <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <CalendarRange className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Active Bookings</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.activeBookings}</p>
+                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Live</p>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/quotes" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-slate-100 hover:border-indigo-200">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Quotes</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.quotesCount}</p>
+                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Submitted</p>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/service-requests?filter=completed" className="block">
+            <Card className="p-4 flex items-center gap-3.5 h-full hover:shadow-md transition-all border border-slate-100 hover:border-teal-200">
+              <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5"/>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-500 truncate">Completed Jobs</p>
+                <p className="text-xl font-black text-[#17307a]">{stats.completedJobsCount}</p>
+                <p className="text-[10px] font-bold text-green-500 flex items-center gap-1">Finished</p>
+              </div>
+            </Card>
+          </Link>
+        </div>
+
+        {/* 2-Column Responsive Main Grid: Left column (Approvals & Moderation), Right column (Activity & Tasks & Overview) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left Column (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            {/* Pending Garage Approvals */}
+            <Card className="p-5 border border-slate-100 shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-[#17307a]">Pending Garage Approvals</h3>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                    {stats.pendingApprovals}
+                  </span>
+                </div>
+                <Link href="/admin/garages/pending-approvals" className="text-xs text-blue-600 font-bold hover:underline">
+                  View All &rarr;
+                </Link>
+              </div>
+
+              {stats.pendingApprovals === 0 && pendingGarages.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-sm text-slate-500">
+                  No pending garage approvals at the moment. All caught up!
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {pendingGarages.map((g: any, idx: number) => (
+                    <div key={g.id} className="border border-slate-200 rounded-xl p-4 bg-white shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between relative">
+                      {idx === 0 && (
+                        <div className="absolute top-0 right-0 bg-orange-500 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-bl-lg rounded-tr-xl shadow-xs">
+                          NEW
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                            {g.name ? g.name.substring(0, 2).toUpperCase() : 'GA'}
+                          </div>
+                          <div className="min-w-0 pr-6">
+                            <p className="text-sm font-bold text-slate-800 leading-tight truncate">{g.name}</p>
+                            <p className="text-[11px] text-slate-500 truncate">Owner: {g.ownerName || 'N/A'}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 mb-4 text-xs text-slate-600">
+                          <p className="flex items-center gap-1.5 truncate">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{g.city || 'N/A'}</span>
+                          </p>
+                          <p className="flex items-center gap-1.5 text-green-600 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5 shrink-0"/>
+                            <span>Documents Under Review</span>
+                          </p>
                         </div>
                       </div>
-                      <div className="space-y-1 mb-4">
-                        <p className="text-[10px] text-slate-600 flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-400" /> {g.city || 'N/A'}</p>
-                        <p className="text-[10px] text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Documents Under Review</p>
+
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-3 border-t border-slate-100 pt-2">
+                          Submitted: {formatTime(g.createdAt)}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Link href="/admin/garages" className="border border-slate-200 text-slate-700 rounded-lg text-xs font-bold py-1.5 hover:bg-slate-50 text-center flex items-center justify-center transition-colors">
+                            View
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})}
+                            className="bg-green-600 text-white rounded-lg text-xs font-bold py-1.5 hover:bg-green-700 transition-colors shadow-xs"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})}
+                            className="bg-red-50 text-red-600 rounded-lg text-xs font-bold py-1.5 hover:bg-red-100 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-[9px] text-slate-400 mb-3">Submitted: {formatTime(g.createdAt)}</p>
-                      <div className="grid grid-cols-3 gap-2">
-                         <Link href={`/admin/garages`} className="border border-slate-200 text-blue-600 rounded text-[10px] font-bold py-1.5 hover:bg-slate-50 text-center flex items-center justify-center">View</Link>
-                         <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})} className="bg-green-50 text-green-600 rounded text-[10px] font-bold py-1.5 hover:bg-green-100">Approve</button>
-                         <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})} className="bg-red-50 text-red-600 rounded text-[10px] font-bold py-1.5 hover:bg-red-100 text-center">Reject</button>
-                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Garage Products Moderation */}
+            <AdminProductModeration />
+          </div>
+
+          {/* Right Column (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col">
+            {/* Recent Activity */}
+            <Card className="p-5 border border-slate-100 shadow-sm flex-1">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-[#17307a] flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-600" />
+                  <span>Recent Activity</span>
+                </h3>
+              </div>
+              <div className="space-y-4 pl-4 relative before:absolute before:inset-0 before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                {recentGarages.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-2">No recent activity.</p>
+                ) : (
+                  recentGarages.slice(0, 6).map((g: any) => (
+                    <div key={g.id} className="relative pl-3">
+                      <div className="absolute -left-[19px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-white"></div>
+                      <p className="text-xs font-bold text-slate-800">New Garage Registered</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{g.name} joined the platform</p>
+                      <span className="text-[9.5px] text-slate-400">{formatTime(g.createdAt)}</span>
                     </div>
                   ))
                 )}
-             </div>
-           </Card>
-           
-           <AdminProductModeration />
-
-         </div>
-         <div className="w-96 max-w-[384px] shrink-0">
-             <Card className="p-5 col-span-1">
-               <div className="flex justify-between items-center mb-4">
-                 <h3 className="font-bold text-[#17307a]">Recent Activity</h3>
-                 </div>
-               <div className="space-y-4 pl-4 relative before:absolute before:inset-0 before:ml-1 before:h-full before:w-px before:bg-slate-100">
-                 {recentGarages.length === 0 ? (
-                   <p className="text-xs text-slate-500">No recent activity</p>
-                 ) : (
-                   recentGarages.slice(0, 3).map((g: any) => (
-                     <div key={g.id} className="relative">
-                        <div className="absolute -left-5 top-1 w-2 h-2 rounded-full bg-blue-500"></div>
-                        <p className="text-xs font-bold text-slate-800">New Garage Registered</p>
-                        <p className="text-[10px] text-slate-500">{g.name} joined the platform</p>
-                     </div>
-                   ))
-                 )}
-               </div>
-             </Card>
-
-             <Card className="p-5 col-span-2 flex gap-6">
-                <div className="flex-1">
-                   <div className="flex justify-between items-center mb-4">
-                     <h3 className="font-bold text-[#17307a]">Pending Tasks</h3>
-                   </div>
-                   <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-100">
-                         <div className="flex items-center gap-3"><div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center"><Building2 className="w-4 h-4"/></div><p className="text-xs font-bold text-slate-700">Pending Garage Approvals</p></div>
-                         <span className="text-xs font-bold text-red-500">{stats.pendingApprovals}</span>
-                      </div>
-                   </div>
-                </div>
-                <div className="flex-1">
-                   <h3 className="font-bold text-[#17307a] mb-4">Platform Overview</h3>
-                   <div className="grid grid-cols-2 gap-3">
-                      <div className="border rounded-lg p-3 bg-white">
-                         <div className="flex items-center gap-2 mb-2"><CalendarRange className="w-4 h-4 text-blue-500"/><p className="text-[10px] font-bold text-slate-500">Total Bookings</p></div>
-                         <p className="text-xl font-bold text-slate-800">{stats.activeBookings}</p>
-                      </div>
-                      <div className="border rounded-lg p-3 bg-white">
-                         <div className="flex items-center gap-2 mb-2"><CheckCircle2 className="w-4 h-4 text-green-500"/><p className="text-[10px] font-bold text-slate-500">Garages</p></div>
-                         <p className="text-xl font-bold text-slate-800">{stats.registeredGarages}</p>
-                      </div>
-                   </div>
-                </div>
-             </Card>
-           </div>
-      </div>
-      
-      <Card className="p-0 overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-           <h3 className="font-bold text-[#17307a]">Recently Registered Garages</h3>
-           <Link href="/admin/garages" className="text-xs text-blue-600 font-bold">View All</Link>
+              </div>
+            </Card>
+          </div>
         </div>
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50">
-              <th className="p-4 text-[11px] font-bold text-slate-500">Garage Name</th>
-              <th className="p-4 text-[11px] font-bold text-slate-500">Owner</th>
-              <th className="p-4 text-[11px] font-bold text-slate-500">City</th>
-              <th className="p-4 text-[11px] font-bold text-slate-500">Registration Date</th>
-              <th className="p-4 text-[11px] font-bold text-slate-500">Status</th>
-              <th className="p-4 text-[11px] font-bold text-slate-500">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {recentGarages.length === 0 ? (
-               <tr>
-                 <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">No garages registered yet.</td>
-               </tr>
-            ) : (
-               recentGarages.map((g: any) => (
-                 <tr key={g.id} className="hover:bg-slate-50 transition-colors">
-                   <td className="p-4">
-                     <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded bg-slate-100"></div>
-                       <span className="font-bold text-sm text-[#17307a]">{g.name}</span>
-                     </div>
-                   </td>
-                   <td className="p-4 text-sm text-slate-600">{g.ownerName || 'N/A'}</td>
-                   <td className="p-4 text-sm text-slate-600">{g.city || 'N/A'}</td>
-                   <td className="p-4 text-sm text-slate-500">{formatTime(g.createdAt)}</td>
-                   <td className="p-4">
-                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                       g.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' :
-                       g.approvalStatus === 'pending' ? 'bg-orange-100 text-orange-700' :
-                       'bg-red-100 text-red-700'
-                     }`}>
-                       {g.approvalStatus ? g.approvalStatus.charAt(0).toUpperCase() + g.approvalStatus.slice(1) : 'Unknown'}
-                     </span>
-                   </td>
-                   <td className="p-4">
-<div className="flex gap-2">
-  {g.approvalStatus === 'pending' && (
-    <>
-      <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})} className="text-[10px] bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100 font-bold">Approve</button>
-      <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})} className="text-[10px] bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100 font-bold">Reject</button>
-    </>
-  )}
-  {g.approvalStatus === 'approved' && (
-    <button onClick={() => setActionModal({isOpen: true, id: g.id, action: 'suspend', type: 'confirm', message: `Are you sure you want to suspend ${g.name}?`})} className="text-[10px] bg-orange-50 text-orange-700 px-2 py-1 rounded hover:bg-orange-100 font-bold">Suspend</button>
-  )}
-</div>
-</td>
-                 </tr>
-               ))
-            )}
-          </tbody>
-        </table>
-      </Card>
+
+        {/* Recently Registered Garages Full Width Table */}
+        <Card className="p-0 overflow-hidden border border-slate-100 shadow-sm">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-white">
+            <div>
+              <h3 className="font-bold text-[#17307a]">Recently Registered Garages</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Workshops that joined the platform recently</p>
+            </div>
+            <Link href="/admin/garages" className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
+              View All Garages &rarr;
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-100">
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Garage Name</th>
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Owner</th>
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">City</th>
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registration Date</th>
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="p-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {recentGarages.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">No garages registered yet.</td>
+                  </tr>
+                ) : (
+                  recentGarages.map((g: any) => (
+                    <tr key={g.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                            {g.name ? g.name.substring(0, 2).toUpperCase() : 'GA'}
+                          </div>
+                          <span className="font-bold text-[#17307a]">{g.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-600 font-medium">{g.ownerName || 'N/A'}</td>
+                      <td className="p-4 text-slate-600">{g.city || 'N/A'}</td>
+                      <td className="p-4 text-slate-500">{formatTime(g.createdAt)}</td>
+                      <td className="p-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-block ${
+                          g.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' :
+                          g.approvalStatus === 'pending' ? 'bg-orange-100 text-orange-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {g.approvalStatus ? g.approvalStatus.charAt(0).toUpperCase() + g.approvalStatus.slice(1) : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {g.approvalStatus === 'pending' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setActionModal({isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?`})}
+                                className="text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded font-bold hover:bg-green-100 transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActionModal({isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?`})}
+                                className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded font-bold hover:bg-red-100 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {g.approvalStatus === 'approved' && (
+                            <button
+                              type="button"
+                              onClick={() => setActionModal({isOpen: true, id: g.id, action: 'suspend', type: 'confirm', message: `Are you sure you want to suspend ${g.name}?`})}
+                              className="text-xs bg-orange-50 text-orange-700 px-2.5 py-1 rounded font-bold hover:bg-orange-100 transition-colors"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                          <Link
+                            href="/admin/garages"
+                            className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-bold hover:bg-slate-200 transition-colors"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
 
       <Modal isOpen={actionModal.isOpen} onClose={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} title={actionModal.type === 'error' ? 'Error' : 'Confirm Action'}>
         <div className="space-y-4">
@@ -391,8 +476,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </Modal>
-
-    </div>
     </RoleGuard>
   );
 }

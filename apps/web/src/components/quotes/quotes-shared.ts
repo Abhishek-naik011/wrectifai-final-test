@@ -2,7 +2,12 @@ export type QuoteStatus = 'new' | 'viewed' | 'expired' | 'open' | 'active' | 'se
 
 export type QuoteItem = {
   id: string;
+  quoteId?: string | null;
   quoteRequestId?: string;
+  garageId?: string;
+  vehicleId?: string;
+  requestStatus?: string;
+  hasQuote?: boolean;
   status: QuoteStatus;
   garage: string;
   image: string;

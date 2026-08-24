@@ -32,19 +32,22 @@ vehiclesRouter.get('/', authenticate, async (req, res) => {
   try {
     const userId = req.user?.userId;
     const userRoles = req.user?.roles || [];
-    let filterCondition = 'is_active = true';
-    let params: any[] = [];
+    let filterCondition = 'v.is_active = true';
+    const params: any[] = [];
 
     if (!userRoles.includes('admin')) {
-      filterCondition += ' AND customer_id = $1';
+      filterCondition += ' AND v.customer_id = $1';
       params.push(userId);
     }
 
     const result = await query(
-      `SELECT id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt"
-       FROM vehicles
+      `SELECT v.id, v.customer_id as "customerId", v.make, v.model, v.year, v.vin, v.mileage, v.warranty, 
+              v.created_at as "createdAt", v.updated_at as "updatedAt",
+              v.fuel_type as "fuelType", v.transmission, v.color, v.plate_number as "plateNumber", v.is_default as "isPrimary",
+              (SELECT json_agg(url) FROM vehicle_photos vp WHERE vp.vehicle_id = v.id) as photos
+       FROM vehicles v
        WHERE ${filterCondition}
-       ORDER BY created_at DESC`,
+       ORDER BY v.created_at DESC`,
       params
     );
 
@@ -67,17 +70,33 @@ vehiclesRouter.post('/', authenticate, async (req, res) => {
       return error(res, 'User ID missing from authentication token', 'UNAUTHORIZED', 401);
     }
 
-    const { make, model, year, vin, mileage, warranty } = req.body;
+    const { make, model, year, vin, mileage, warranty, fuelType, transmission, color, plateNumber, isPrimary, photos } = req.body;
     if (!make || !model || !year) {
       return error(res, 'Make, model, and year are required fields', 'BAD_REQUEST', 400);
     }
 
+    if (isPrimary) {
+      await query(`UPDATE vehicles SET is_default = false WHERE customer_id = $1`, [userId]);
+    }
+
     const result = await query(
-      `INSERT INTO vehicles (customer_id, make, model, year, vin, mileage, warranty, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-       RETURNING id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt"`,
-      [userId, make, model, year, vin || null, mileage || null, warranty ? JSON.stringify(warranty) : null]
+      `INSERT INTO vehicles (customer_id, make, model, year, vin, mileage, warranty, is_active, fuel_type, transmission, color, plate_number, is_default)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $11, $12)
+       RETURNING id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt", fuel_type as "fuelType", transmission, color, plate_number as "plateNumber", is_default as "isPrimary"`,
+      [userId, make, model, year, vin || null, mileage || null, warranty ? JSON.stringify(warranty) : null, fuelType || null, transmission || null, color || null, plateNumber || null, !!isPrimary]
     );
+    
+    const vehicleId = result.rows[0].id;
+    if (photos && Array.isArray(photos)) {
+      for (let i = 0; i < photos.length && i < 5; i++) {
+        if (typeof photos[i] === 'string' && photos[i].trim() !== '') {
+          await query(
+            `INSERT INTO vehicle_photos (vehicle_id, url, is_primary) VALUES ($1, $2, $3)`,
+            [vehicleId, photos[i], i === 0]
+          );
+        }
+      }
+    }
 
     return success(res, result.rows[0], 201);
   } catch (err) {
@@ -101,9 +120,12 @@ vehiclesRouter.get('/:vehicleId', authenticate, async (req, res) => {
     }
 
     const result = await query(
-      `SELECT id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt", is_active
-       FROM vehicles
-       WHERE id = $1`,
+      `SELECT v.id, v.customer_id as "customerId", v.make, v.model, v.year, v.vin, v.mileage, v.warranty, 
+              v.created_at as "createdAt", v.updated_at as "updatedAt", v.is_active,
+              v.fuel_type as "fuelType", v.transmission, v.color, v.plate_number as "plateNumber", v.is_default as "isPrimary",
+              (SELECT json_agg(url) FROM vehicle_photos vp WHERE vp.vehicle_id = v.id) as photos
+       FROM vehicles v
+       WHERE v.id = $1`,
       [vehicleId]
     );
 
@@ -159,7 +181,11 @@ vehiclesRouter.patch('/:vehicleId', authenticate, async (req, res) => {
 
 
     // 2. Perform partial update
-    const { make, model, year, vin, mileage, warranty } = req.body;
+    const { make, model, year, vin, mileage, warranty, fuelType, transmission, color, plateNumber, isPrimary, photos } = req.body;
+
+    if (isPrimary) {
+      await query(`UPDATE vehicles SET is_default = false WHERE customer_id = $1 AND id != $2`, [userId, vehicleId]);
+    }
 
     const result = await query(
       `UPDATE vehicles
@@ -169,9 +195,14 @@ vehiclesRouter.patch('/:vehicleId', authenticate, async (req, res) => {
            vin = COALESCE($4, vin),
            mileage = COALESCE($5, mileage),
            warranty = COALESCE($6, warranty),
+           fuel_type = COALESCE($7, fuel_type),
+           transmission = COALESCE($8, transmission),
+           color = COALESCE($9, color),
+           plate_number = COALESCE($10, plate_number),
+           is_default = COALESCE($11, is_default),
            updated_at = NOW()
-       WHERE id = $7
-       RETURNING id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt"`,
+       WHERE id = $12
+       RETURNING id, customer_id as "customerId", make, model, year, vin, mileage, warranty, created_at as "createdAt", updated_at as "updatedAt", fuel_type as "fuelType", transmission, color, plate_number as "plateNumber", is_default as "isPrimary"`,
       [
         make !== undefined ? make : null,
         model !== undefined ? model : null,
@@ -179,9 +210,26 @@ vehiclesRouter.patch('/:vehicleId', authenticate, async (req, res) => {
         vin !== undefined ? vin : null,
         mileage !== undefined ? mileage : null,
         warranty !== undefined ? (warranty ? JSON.stringify(warranty) : null) : null,
+        fuelType !== undefined ? fuelType : null,
+        transmission !== undefined ? transmission : null,
+        color !== undefined ? color : null,
+        plateNumber !== undefined ? plateNumber : null,
+        isPrimary !== undefined ? isPrimary : null,
         vehicleId,
       ]
     );
+    
+    if (photos !== undefined && Array.isArray(photos)) {
+      await query(`DELETE FROM vehicle_photos WHERE vehicle_id = $1`, [vehicleId]);
+      for (let i = 0; i < photos.length && i < 5; i++) {
+        if (typeof photos[i] === 'string' && photos[i].trim() !== '') {
+          await query(
+            `INSERT INTO vehicle_photos (vehicle_id, url, is_primary) VALUES ($1, $2, $3)`,
+            [vehicleId, photos[i], i === 0]
+          );
+        }
+      }
+    }
 
     return success(res, result.rows[0], 200);
   } catch (err) {

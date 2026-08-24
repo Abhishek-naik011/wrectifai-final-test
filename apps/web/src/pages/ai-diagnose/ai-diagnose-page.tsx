@@ -77,8 +77,12 @@ import {
   CarFront,
   Wind,
   X,
+  Scale,
+  Star,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react';
+import { Button } from '@/components/common/button';
 import {
   getCategoryById,
   issueCategories,
@@ -92,6 +96,74 @@ import { cn } from '@/utils/cn';
 import { VehicleSelector } from '@/components/common/vehicle-selector';
 import { submitDiagnosis, chatDiagnosis, type DiagnosisResponse } from '../../lib/diagnosis-api';
 import { getVehicleImage } from '@/lib/vehicle-image-catalog';
+import { fetchGarages, type Garage as ApiGarage } from '@/lib/garages-api';
+import { GarageDetailPage } from '@/components/garages/garage-detail-page';
+import { RequestQuoteModal } from '@/components/garages/request-quote-modal';
+import { BookingModal } from '@/components/garages/booking-modal';
+import type { Garage } from '@/pages/garages/garages-page';
+
+function getGarageTone(name: string) {
+  const gradients = [
+    'from-[#0d1118] via-[#43301c] to-[#0b0f16]',
+    'from-[#1b2734] via-[#2a3e49] to-[#101721]',
+    'from-[#151820] via-[#32271c] to-[#11141c]',
+    'from-[#161616] via-[#353535] to-[#12151c]',
+    'from-[#20222a] via-[#4a3026] to-[#1b1d24]',
+    'from-[#11141d] via-[#2f3640] to-[#0d1118]',
+    'from-[#1a2027] via-[#2d353d] to-[#0f131b]',
+    'from-[#151922] via-[#25394a] to-[#10151d]',
+    'from-[#17202e] via-[#22415e] to-[#0c1220]',
+    'from-[#211d20] via-[#3e3840] to-[#17161a]',
+    'from-[#20252a] via-[#3b3028] to-[#11161c]',
+    'from-[#131922] via-[#253647] to-[#11161c]',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % gradients.length;
+  return gradients[index];
+}
+
+function getGarageBadgeTone(badge: string) {
+  if (badge === 'Best Value') return 'bg-[#1aa14a]';
+  if (badge === 'Most Trusted') return 'bg-[#ff8a1f]';
+  if (badge === 'Top Rated') return 'bg-[#1a56db]';
+  return '';
+}
+
+function parseDistanceKm(distance: any): number {
+  if (typeof distance === 'number') return distance;
+  if (!distance) return 3.0;
+  const num = parseFloat(String(distance).replace(/[^\d.]/g, ''));
+  return isNaN(num) ? 3.0 : num;
+}
+
+function mapBackendGarageToFrontend(g: any): Garage {
+  const name = g.name;
+  const badge = g.badge || '';
+  const chips = g.chips && g.chips.length > 0 ? g.chips : ['General Service'];
+  const image = g.image || '/assets/garage_1_1778071156220.png';
+  const distanceKm = parseDistanceKm(g.distance) || 3.0;
+  const responseMins = Number(g.responseMins) || 30;
+
+  return {
+    id: g.id,
+    badge,
+    badgeTone: getGarageBadgeTone(badge),
+    name,
+    rating: Number(g.rating) || 0.0,
+    reviews: Number(g.reviews) || 0,
+    location: g.location || '',
+    distanceKm,
+    responseMins,
+    chips,
+    facade: name.split(' ').slice(0, 2).join(' '),
+    tone: getGarageTone(name),
+    verified: g.verified !== undefined ? g.verified : false,
+    image,
+  };
+}
 
 function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
   if (index === 0 && overallRisk) {
@@ -519,13 +591,21 @@ function IssueDetailsModal({
 
 function buildInitialFlow(issueText: string): InitialFlowState {
   const trimmedIssue = issueText.trim();
+  const lowerIssue = trimmedIssue.toLowerCase();
+  
+  const matchedCategory = issueCategories.find((cat) =>
+    cat.keywords.some((kw) => lowerIssue.includes(kw.toLowerCase()))
+  );
+
   return {
     issueText: trimmedIssue || DEFAULT_ISSUE_TEXT,
     introText: trimmedIssue
-      ? `I received your symptom description: "${trimmedIssue}". Selecting your vehicle on the right will immediately begin the diagnosis.`
+      ? (matchedCategory 
+          ? `I received your symptom description: "${trimmedIssue}". Let's narrow this down.` 
+          : `I received your symptom description: "${trimmedIssue}". Selecting your vehicle on the right will immediately begin the diagnosis.`)
       : 'Hello! I am WrectifAI, your automotive diagnostic assistant. Please select your vehicle on the right, then describe the issues or symptoms your vehicle is experiencing below to start the diagnosis.',
-    initialQuestion: null,
-    activeCategoryId: null,
+    initialQuestion: matchedCategory ? matchedCategory.questions[0] : null,
+    activeCategoryId: matchedCategory ? matchedCategory.id : null,
   };
 }
 
@@ -1216,6 +1296,7 @@ function DiagnoseResultsScreen({
   onRegenerateDiagnosis,
   diyType = 'none',
 }: DiagnoseResultsScreenProps) {
+  const router = useRouter();
   const selectedCount = selectedIssues.length;
   const detailsTabs = ['Text Details', 'Photo', 'Video', 'Audio'];
   const [activeIssueDetails, setActiveIssueDetails] =
@@ -1237,6 +1318,52 @@ function DiagnoseResultsScreen({
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isDiyDrawerOpen, setIsDiyDrawerOpen] = useState(false);
+
+  // Nearby Garages States
+  const [garages, setGarages] = useState<Garage[]>([]);
+  const [loadingGarages, setLoadingGarages] = useState(true);
+  const [selectedGarageForDetail, setSelectedGarageForDetail] = useState<Garage | null>(null);
+  const [quoteGarageId, setQuoteGarageId] = useState<string | null>(null);
+  const [bookingGarageId, setBookingGarageId] = useState<string | null>(null);
+  const [compareGarageIds, setCompareGarageIds] = useState<string[]>([]);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchGarages()
+      .then((data) => {
+        if (active && data && data.length > 0) {
+          const mapped = data.map(mapBackendGarageToFrontend);
+          setGarages(mapped);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load nearby garages:', err);
+      })
+      .finally(() => {
+        if (active) setLoadingGarages(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleToggleCompare = (garageId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCompareGarageIds((prev) =>
+      prev.includes(garageId)
+        ? prev.filter((id) => id !== garageId)
+        : prev.length < 3
+        ? [...prev, garageId]
+        : prev
+    );
+  };
+
+  const comparedGarages = useMemo(() => {
+    return garages.filter((g) => g.id && compareGarageIds.includes(g.id));
+  }, [garages, compareGarageIds]);
 
   useEffect(() => {
     if (resultIssues[0]) {
@@ -1650,6 +1777,227 @@ function DiagnoseResultsScreen({
         </div>
       </Card>
 
+      {/* NEARBY GARAGES RECOMMENDATION SECTION */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6ecfb] pb-3">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-[18px] font-bold text-[#17307a]">
+                Recommended Nearby Garages
+              </h2>
+              <span className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[11px] font-bold text-[#1a56db]">
+                {garages.length} Available
+              </span>
+            </div>
+            <p className="mt-1 text-[12px] text-[#5f7099]">
+              Verified workshops equipped to resolve your diagnosed issue near{' '}
+              <span className="font-semibold text-[#17307a]">Hyderabad</span>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {compareGarageIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsCompareOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#1a56db] px-3.5 py-2 text-[12px] font-bold text-white shadow-sm hover:bg-[#1644ad] transition-colors"
+              >
+                <Scale className="h-4 w-4" />
+                <span>Compare ({compareGarageIds.length})</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => router.push('/garages')}
+              className="text-[12.5px] font-bold text-[#1a56db] hover:underline"
+            >
+              View All Garages &rarr;
+            </button>
+          </div>
+        </div>
+
+        {actionSuccessMessage && (
+          <div className="rounded-[12px] bg-[#e8f8eb] border border-[#b8ecc1] p-3 text-[13px] font-semibold text-[#25a24a] flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4.5 w-4.5" />
+              <span>{actionSuccessMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActionSuccessMessage(null)}
+              className="text-[#25a24a] hover:opacity-75"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {loadingGarages ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-[310px] rounded-[18px] border border-[#eef3fc] bg-white p-4 animate-pulse"
+              >
+                <div className="h-[120px] rounded-[12px] bg-[#f0f4fc]" />
+                <div className="mt-4 h-4 w-3/4 rounded bg-[#f0f4fc]" />
+                <div className="mt-2 h-3 w-1/2 rounded bg-[#f0f4fc]" />
+                <div className="mt-6 h-8 rounded bg-[#f0f4fc]" />
+              </div>
+            ))}
+          </div>
+        ) : garages.length === 0 ? (
+          <Card className="rounded-[18px] border-[#e6ecfb] bg-white p-8 text-center shadow-sm">
+            <p className="text-[13px] text-[#5f7099]">
+              No garages currently found in this location.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {garages.slice(0, 6).map((garage) => {
+              const isSelectedForCompare = garage.id
+                ? compareGarageIds.includes(garage.id)
+                : false;
+
+              return (
+                <Card
+                  key={garage.id || garage.name}
+                  className={cn(
+                    'overflow-hidden rounded-[18px] border bg-white shadow-[0_10px_28px_rgba(21,48,122,0.06)] transition-all duration-200 hover:border-[#1a56db]/30 hover:shadow-md flex flex-col justify-between',
+                    isSelectedForCompare
+                      ? 'border-[#1a56db] ring-2 ring-[#1a56db]/20'
+                      : 'border-[#e7eefc]'
+                  )}
+                >
+                  {/* Garage Top Banner */}
+                  <div
+                    className={cn(
+                      'relative h-[120px] bg-gradient-to-r cursor-pointer',
+                      garage.tone
+                    )}
+                    onClick={() => setSelectedGarageForDetail(garage)}
+                  >
+                    {garage.image && (
+                      <Image
+                        src={garage.image}
+                        alt={garage.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#09101d]/60 via-transparent to-black/20" />
+                    
+                    {garage.badge && (
+                      <div
+                        className={cn(
+                          'absolute left-3 top-3 rounded-[8px] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm',
+                          garage.badgeTone
+                        )}
+                      >
+                        {garage.badge}
+                      </div>
+                    )}
+
+                    {/* Compare Button */}
+                    <button
+                      type="button"
+                      title="Compare Garage"
+                      onClick={(e) => garage.id && handleToggleCompare(garage.id, e)}
+                      className={cn(
+                        'absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-md transition-all z-10',
+                        isSelectedForCompare
+                          ? 'bg-[#1a56db] text-white ring-2 ring-white'
+                          : 'bg-white/90 text-[#17307a] hover:bg-white'
+                      )}
+                    >
+                      <Scale className="h-3 w-3" />
+                      <span>{isSelectedForCompare ? 'Selected' : 'Compare'}</span>
+                    </button>
+
+                    <div className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white/90 drop-shadow">
+                      {garage.facade}
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div
+                        className="cursor-pointer"
+                        onClick={() => setSelectedGarageForDetail(garage)}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="text-[14.5px] font-bold tracking-tight text-[#17307a] hover:text-[#1a56db] transition-colors truncate">
+                            {garage.name}
+                          </h3>
+                          {garage.verified && (
+                            <BadgeCheck className="h-4 w-4 fill-[#1a56db] text-white shrink-0" />
+                          )}
+                        </div>
+
+                        <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-[#5f7099]">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
+                            <span className="font-bold text-[#f28c28]">
+                              {garage.rating.toFixed(1)}
+                            </span>
+                            <span>({garage.reviews})</span>
+                          </div>
+                          <span>•</span>
+                          <span className="truncate">{garage.location}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#17307a]">
+                        <div className="flex items-center gap-1 text-[#4c5f8f]">
+                          <MapPin className="h-3.5 w-3.5 text-[#1a56db]" />
+                          <span>{garage.distanceKm.toFixed(1)} km away</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#4c5f8f]">
+                          <Clock3 className="h-3.5 w-3.5 text-[#1a56db]" />
+                          <span>~{garage.responseMins}m response</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {garage.chips.slice(0, 3).map((chip) => (
+                          <span
+                            key={chip}
+                            className="rounded-md bg-[#edf5ff] px-2 py-0.5 text-[9.5px] font-semibold text-[#1a56db]"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#edf2fb] pt-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => garage.id && setQuoteGarageId(garage.id)}
+                        className="h-[34px] rounded-[10px] text-[11.5px] font-bold border-[#dbe6ff] text-[#1a56db] hover:bg-[#f4f8ff] hover:text-[#17307a]"
+                      >
+                        Request Quote
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => garage.id && setBookingGarageId(garage.id)}
+                        className="h-[34px] rounded-[10px] bg-[#1a56db] text-[11.5px] font-bold text-white hover:bg-[#1644ad]"
+                      >
+                        Book
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
         {resultTrustItems.map(({ title, description, icon: Icon }) => (
           <div key={title} className="flex items-start gap-3">
@@ -1667,6 +2015,170 @@ function DiagnoseResultsScreen({
           </div>
         ))}
       </div>
+
+      {/* FULL GARAGE DETAIL MODAL / DRAWER */}
+      {selectedGarageForDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-5xl bg-[#f8faff] rounded-[24px] shadow-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#e6ecfb] bg-white px-6 py-4 sticky top-0 z-20">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[17px] font-bold text-[#17307a]">
+                  Garage Details: {selectedGarageForDetail.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedGarageForDetail(null)}
+                className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <GarageDetailPage
+                garage={selectedGarageForDetail}
+                onBack={() => setSelectedGarageForDetail(null)}
+                backLabel="Close Details"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GARAGE COMPARISON MODAL */}
+      {isCompareOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-5xl bg-white rounded-[24px] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#e6ecfb] px-6 py-4 bg-white sticky top-0 z-10">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#17307a] flex items-center gap-2">
+                  <Scale className="h-5 w-5 text-[#1a56db]" />
+                  <span>Compare Garages ({comparedGarages.length})</span>
+                </h2>
+                <p className="text-[12px] text-[#5f7099] mt-0.5">
+                  Review ratings, response times, distance, and features side-by-side
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCompareOpen(false)}
+                className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-x-auto p-6">
+              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${comparedGarages.length}, minmax(260px, 1fr))` }}>
+                {comparedGarages.map((g) => (
+                  <Card key={g.id} className="rounded-[18px] border border-[#e6ecfb] p-5 flex flex-col justify-between shadow-sm">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-[16px] font-bold text-[#17307a]">{g.name}</h3>
+                          <p className="text-[12px] text-[#5f7099] mt-0.5">{g.location}</p>
+                        </div>
+                        {g.badge && (
+                          <span className={cn('rounded px-2 py-0.5 text-[10px] font-bold text-white', g.badgeTone)}>
+                            {g.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-4 space-y-3 border-t border-b border-[#edf2fb] py-3 text-[12.5px]">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#5f7099]">Rating</span>
+                          <span className="font-bold text-[#f28c28] flex items-center gap-1">
+                            <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
+                            {g.rating.toFixed(1)} ({g.reviews})
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#5f7099]">Distance</span>
+                          <span className="font-semibold text-[#17307a]">{g.distanceKm.toFixed(1)} km</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#5f7099]">Avg Response</span>
+                          <span className="font-semibold text-[#17307a]">{g.responseMins} mins</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-[#5f7099]">Status</span>
+                          <span className="font-semibold text-[#25a24a]">
+                            {g.verified ? 'Verified Partner' : 'Registered'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="text-[11.5px] font-semibold text-[#5f7099] mb-1.5">Specializations:</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {g.chips.map((chip) => (
+                            <span key={chip} className="rounded bg-[#f0f4fc] px-2 py-0.5 text-[10.5px] font-medium text-[#1a56db]">
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setIsCompareOpen(false);
+                          if (g.id) setQuoteGarageId(g.id);
+                        }}
+                        className="w-full h-9 rounded-[10px] bg-[#1a56db] text-[12px] font-bold text-white hover:bg-[#1644ad]"
+                      >
+                        Request Quote
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsCompareOpen(false);
+                          if (g.id) setBookingGarageId(g.id);
+                        }}
+                        className="w-full h-9 rounded-[10px] text-[12px] font-bold border-[#dbe6ff] text-[#1a56db]"
+                      >
+                        Book Appointment
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REQUEST QUOTE MODAL */}
+      {quoteGarageId && (
+        <RequestQuoteModal
+          isOpen={!!quoteGarageId}
+          garageId={quoteGarageId}
+          onClose={() => setQuoteGarageId(null)}
+          onSubmitSuccess={() => {
+            setActionSuccessMessage('Quote request sent successfully! You will be notified when the garage responds.');
+          }}
+        />
+      )}
+
+      {/* DIRECT BOOKING MODAL */}
+      {bookingGarageId && (
+        <BookingModal
+          isOpen={!!bookingGarageId}
+          garageId={bookingGarageId}
+          onClose={() => setBookingGarageId(null)}
+          onSubmitSuccess={() => {
+            setActionSuccessMessage('Booking appointment scheduled successfully!');
+          }}
+        />
+      )}
 
       {/* DIY Centered Modal */}
       {isDiyDrawerOpen && (
@@ -2382,8 +2894,8 @@ export function AIDiagnosePage() {
 
   const applyDiagnoseFlow = (nextIssue: string) => {
     const flow = buildInitialFlow(nextIssue);
-
-    setMessages([
+    
+    const initialMessages: ChatEntry[] = [
       {
         id: 'message-1',
         sender: 'assistant',
@@ -2392,7 +2904,31 @@ export function AIDiagnosePage() {
         text: flow.introText,
         highlighted: true,
       },
-    ]);
+    ];
+
+    if (flow.activeCategoryId) {
+      const category = getCategoryById(flow.activeCategoryId);
+      if (category && category.questions.length > 0) {
+        initialMessages.push({
+          id: category.questions[0].id || `dyn-q-0-${Date.now()}`,
+          sender: 'assistant',
+          time: pageLoadTime,
+          kind: 'question',
+          question: category.questions[0].question,
+          options: category.questions[0].options,
+          selected: '',
+        });
+        setDynamicQuestions(category.questions);
+        setCurrentQuestionIdx(0);
+        setHasStartedDiagnose(true);
+      }
+    } else {
+      setDynamicQuestions([]);
+      setCurrentQuestionIdx(-1);
+      setHasStartedDiagnose(false);
+    }
+
+    setMessages(initialMessages);
     setIssueText(flow.issueText);
     setActiveCategoryId(flow.activeCategoryId);
     setAnswers({});
@@ -2404,10 +2940,7 @@ export function AIDiagnosePage() {
     setTypedMessage('');
     setSelectedIssues([]);
     setDetailsText('');
-    setDynamicQuestions([]);
-    setCurrentQuestionIdx(-1);
     setDynamicAnswers({});
-    setHasStartedDiagnose(false);
     setAccumulatedIntakeContext('');
     setClarificationTurns(0);
   };

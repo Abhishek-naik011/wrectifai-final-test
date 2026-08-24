@@ -684,7 +684,7 @@ function FeaturedGarages({
           className="flex gap-4 overflow-x-auto pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {garagesList.map(({ href: _href, ...garage }) => (
-            <Link key={garage.name} href={`/garages?garage=${encodeURIComponent(garage.name)}`} className="w-[270px] shrink-0 block hover:opacity-95 transition-opacity">
+            <Link key={garage.id} href={`/garages?garage=${encodeURIComponent(garage.name)}`} className="w-[270px] shrink-0 block hover:opacity-95 transition-opacity">
               <GarageCard {...garage} />
             </Link>
           ))}

@@ -13,7 +13,7 @@ import { Button } from '@/components/common/button';
 import { Trash2, ShoppingCart, Heart } from 'lucide-react';
 import Image from 'next/image';
 
-const CITIES = [
+export const CITIES = [
   'Hyderabad',
   'Bengaluru',
   'Mumbai',
@@ -75,6 +75,11 @@ export function TopNavbar() {
     updateCart();
     updateWishlist();
     updateNotifications();
+    
+    const savedLocation = localStorage.getItem('wrectifai_location');
+    if (savedLocation) {
+      setSelectedCity(savedLocation);
+    }
     
     window.addEventListener('cart-updated', updateCart);
     window.addEventListener('wishlist-updated', updateWishlist);
@@ -181,6 +186,8 @@ export function TopNavbar() {
                       onClick={() => {
                         setSelectedCity(city);
                         setIsDropdownOpen(false);
+                        localStorage.setItem('wrectifai_location', city);
+                        window.dispatchEvent(new CustomEvent('location-changed', { detail: city }));
                       }}
                       className={cn(
                         "flex h-[34px] w-full items-center rounded-lg px-2.5 text-left text-[13px] font-semibold transition-colors",

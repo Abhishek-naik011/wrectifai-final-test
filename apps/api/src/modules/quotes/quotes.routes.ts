@@ -13,21 +13,22 @@ quotesRouter.get('/', authenticate, async (req, res) => {
     }
 
     const result = await query(
-      `SELECT q.id, q.quote_request_id as "quoteRequestId", q.amount, q.currency, q.eta_days as "etaDays", q.status, q.created_at as "createdAt", q.details,
+      `SELECT q.id as "quoteId", qr.id as "quoteRequestId", qr.garage_id as "garageId", qr.vehicle_id as "vehicleId", qr.status as "requestStatus",
+              q.amount, q.currency, q.eta_days as "etaDays", COALESCE(q.status, qr.status) as status, q.created_at as "createdAt", q.details,
               q.labor_cost as "laborCost", q.parts_cost as "partsCost", q.total_cost as "totalCost", q.eta_note as "etaNote",
               g.name as "garageName", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
               qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary", qr.preferred_date as "preferredDate",
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage",
               b.id as "bookingId", b.status as "bookingStatus", b.created_at as "bookingCreatedAt", b.scheduled_at as "bookingScheduledAt",
               u.name as "customerName"
-       FROM quotes q
-       JOIN garages g ON q.garage_id = g.id
-       JOIN quote_requests qr ON q.quote_request_id = qr.id
+       FROM quote_requests qr
+       LEFT JOIN quotes q ON q.quote_request_id = qr.id
+       JOIN garages g ON qr.garage_id = g.id
        LEFT JOIN vehicles v ON qr.vehicle_id = v.id
        LEFT JOIN LATERAL (SELECT id, status, created_at, scheduled_at FROM bookings WHERE quote_id = q.id ORDER BY created_at DESC LIMIT 1) b ON true
        LEFT JOIN users u ON qr.customer_id = u.id
        WHERE qr.customer_id = $1
-       ORDER BY q.created_at DESC`,
+       ORDER BY qr.created_at DESC`,
       [customerId]
     );
 
@@ -43,8 +44,13 @@ quotesRouter.get('/', authenticate, async (req, res) => {
       }
 
       return {
-        id: row.id,
+        id: row.quoteId || row.quoteRequestId,
+        quoteId: row.quoteId || null,
         quoteRequestId: row.quoteRequestId,
+        garageId: row.garageId,
+        vehicleId: row.vehicleId,
+        requestStatus: row.requestStatus,
+        hasQuote: !!row.quoteId,
         status: row.status || 'open',
         isBooked: !!row.bookingId,
         bookingDetails: row.bookingId ? {
@@ -61,7 +67,7 @@ quotesRouter.get('/', authenticate, async (req, res) => {
         distance: '3.0 km away',
         meta: 'Certified technicians',
         metaSecondary: '6 Months warranty',
-        price: `$${amountNum.toLocaleString('en-US')}`,
+        price: amountNum > 0 ? `$${amountNum.toLocaleString('en-US')}` : 'Awaiting Quote',
         savings: undefined,
         time: timeStr,
         tag: undefined,
@@ -403,6 +409,123 @@ quotesRouter.get('/requests/:requestId', authenticate, async (req, res) => {
       'DATABASE_ERROR',
       500
     );
+  }
+});
+
+quotesRouter.put('/requests/:requestId', authenticate, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId)) {
+      return error(res, 'Invalid request ID format', 'BAD_REQUEST', 400);
+    }
+
+    const customerId = req.user?.userId;
+    if (!customerId) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+    }
+
+    const { issueSummary, preferredDate, vehicleId } = req.body;
+
+    // Check existing request and ownership
+    const reqRes = await query(
+      `SELECT qr.id, qr.customer_id as "customerId", qr.status,
+              (SELECT COUNT(*) FROM quotes q WHERE q.quote_request_id = qr.id) as "quoteCount"
+       FROM quote_requests qr
+       WHERE qr.id = $1`,
+      [requestId]
+    );
+
+    if (reqRes.rows.length === 0) {
+      return error(res, 'Quote request not found', 'NOT_FOUND', 404);
+    }
+
+    const row = reqRes.rows[0];
+    if (row.customerId !== customerId && !req.user?.roles?.includes('admin')) {
+      return error(res, 'Forbidden: You do not have access to update this request', 'FORBIDDEN', 403);
+    }
+
+    // Check status-based rules: only allow editing if open/pending/unanswered and no quotes submitted
+    const isLocked = Number(row.quoteCount) > 0 || !['open', 'pending', 'pendingpayment'].includes((row.status || '').toLowerCase());
+    if (isLocked) {
+      return error(res, 'This quote request is locked because the garage has already responded or reviewed it.', 'FORBIDDEN', 403);
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (issueSummary !== undefined) {
+      updates.push(`issue_summary = $${idx++}`);
+      values.push(issueSummary);
+    }
+    if (preferredDate !== undefined) {
+      updates.push(`preferred_date = $${idx++}`);
+      values.push(preferredDate || null);
+    }
+    if (vehicleId !== undefined) {
+      updates.push(`vehicle_id = $${idx++}`);
+      values.push(vehicleId);
+    }
+
+    if (updates.length === 0) {
+      return error(res, 'No update fields provided', 'BAD_REQUEST', 400);
+    }
+
+    values.push(requestId);
+    const updateResult = await query(
+      `UPDATE quote_requests SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, issue_summary as "issueSummary", preferred_date as "preferredDate", vehicle_id as "vehicleId", status`,
+      values
+    );
+
+    return success(res, updateResult.rows[0]);
+  } catch (err: any) {
+    console.error('Failed to update quote request:', err);
+    return error(res, err instanceof Error ? err.message : 'Database query failed', 'DATABASE_ERROR', 500);
+  }
+});
+
+quotesRouter.delete('/requests/:requestId', authenticate, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId)) {
+      return error(res, 'Invalid request ID format', 'BAD_REQUEST', 400);
+    }
+
+    const customerId = req.user?.userId;
+    if (!customerId) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+    }
+
+    // Check existing request and ownership
+    const reqRes = await query(
+      `SELECT qr.id, qr.customer_id as "customerId", qr.status,
+              (SELECT COUNT(*) FROM quotes q WHERE q.quote_request_id = qr.id) as "quoteCount"
+       FROM quote_requests qr
+       WHERE qr.id = $1`,
+      [requestId]
+    );
+
+    if (reqRes.rows.length === 0) {
+      return error(res, 'Quote request not found', 'NOT_FOUND', 404);
+    }
+
+    const row = reqRes.rows[0];
+    if (row.customerId !== customerId && !req.user?.roles?.includes('admin')) {
+      return error(res, 'Forbidden: You do not have access to delete this request', 'FORBIDDEN', 403);
+    }
+
+    // Check status-based rules: only allow deleting if open/pending/unanswered and no quotes submitted
+    const isLocked = Number(row.quoteCount) > 0 || !['open', 'pending', 'pendingpayment'].includes((row.status || '').toLowerCase());
+    if (isLocked) {
+      return error(res, 'This quote request is locked because the garage has already responded or reviewed it.', 'FORBIDDEN', 403);
+    }
+
+    await query(`DELETE FROM quote_requests WHERE id = $1`, [requestId]);
+
+    return success(res, { success: true, message: 'Quote request deleted successfully' });
+  } catch (err: any) {
+    console.error('Failed to delete quote request:', err);
+    return error(res, err instanceof Error ? err.message : 'Database query failed', 'DATABASE_ERROR', 500);
   }
 });
 

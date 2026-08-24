@@ -55,6 +55,20 @@ export async function getQuoteRequest(id: string): Promise<QuoteRequestResponse>
   return apiClient.get(`/quotes/requests/${id}`);
 }
 
+export interface UpdateQuoteRequestPayload {
+  issueSummary?: string;
+  preferredDate?: string;
+  vehicleId?: string;
+}
+
+export async function updateQuoteRequest(id: string, payload: UpdateQuoteRequestPayload): Promise<QuoteRequestResponse> {
+  return apiClient.put(`/quotes/requests/${id}`, payload);
+}
+
+export async function deleteQuoteRequest(id: string): Promise<{ success: boolean; message: string }> {
+  return apiClient.delete(`/quotes/requests/${id}`);
+}
+
 export async function fetchQuoteRequests(): Promise<QuoteRequestResponse[]> {
   return apiClient.get('/quotes/requests');
 }

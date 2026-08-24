@@ -9,7 +9,7 @@ import { Calendar, Inbox, CheckCircle, Car, DollarSign, Plus, Calendar as Calend
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingBookings } from '@/lib/quotes-api';
+import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingRequests } from '@/lib/quotes-api';
 import { useRouter } from 'next/navigation';
 
 export default function GarageDashboard() {
@@ -26,10 +26,13 @@ export default function GarageDashboard() {
         const [statsData, jobsData, requestsData, quotesData] = await Promise.all([
           fetchGarageStats().catch(() => ({ incoming: 0, todaysBookings: 0, activeJobs: 0, generatedQuotes: 0, completed: 0 })),
           fetchGarageActiveJobs().catch(() => []),
-          getGarageIncomingBookings().catch(() => []),
+          getGarageIncomingRequests().catch(() => []),
           fetchGarageQuotes().catch(() => []),
         ]);
-        setStats(statsData as any);
+        setStats({
+          ...(statsData as any),
+          generatedQuotes: requestsData.length
+        });
         setActiveJobs(jobsData.slice(0, 4)); // Get up to 4 for the floor
         setRecentRequests(requestsData.slice(0, 3));
         setRecentQuotes(quotesData.slice(0, 5));
@@ -148,6 +151,59 @@ export default function GarageDashboard() {
                  
               </div>
 
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-5 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-[#17307a]">Pending Quote Requests</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-4 font-medium">Customer</th>
+                        <th className="px-6 py-4 font-medium">Vehicle</th>
+                        <th className="px-6 py-4 font-medium">Issue</th>
+                        <th className="px-6 py-4 font-medium">Created</th>
+                        <th className="px-6 py-4 font-medium text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {recentRequests.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                            No pending requests found.
+                          </td>
+                        </tr>
+                      ) : (
+                        recentRequests.map(req => (
+                          <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="font-medium text-slate-900">{req.customerName || 'Customer'}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-slate-700">{req.vehicleMake || req.vehicle?.make || ''} {req.vehicleModel || req.vehicle?.model || ''}</div>
+                            </td>
+                            <td className="px-6 py-4 max-w-[200px] truncate text-slate-700">
+                              {req.issueSummary}
+                            </td>
+                            <td className="px-6 py-4 text-slate-500">
+                              {new Date(req.createdAt).toLocaleDateString()} {formatTime(req.createdAt)}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={() => router.push(`/garage/quotes`)}
+                                className="text-blue-600 hover:text-blue-800 font-medium px-4 py-2 hover:bg-blue-50 rounded-lg transition-colors"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
 
             <div className="col-span-3 space-y-6">
@@ -177,58 +233,6 @@ export default function GarageDashboard() {
                 <button className="w-full bg-white text-[#17307a] py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">Chat Now</button>
               </div>
 
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-[#17307a]">Pending Quote Requests</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Customer</th>
-                    <th className="px-6 py-4 font-medium">Vehicle</th>
-                    <th className="px-6 py-4 font-medium">Issue</th>
-                    <th className="px-6 py-4 font-medium">Created</th>
-                    <th className="px-6 py-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {recentRequests.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                        No pending requests found.
-                      </td>
-                    </tr>
-                  ) : (
-                    recentRequests.map(req => (
-                      <tr key={req.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">{req.customerName || 'Customer'}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-slate-700">{req.vehicleMake || req.vehicle?.make || ''} {req.vehicleModel || req.vehicle?.model || ''}</div>
-                        </td>
-                        <td className="px-6 py-4 max-w-[200px] truncate text-slate-700">
-                          {req.issueSummary}
-                        </td>
-                        <td className="px-6 py-4 text-slate-500">
-                          {new Date(req.createdAt).toLocaleDateString()} {formatTime(req.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => router.push(`/garage/quotes`)}
-                            className="text-blue-600 hover:text-blue-800 font-medium px-4 py-2 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>

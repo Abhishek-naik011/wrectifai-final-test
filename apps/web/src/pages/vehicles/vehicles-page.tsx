@@ -10,7 +10,10 @@ import {
   ShieldAlert,
   X,
   Sparkles,
-  Settings
+  Settings,
+  UploadCloud,
+  CheckCircle2,
+  Star
 } from 'lucide-react';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { Card } from '@/components/common/card';
@@ -27,6 +30,12 @@ interface Vehicle {
   vin?: string;
   mileage?: number;
   warranty?: unknown;
+  plateNumber?: string;
+  fuelType?: string;
+  transmission?: string;
+  color?: string;
+  isPrimary?: boolean;
+  photos?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -148,6 +157,13 @@ export function VehiclesPage() {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [vin, setVin] = useState('');
   const [mileage, setMileage] = useState<number | ''>('');
+  const [licensePlate, setLicensePlate] = useState('');
+  const [fuelType, setFuelType] = useState('');
+  const [transmission, setTransmission] = useState('');
+  const [color, setColor] = useState('');
+  const [isPrimary, setIsPrimary] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -157,7 +173,43 @@ export function VehiclesPage() {
     setYear(new Date().getFullYear());
     setVin('');
     setMileage('');
+    setLicensePlate('');
+    setFuelType('');
+    setTransmission('');
+    setColor('');
+    setIsPrimary(false);
+    setPhotos([]);
     setFormError(null);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newPhotos = [...photos];
+    let added = 0;
+    
+    Array.from(files).forEach(file => {
+      if (newPhotos.length + added >= 5) return;
+      if (file.type.startsWith('image/')) {
+        added++;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotos(prev => {
+            if (prev.length < 5) {
+              return [...prev, reader.result as string];
+            }
+            return prev;
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    const newPhotos = [...photos];
+    newPhotos.splice(index, 1);
+    setPhotos(newPhotos);
   };
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -166,6 +218,16 @@ export function VehiclesPage() {
 
     if (!make.trim() || !model.trim() || !year) {
       setFormError('Make, model, and year are required.');
+      return;
+    }
+    
+    if (vin.trim() && vin.trim().length !== 17) {
+      setFormError('VIN must be exactly 17 characters if provided.');
+      return;
+    }
+    
+    if (mileage !== '' && Number(mileage) < 0) {
+      setFormError('Mileage cannot be negative.');
       return;
     }
 
@@ -177,6 +239,12 @@ export function VehiclesPage() {
         year: Number(year),
         vin: vin.trim() || undefined,
         mileage: mileage !== '' ? Number(mileage) : undefined,
+        plateNumber: licensePlate.trim() || undefined,
+        fuelType: fuelType || undefined,
+        transmission: transmission || undefined,
+        color: color.trim() || undefined,
+        isPrimary,
+        photos,
       });
       setIsAddOpen(false);
       resetForm();
@@ -196,6 +264,12 @@ export function VehiclesPage() {
     setYear(vehicle.year);
     setVin(vehicle.vin || '');
     setMileage(vehicle.mileage || '');
+    setLicensePlate(vehicle.plateNumber || '');
+    setFuelType(vehicle.fuelType || '');
+    setTransmission(vehicle.transmission || '');
+    setColor(vehicle.color || '');
+    setIsPrimary(vehicle.isPrimary || false);
+    setPhotos(vehicle.photos || []);
     setIsEditOpen(true);
   };
 
@@ -209,6 +283,16 @@ export function VehiclesPage() {
       setFormError('Make, model, and year are required.');
       return;
     }
+    
+    if (vin.trim() && vin.trim().length !== 17) {
+      setFormError('VIN must be exactly 17 characters if provided.');
+      return;
+    }
+
+    if (mileage !== '' && Number(mileage) < 0) {
+      setFormError('Mileage cannot be negative.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -218,6 +302,12 @@ export function VehiclesPage() {
         year: Number(year),
         vin: vin.trim() || undefined,
         mileage: mileage !== '' ? Number(mileage) : undefined,
+        plateNumber: licensePlate.trim() || undefined,
+        fuelType: fuelType || undefined,
+        transmission: transmission || undefined,
+        color: color.trim() || undefined,
+        isPrimary,
+        photos,
       });
       setIsEditOpen(false);
       setSelectedVehicle(null);
@@ -308,30 +398,69 @@ export function VehiclesPage() {
             {vehicles.map((vehicle) => (
               <Card key={vehicle.id} className="relative overflow-hidden rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_10px_30px_rgba(30,58,138,0.03)] hover:shadow-[0_15px_40px_rgba(26,86,219,0.06)] hover:border-[#bfd1ff] transition-all group">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-bold text-[#17307a] leading-tight">
-                      {vehicle.year} {vehicle.make} {vehicle.model}
-                    </h3>
-                    <p className="mt-1 text-[13px] font-medium text-[#7a8ab4] uppercase tracking-wider">
-                      ID: {vehicle.id.slice(0, 8)}
-                    </p>
+                  <div className="flex gap-4">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-[#dbe6ff] bg-[#f4f7ff]">
+                      {vehicle.photos && vehicle.photos.length > 0 ? (
+                        <img src={vehicle.photos[0]} alt={`${vehicle.make} ${vehicle.model}`} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[#1a56db]">
+                          <Car className="h-8 w-8 opacity-50" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-[#17307a] leading-tight">
+                          {vehicle.year} {vehicle.make} {vehicle.model}
+                        </h3>
+                        {vehicle.isPrimary && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                            PRIMARY
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[13px] font-medium text-[#7a8ab4] uppercase tracking-wider">
+                        {vehicle.plateNumber ? `PLATE: ${vehicle.plateNumber}` : `ID: ${vehicle.id.slice(0, 8)}`}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#eef4ff] text-[#1a56db]">
-                    <Car className="h-5 w-5" />
-                  </div>
+                  {(!vehicle.photos || vehicle.photos.length === 0) && (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#eef4ff] text-[#1a56db]">
+                      <Car className="h-5 w-5" />
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-5 space-y-2.5 pt-4 border-t border-slate-100/80 text-[13.5px]">
+                <div className="mt-5 grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 border-t border-slate-100/80 text-[13px]">
                   {vehicle.vin && (
-                    <div className="flex justify-between text-[#5d6f9f]">
-                      <span className="font-medium">VIN:</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">VIN</span>
                       <span className="font-mono text-[#17307a] tracking-tight">{vehicle.vin}</span>
                     </div>
                   )}
                   {vehicle.mileage !== undefined && vehicle.mileage !== null && (
-                    <div className="flex justify-between text-[#5d6f9f]">
-                      <span className="font-medium">Mileage:</span>
-                      <span className="text-[#17307a] font-semibold">{vehicle.mileage.toLocaleString()} miles</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Mileage</span>
+                      <span className="text-[#17307a] font-semibold">{vehicle.mileage.toLocaleString()} mi</span>
+                    </div>
+                  )}
+                  {vehicle.fuelType && (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Fuel</span>
+                      <span className="text-[#17307a]">{vehicle.fuelType}</span>
+                    </div>
+                  )}
+                  {vehicle.transmission && (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Transmission</span>
+                      <span className="text-[#17307a]">{vehicle.transmission}</span>
+                    </div>
+                  )}
+                  {vehicle.color && (
+                    <div className="flex flex-col">
+                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Color</span>
+                      <span className="text-[#17307a]">{vehicle.color}</span>
                     </div>
                   )}
                 </div>
@@ -364,47 +493,68 @@ export function VehiclesPage() {
         {/* Modal: Add Vehicle */}
         {isAddOpen && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="w-full max-w-lg rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
+            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2 shrink-0">
                 <Car className="h-5 w-5 text-[#1a56db]" />
                 Add New Vehicle
               </h2>
 
-              <form onSubmit={handleAddSubmit} className="space-y-4">
+              <form onSubmit={handleAddSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-3 -mr-2">
                 {formError && (
                   <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-[10px]">
                     {formError}
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    Make *
-                  </label>
-                  <Input
-                    placeholder="e.g. Honda, Toyota"
-                    value={make}
-                    onChange={(e) => setMake(e.target.value)}
-                    required
-                  />
+                <div className="mb-4">
+                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
+                   <div className="border border-slate-200 border-dashed rounded-[14px] p-4 bg-slate-50 flex flex-col items-center justify-center text-center">
+                     <UploadCloud className="w-8 h-8 text-[#a3b8e8] mb-2" />
+                     <p className="text-sm font-medium text-slate-700 mb-1">Click to upload photos</p>
+                     <p className="text-xs text-slate-500 mb-4">First photo will be your primary vehicle image.</p>
+                     <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" id="vehicle-photos-upload-add" />
+                     <label htmlFor="vehicle-photos-upload-add" className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 shadow-sm">Select Photos</label>
+                   </div>
+                   
+                   {photos && photos.length > 0 && (
+                     <div className="mt-4 flex flex-wrap gap-4">
+                       {photos.map((photo: string, index: number) => (
+                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                           <img src={photo} alt={`Vehicle ${index}`} className="w-full h-full object-cover" />
+                           {index === 0 && (
+                             <div className="absolute bottom-0 inset-x-0 bg-blue-600/90 text-white text-[9px] font-bold py-0.5 text-center">
+                               PRIMARY
+                             </div>
+                           )}
+                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <X className="w-3 h-3" />
+                           </button>
+                         </div>
+                       ))}
+                     </div>
+                   )}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    Model *
-                  </label>
-                  <Input
-                    placeholder="e.g. Accord, RAV4"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Make *
+                    </label>
+                    <Input placeholder="e.g. Honda" value={make} onChange={(e) => setMake(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Model *
+                    </label>
+                    <Input placeholder="e.g. Accord" value={model} onChange={(e) => setModel(e.target.value)} required />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -412,41 +562,88 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Year *
                     </label>
-                    <Input
-                      type="number"
-                      min={1900}
-                      max={new Date().getFullYear() + 1}
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value))}
-                      required
-                    />
+                    <Input type="number" min={1900} max={new Date().getFullYear() + 1} value={year} onChange={(e) => setYear(Number(e.target.value))} required />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Mileage (miles)
                     </label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 45000"
-                      value={mileage}
-                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')}
-                    />
+                    <Input type="number" placeholder="e.g. 45000" value={mileage} onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    VIN (17 characters)
-                  </label>
-                  <Input
-                    placeholder="Enter 17-digit VIN"
-                    value={vin}
-                    onChange={(e) => setVin(e.target.value.toUpperCase())}
-                    maxLength={17}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      VIN (17 characters)
+                    </label>
+                    <Input placeholder="Enter 17-digit VIN" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      License Plate
+                    </label>
+                    <Input placeholder="e.g. ABC-1234" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value.toUpperCase())} />
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-2.5 pt-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Fuel Type
+                    </label>
+                    <select 
+                      value={fuelType} 
+                      onChange={(e) => setFuelType(e.target.value)}
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                    >
+                      <option value="">Select</option>
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Electric">Electric</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Transmission
+                    </label>
+                    <select 
+                      value={transmission} 
+                      onChange={(e) => setTransmission(e.target.value)}
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                    >
+                      <option value="">Select</option>
+                      <option value="Automatic">Automatic</option>
+                      <option value="Manual">Manual</option>
+                      <option value="CVT">CVT</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Color
+                    </label>
+                    <Input placeholder="e.g. Black" value={color} onChange={(e) => setColor(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] bg-[#f8faff]">
+                  <input 
+                    type="checkbox" 
+                    id="isPrimary-add" 
+                    checked={isPrimary} 
+                    onChange={(e) => setIsPrimary(e.target.checked)}
+                    className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
+                  />
+                  <label htmlFor="isPrimary-add" className="text-sm font-medium text-[#17307a] cursor-pointer select-none flex-1">
+                    Set as Primary Vehicle
+                  </label>
+                  {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+                </div>
+
+                </div>
+                
+                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 shrink-0">
                   <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
                     Cancel
                   </Button>
@@ -462,45 +659,68 @@ export function VehiclesPage() {
         {/* Modal: Edit Vehicle */}
         {isEditOpen && selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="w-full max-w-lg rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
+            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setIsEditOpen(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2 shrink-0">
                 <Settings className="h-5 w-5 text-[#1a56db]" />
                 Edit Vehicle Details
               </h2>
 
-              <form onSubmit={handleEditSubmit} className="space-y-4">
+              <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-3 -mr-2">
                 {formError && (
                   <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-sm rounded-[10px]">
                     {formError}
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    Make *
-                  </label>
-                  <Input
-                    value={make}
-                    onChange={(e) => setMake(e.target.value)}
-                    required
-                  />
+                <div className="mb-4">
+                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
+                   <div className="border border-slate-200 border-dashed rounded-[14px] p-4 bg-slate-50 flex flex-col items-center justify-center text-center">
+                     <UploadCloud className="w-8 h-8 text-[#a3b8e8] mb-2" />
+                     <p className="text-sm font-medium text-slate-700 mb-1">Click to upload photos</p>
+                     <p className="text-xs text-slate-500 mb-4">First photo will be your primary vehicle image.</p>
+                     <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" id="vehicle-photos-upload-edit" />
+                     <label htmlFor="vehicle-photos-upload-edit" className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 shadow-sm">Select Photos</label>
+                   </div>
+                   
+                   {photos && photos.length > 0 && (
+                     <div className="mt-4 flex flex-wrap gap-4">
+                       {photos.map((photo: string, index: number) => (
+                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                           <img src={photo} alt={`Vehicle ${index}`} className="w-full h-full object-cover" />
+                           {index === 0 && (
+                             <div className="absolute bottom-0 inset-x-0 bg-blue-600/90 text-white text-[9px] font-bold py-0.5 text-center">
+                               PRIMARY
+                             </div>
+                           )}
+                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <X className="w-3 h-3" />
+                           </button>
+                         </div>
+                       ))}
+                     </div>
+                   )}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    Model *
-                  </label>
-                  <Input
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Make *
+                    </label>
+                    <Input placeholder="e.g. Honda" value={make} onChange={(e) => setMake(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Model *
+                    </label>
+                    <Input placeholder="e.g. Accord" value={model} onChange={(e) => setModel(e.target.value)} required />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -508,41 +728,88 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Year *
                     </label>
-                    <Input
-                      type="number"
-                      min={1900}
-                      max={new Date().getFullYear() + 1}
-                      value={year}
-                      onChange={(e) => setYear(Number(e.target.value))}
-                      required
-                    />
+                    <Input type="number" min={1900} max={new Date().getFullYear() + 1} value={year} onChange={(e) => setYear(Number(e.target.value))} required />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       Mileage (miles)
                     </label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 45000"
-                      value={mileage}
-                      onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')}
-                    />
+                    <Input type="number" placeholder="e.g. 45000" value={mileage} onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                    VIN (17 characters)
-                  </label>
-                  <Input
-                    placeholder="Enter 17-digit VIN"
-                    value={vin}
-                    onChange={(e) => setVin(e.target.value.toUpperCase())}
-                    maxLength={17}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      VIN (17 characters)
+                    </label>
+                    <Input placeholder="Enter 17-digit VIN" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      License Plate
+                    </label>
+                    <Input placeholder="e.g. ABC-1234" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value.toUpperCase())} />
+                  </div>
                 </div>
 
-                <div className="flex justify-end gap-2.5 pt-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Fuel Type
+                    </label>
+                    <select 
+                      value={fuelType} 
+                      onChange={(e) => setFuelType(e.target.value)}
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                    >
+                      <option value="">Select</option>
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Electric">Electric</option>
+                      <option value="Hybrid">Hybrid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Transmission
+                    </label>
+                    <select 
+                      value={transmission} 
+                      onChange={(e) => setTransmission(e.target.value)}
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                    >
+                      <option value="">Select</option>
+                      <option value="Automatic">Automatic</option>
+                      <option value="Manual">Manual</option>
+                      <option value="CVT">CVT</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
+                      Color
+                    </label>
+                    <Input placeholder="e.g. Black" value={color} onChange={(e) => setColor(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] bg-[#f8faff]">
+                  <input 
+                    type="checkbox" 
+                    id="isPrimary-edit" 
+                    checked={isPrimary} 
+                    onChange={(e) => setIsPrimary(e.target.checked)}
+                    className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
+                  />
+                  <label htmlFor="isPrimary-edit" className="text-sm font-medium text-[#17307a] cursor-pointer select-none flex-1">
+                    Set as Primary Vehicle
+                  </label>
+                  {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+                </div>
+
+                </div>
+                
+                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 shrink-0">
                   <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
                     Cancel
                   </Button>

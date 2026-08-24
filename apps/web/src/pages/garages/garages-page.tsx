@@ -427,18 +427,47 @@ function GaragesContent() {
   const [garagesList, setGaragesList] = useState<Garage[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
 
+  const [currentLocation, setCurrentLocation] = useState<string>('Hyderabad');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loc = localStorage.getItem('wrectifai_location') || 'Hyderabad';
+    setCurrentLocation(loc);
+
+    const handleLocationChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setCurrentLocation(customEvent.detail || 'Hyderabad');
+    };
+    window.addEventListener('location-changed', handleLocationChange);
+    return () => window.removeEventListener('location-changed', handleLocationChange);
+  }, []);
+
   useEffect(() => {
     let active = true;
-    fetchGarages()
+    setIsLoading(true);
+    setError('');
+    
+    fetchGarages(currentLocation)
       .then((data) => {
-        if (active && data && data.length > 0) {
-          const merged = data.map(mapBackendGarageToFrontend);
-          setGaragesList(merged);
+        if (active) {
+          if (data && data.length > 0) {
+            const merged = data.map(mapBackendGarageToFrontend);
+            setGaragesList(merged);
+          } else {
+            setGaragesList([]);
+          }
+          setIsLoading(false);
         }
       })
       .catch((err) => {
-        console.error('Failed to fetch garages:', err);
+        if (active) {
+          console.error('Failed to fetch garages:', err);
+          setError(`Unable to load garages for ${currentLocation}. Please try again.`);
+          setIsLoading(false);
+        }
       });
+      
     apiClient.get<any[]>('/quotes')
       .then((data) => {
         if (active && data) {
@@ -448,10 +477,11 @@ function GaragesContent() {
       .catch((err) => {
         console.error('Failed to fetch quotes:', err);
       });
+      
     return () => {
       active = false;
     };
-  }, []);
+  }, [currentLocation]);
 
   useEffect(() => {
     const handleSearch = (event: Event) => {
@@ -785,7 +815,7 @@ function GaragesContent() {
             </h1>
             <p className="mt-1.5 text-[12.5px] font-medium text-[#4f67a2]">
               Showing {filteredGarages.length} garages near{' '}
-              <span className="font-bold text-[#1a56db]">Hyderabad</span>
+              <span className="font-bold text-[#1a56db]">{currentLocation}</span>
             </p>
         </div>
         </div>
@@ -904,12 +934,22 @@ function GaragesContent() {
         ) : null}
       </div>
 
-      {viewMode === 'map' ? (
+      {error ? (
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-red-200 bg-white text-center shadow-sm p-6">
+          <h3 className="text-[16px] font-bold text-red-600">{error}</h3>
+          <Button className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      ) : isLoading ? (
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm p-6">
+          <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#dbe6ff] border-t-[#1a56db]"></div>
+          <h3 className="text-[16px] font-bold text-[#17307a]">Loading garages near {currentLocation}...</h3>
+        </div>
+      ) : viewMode === 'map' ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-2">
             {paginatedGarages.map((garage) => (
-              <div key={garage.name} className="relative group">
-                <div className="absolute inset-0 z-0" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
+              <div key={garage.id} className="relative group">
+                <div className="absolute inset-0 z-0 cursor-pointer" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
                 <GarageCard
                   {...garage}
                   compact
@@ -932,7 +972,7 @@ function GaragesContent() {
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(145,170,221,0.18)_1px,transparent_1px),linear-gradient(rgba(145,170,221,0.18)_1px,transparent_1px)] bg-[size:42px_42px]" />
               {paginatedGarages.map((garage, index) => (
                 <div
-                  key={garage.name}
+                  key={garage.id}
                   className="absolute flex h-10 w-10 items-center justify-center rounded-full bg-[#1a56db] text-white shadow-[0_10px_20px_rgba(26,86,219,0.24)] cursor-pointer transition-transform hover:scale-105"
                   style={{
                     left: `${
@@ -949,17 +989,17 @@ function GaragesContent() {
           </Card>
         </div>
       ) : filteredGarages.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm">
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm p-6">
           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7ff] text-[#6173a1]">
             <Search className="h-6 w-6" />
           </div>
-          <h3 className="text-[16px] font-bold text-[#17307a]">No garages found</h3>
-          <p className="mt-1 text-[13px] text-[#6173a1]">Try adjusting your search or filters.</p>
+          <h3 className="text-[16px] font-bold text-[#17307a]">No garages found near {currentLocation}.</h3>
+          <p className="mt-1 text-[13px] text-[#6173a1]">Try adjusting your search or filters, or select a different location.</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {paginatedGarages.map((garage) => (
-            <div key={garage.name} className="relative group">
+            <div key={garage.id} className="relative group">
               <div className="absolute inset-0 z-0 cursor-pointer" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
               <GarageCard
                 {...garage}

@@ -12,8 +12,10 @@ adminRouter.use(requireRole(['admin']));
 adminRouter.get('/stats', async (req, res) => {
   try {
     const customersCount = await query(`SELECT COUNT(*) FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.code = 'user'`);
-    const garagesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'approved'`);
+    const totalGaragesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status != 'deleted' OR approval_status IS NULL`);
+    const approvedGaragesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'approved'`);
     const pendingCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'pending'`);
+    const suspendedCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'suspended'`);
     const bookingsCount = await query(`SELECT COUNT(*) FROM bookings WHERE status IN ('confirmed', 'inService')`);
     const quotesCount = await query(`SELECT COUNT(*) FROM quotes`);
     const serviceRequestsCount = await query(`SELECT COUNT(*) FROM quote_requests`);
@@ -23,7 +25,7 @@ adminRouter.get('/stats', async (req, res) => {
       SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", g.approval_status as "approvalStatus"
       FROM garages g
       LEFT JOIN users u ON g.owner_user_id = u.id
-      WHERE g.approval_status = 'approved'
+      WHERE g.approval_status != 'deleted' OR g.approval_status IS NULL
       ORDER BY g.created_at DESC
       LIMIT 12
     `);
@@ -39,8 +41,10 @@ adminRouter.get('/stats', async (req, res) => {
 
     return success(res, {
       totalCustomers: parseInt(customersCount.rows[0].count),
-      registeredGarages: parseInt(garagesCount.rows[0].count),
+      registeredGarages: parseInt(totalGaragesCount.rows[0].count),
+      approvedGarages: parseInt(approvedGaragesCount.rows[0].count),
       pendingApprovals: parseInt(pendingCount.rows[0].count),
+      suspendedGarages: parseInt(suspendedCount.rows[0].count),
       activeBookings: parseInt(bookingsCount.rows[0].count),
       quotesCount: parseInt(quotesCount.rows[0].count),
       serviceRequestsCount: parseInt(serviceRequestsCount.rows[0].count),
@@ -56,10 +60,11 @@ adminRouter.get('/stats', async (req, res) => {
 adminRouter.get('/onboarding/garages', async (req, res) => {
   try {
     const result = await query(
-      `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", g.created_at as "createdAt", g.city, g.specializations,
-              u.name as "ownerName"
+      `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
+              u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail"
        FROM garages g
        LEFT JOIN users u ON g.owner_user_id = u.id
+       WHERE g.approval_status != 'deleted' OR g.approval_status IS NULL
        ORDER BY g.created_at DESC`
     );
     return success(res, result.rows);
@@ -130,6 +135,97 @@ adminRouter.post('/onboarding/garages', async (req, res) => {
     return success(res, { id: newGarage.rows[0].id }, 201);
   } catch (err) {
     return error(res, 'Failed to register garage', 'DATABASE_ERROR', 500);
+  }
+});
+
+adminRouter.post('/onboarding/garages/:id/photos', async (req, res) => {
+  try {
+    const garageId = req.params.id;
+    const { photos } = req.body;
+
+    if (!photos || !Array.isArray(photos)) {
+      return error(res, 'Photos array is required', 'BAD_REQUEST', 400);
+    }
+
+    // Insert all photos
+    for (const photo of photos) {
+      if (typeof photo === 'string' && photo.trim() !== '') {
+        await query(
+          `INSERT INTO garage_photos (garage_id, url) VALUES ($1, $2)`,
+          [garageId, photo]
+        );
+      }
+    }
+
+    return success(res, { message: 'Photos uploaded successfully' }, 201);
+  } catch (err) {
+    return error(res, 'Failed to upload photos', 'DATABASE_ERROR', 500);
+  }
+});
+
+adminRouter.put('/onboarding/garages/:id', async (req, res) => {
+  try {
+    const { name, phone, email, address, city, state, pincode, ownerName } = req.body;
+    const garageId = req.params.id;
+    
+    // First, update the garage
+    const updateGarage = await query(
+      `UPDATE garages 
+       SET name = $1, address = $2, city = $3, state = $4, postal_code = $5 
+       WHERE id = $6 RETURNING owner_user_id`,
+      [name, address, city, state, pincode, garageId]
+    );
+
+    if (updateGarage.rows.length === 0) {
+      return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    }
+
+    const ownerUserId = updateGarage.rows[0].owner_user_id;
+
+    // Update user if needed
+    if (ownerUserId) {
+      await query(
+        `UPDATE users 
+         SET name = $1, mobile_number = $2, email = $3 
+         WHERE id = $4`,
+        [ownerName, phone || null, email || null, ownerUserId]
+      );
+    }
+    
+    return success(res, { message: 'Garage updated successfully' });
+  } catch (err) {
+    return error(res, 'Failed to update garage', 'DATABASE_ERROR', 500);
+  }
+});
+
+adminRouter.get('/onboarding/garages/:id/related-data', async (req, res) => {
+  try {
+    const garageId = req.params.id;
+    const bookingsCount = await query(`SELECT COUNT(*) FROM bookings WHERE garage_id = $1`, [garageId]);
+    const customersCount = await query(`SELECT COUNT(DISTINCT customer_id) FROM bookings WHERE garage_id = $1`, [garageId]);
+    
+    return success(res, {
+      bookings: parseInt(bookingsCount.rows[0].count),
+      customers: parseInt(customersCount.rows[0].count)
+    });
+  } catch (err) {
+    return error(res, 'Failed to fetch related data', 'DATABASE_ERROR', 500);
+  }
+});
+
+adminRouter.delete('/onboarding/garages/:id', async (req, res) => {
+  try {
+    const garageId = req.params.id;
+    const result = await query(
+      `UPDATE garages SET approval_status = 'deleted', is_approved = false WHERE id = $1 RETURNING id`,
+      [garageId]
+    );
+
+    if (result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    
+    return success(res, { success: true });
+  } catch (err) {
+    return error(res, 'Failed to delete garage', 'DATABASE_ERROR', 500);
   }
 });
 

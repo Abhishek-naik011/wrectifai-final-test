@@ -13,6 +13,7 @@ const badgeMap: Record<string, string> = {
 };
 
 function mapGarageDbRow(g: any) {
+  const photos = g.photos ? (Array.isArray(g.photos) ? g.photos : JSON.parse(g.photos)) : [];
   return {
     id: g.id,
     name: g.name,
@@ -22,7 +23,8 @@ function mapGarageDbRow(g: any) {
     distance: g.distanceKm || null,
     price: g.startingPrice || null,
     badge: g.badge ? (badgeMap[g.badge] || g.badge) : null,
-    image: g.image || null,
+    image: g.image || (photos.length > 0 ? photos[0] : null),
+    photos: photos,
     chips: g.specializations || [],
     verified: g.approval_status === 'approved',
     responseMins: g.responseMins !== null && g.responseMins !== undefined ? Number(g.responseMins) : 30,
@@ -31,14 +33,27 @@ function mapGarageDbRow(g: any) {
 
 garagesRouter.get('/', async (req, res) => {
   try {
+    const location = req.query.location as string;
+    const conditions: string[] = ["g.approval_status IN ('approved', 'active')"];
+    const params: any[] = [];
+    
+    if (location) {
+      params.push(`%${location}%`);
+      conditions.push(`g.address ILIKE $${params.length}`);
+    }
+
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
     const result = await query(
       `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
               g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
               g.starting_price as "startingPrice", g.distance_km as "distanceKm",
               g.image, g.response_mins as "responseMins",
-              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
+              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge,
+              (SELECT json_agg(url) FROM garage_photos gp WHERE gp.garage_id = g.id) as photos
        FROM garages g
-       WHERE g.approval_status = 'approved'`
+       ${whereClause}`,
+      params
     );
     const mapped = result.rows.map(mapGarageDbRow);
     return success(res, mapped);
@@ -106,10 +121,15 @@ garagesRouter.get('/my-inventory', authenticate, async (req, res) => {
 
 garagesRouter.get('/search', async (req, res) => {
   try {
-    const { rating, specialization, price_range, lat, lng, distance } = req.query;
+    const { rating, specialization, price_range, lat, lng, distance, location } = req.query;
 
-    const conditions: string[] = ["g.approval_status = 'approved'"];
+    const conditions: string[] = ["g.approval_status IN ('approved', 'active')"];
     const params: any[] = [];
+
+    if (location) {
+      params.push(`%${location}%`);
+      conditions.push(`g.address ILIKE $${params.length}`);
+    }
 
     if (rating) {
       params.push(Number(rating));
@@ -128,7 +148,8 @@ garagesRouter.get('/search', async (req, res) => {
               g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
               g.starting_price as "startingPrice", g.distance_km as "distanceKm",
               g.image, g.response_mins as "responseMins",
-              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
+              (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge,
+              (SELECT json_agg(url) FROM garage_photos gp WHERE gp.garage_id = g.id) as photos
        FROM garages g
        ${whereClause}`,
       params
@@ -154,7 +175,8 @@ garagesRouter.get('/:id', async (req, res) => {
                 g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
                 g.starting_price as "startingPrice", g.distance_km as "distanceKm",
                 g.image, g.response_mins as "responseMins",
-                (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge
+                (SELECT badge_key FROM garage_badges gb WHERE gb.garage_id = g.id AND gb.active = true LIMIT 1) as badge,
+                (SELECT json_agg(url) FROM garage_photos gp WHERE gp.garage_id = g.id) as photos
          FROM garages g
          WHERE g.id = $1`,
         [req.params.id]
