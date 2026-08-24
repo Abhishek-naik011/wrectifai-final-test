@@ -111,6 +111,7 @@ export default function LoginPage() {
       });
 
       login(data.accessToken, data.refreshToken, data.user);
+      setIsSubmitting(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Verification failed. Please check the OTP code.';
       setErrorMsg(message);
