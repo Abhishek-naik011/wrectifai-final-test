@@ -19,6 +19,11 @@ import { useGoogleLogin } from '@react-oauth/google';
 export default function LoginPage() {
   const { isAuthenticated, login, user } = useAuth();
   const router = useRouter();
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, user, router]);
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -109,6 +114,13 @@ export default function LoginPage() {
         mobileNumber: mobileNumber.replace(/\s+/g, ''),
         otp,
       });
+
+      if (data.requiresPasswordChange) {
+        setTempAuthData(data);
+        setShowPasswordReset(true);
+        setIsSubmitting(false);
+        return;
+      }
 
       login(data.accessToken, data.refreshToken, data.user);
       setIsSubmitting(false);
