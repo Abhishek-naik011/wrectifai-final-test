@@ -2700,7 +2700,6 @@ export function AIDiagnosePage() {
   const [attachedMedia, setAttachedMedia] = useState<Array<{ mediaType: 'image' | 'video' | 'audio'; base64: string; name: string }>>([]);
   const [isRecording, setIsRecording] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -3097,48 +3096,14 @@ export function AIDiagnosePage() {
   ) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    
-    if (mediaType === 'video') {
-      const file = files[0];
-      const videoBase64 = await fileToBase64(file);
-      
-      const videoEl = document.createElement('video');
-      videoEl.src = URL.createObjectURL(file);
-      videoEl.crossOrigin = 'anonymous';
-      videoEl.muted = true;
-      videoEl.play();
-      
-      await new Promise((resolve) => {
-        videoEl.onloadeddata = () => {
-          videoEl.currentTime = 1;
-        };
-        videoEl.onseeked = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = videoEl.videoWidth;
-          canvas.height = videoEl.videoHeight;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-          const frameBase64 = canvas.toDataURL('image/jpeg');
-          
-          setAttachedMedia((prev) => [
-            ...prev,
-            { mediaType: 'video', base64: videoBase64, name: file.name },
-            { mediaType: 'image', base64: frameBase64, name: `frame-${file.name}.jpg` }
-          ]);
-          URL.revokeObjectURL(videoEl.src);
-          resolve(true);
-        };
-      });
-    } else {
-      const converted = await Promise.all(
-        files.map(async (file) => ({
-          mediaType,
-          base64: await fileToBase64(file),
-          name: file.name,
-        }))
-      );
-      setAttachedMedia((prev) => [...prev, ...converted]);
-    }
+    const converted = await Promise.all(
+      files.map(async (file) => ({
+        mediaType,
+        base64: await fileToBase64(file),
+        name: file.name,
+      }))
+    );
+    setAttachedMedia((prev) => [...prev, ...converted]);
     // reset so the same file can be re-selected
     e.target.value = '';
   }, [fileToBase64]);
@@ -3698,13 +3663,6 @@ export function AIDiagnosePage() {
                     className="hidden"
                     onChange={(e) => handleFileChange(e, 'image')}
                   />
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/mp4,video/webm,video/quicktime"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, 'video')}
-                  />
 
                   <button
                     type="button"
@@ -3717,8 +3675,7 @@ export function AIDiagnosePage() {
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedVehicleId || isAnalyzingResults}
-                    onClick={() => videoInputRef.current?.click()}
+                    disabled={!selectedVehicleId}
                     className="flex items-center gap-1.5 hover:text-[#1a56db] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Video className="h-3.5 w-3.5 text-[#6a8cff]" />

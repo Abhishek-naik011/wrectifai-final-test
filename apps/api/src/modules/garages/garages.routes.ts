@@ -34,7 +34,7 @@ function mapGarageDbRow(g: any) {
 garagesRouter.get('/', async (req, res) => {
   try {
     const location = req.query.location as string;
-    const conditions: string[] = ["g.status = 'active'"];
+    const conditions: string[] = ["g.approval_status IN ('approved', 'active')"];
     const params: any[] = [];
     
     if (location && location !== 'All') {
