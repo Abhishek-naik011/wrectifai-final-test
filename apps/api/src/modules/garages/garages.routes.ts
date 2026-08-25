@@ -17,7 +17,7 @@ function mapGarageDbRow(g: any) {
   return {
     id: g.id,
     name: g.name,
-    location: g.address || '',
+    location: g.city || g.address || '',
     rating: g.ratingAvg !== null && g.ratingAvg !== undefined ? Number(g.ratingAvg) : 0,
     reviews: Number(g.ratingCount || 0),
     distance: g.distanceKm || null,
@@ -37,15 +37,15 @@ garagesRouter.get('/', async (req, res) => {
     const conditions: string[] = ["g.approval_status IN ('approved', 'active')"];
     const params: any[] = [];
     
-    if (location) {
+    if (location && location !== 'All') {
       params.push(`%${location}%`);
-      conditions.push(`g.address ILIKE $${params.length}`);
+      conditions.push(`(g.city ILIKE $${params.length} OR g.address ILIKE $${params.length})`);
     }
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const result = await query(
-      `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
+      `SELECT g.id, g.name, g.address, g.city, g.specializations, g.approval_status, 
               g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
               g.starting_price as "startingPrice", g.distance_km as "distanceKm",
               g.image, g.response_mins as "responseMins",
@@ -126,9 +126,9 @@ garagesRouter.get('/search', async (req, res) => {
     const conditions: string[] = ["g.approval_status IN ('approved', 'active')"];
     const params: any[] = [];
 
-    if (location) {
+    if (location && location !== 'All') {
       params.push(`%${location}%`);
-      conditions.push(`g.address ILIKE $${params.length}`);
+      conditions.push(`(g.city ILIKE $${params.length} OR g.address ILIKE $${params.length})`);
     }
 
     if (rating) {
@@ -144,7 +144,7 @@ garagesRouter.get('/search', async (req, res) => {
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     const result = await query(
-      `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
+      `SELECT g.id, g.name, g.address, g.city, g.specializations, g.approval_status, 
               g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
               g.starting_price as "startingPrice", g.distance_km as "distanceKm",
               g.image, g.response_mins as "responseMins",
@@ -171,7 +171,7 @@ garagesRouter.get('/:id', async (req, res) => {
   try {
     const [result, servicesResult] = await Promise.all([
       query(
-        `SELECT g.id, g.name, g.address, g.specializations, g.approval_status, 
+        `SELECT g.id, g.name, g.address, g.city, g.specializations, g.approval_status, 
                 g.rating_avg as "ratingAvg", g.rating_count as "ratingCount",
                 g.starting_price as "startingPrice", g.distance_km as "distanceKm",
                 g.image, g.response_mins as "responseMins",

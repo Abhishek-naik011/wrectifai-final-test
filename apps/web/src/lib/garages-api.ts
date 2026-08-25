@@ -38,7 +38,7 @@ export interface Promo {
 }
 
 export async function fetchGarages(location?: string): Promise<Garage[]> {
-  const query = location ? `?location=${encodeURIComponent(location)}` : '';
+  const query = (location && location !== 'All') ? `?location=${encodeURIComponent(location)}` : '';
   return apiClient.get(`/garages${query}`);
 }
 

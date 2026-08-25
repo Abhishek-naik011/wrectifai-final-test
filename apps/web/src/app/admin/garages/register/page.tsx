@@ -541,6 +541,18 @@ export default function RegisterGaragePage() {
                   <div><span className="text-slate-500 block text-xs">Established Year</span> <span className="font-medium text-slate-800">{formData.establishedYear || '-'}</span></div>
                   <div><span className="text-slate-500 block text-xs">City</span> <span className="font-medium text-slate-800">{formData.city || '-'}</span></div>
                 </div>
+                {formData.photos && formData.photos.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <span className="text-slate-500 block text-xs mb-2">Garage Photos</span>
+                    <div className="flex flex-wrap gap-3">
+                      {formData.photos.map((photo: string, index: number) => (
+                        <a key={index} href={photo} target="_blank" rel="noopener noreferrer" className="block w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:opacity-90 transition-opacity">
+                          <img src={photo} alt={`Garage preview ${index}`} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Owner Details */}
@@ -605,7 +617,7 @@ export default function RegisterGaragePage() {
               </div>
               <h2 className="text-2xl font-bold text-[#17307a] mb-2">Registration Submitted!</h2>
               <p className="text-slate-500 mb-8 max-w-md mx-auto">Thank you for registering your garage with WrectifAI. Our team will review your details and get back to you within 24-48 hours.</p>
-              <button onClick={() => window.location.href = '/admin'} className="bg-blue-600 text-white px-8 py-3 rounded-lg text-sm font-bold inline-flex items-center gap-2 hover:bg-blue-700 shadow-md">Go to Dashboard</button>
+              <button onClick={() => window.location.href = '/admin/dashboard'} className="bg-blue-600 text-white px-8 py-3 rounded-lg text-sm font-bold inline-flex items-center gap-2 hover:bg-blue-700 shadow-md">Go to Dashboard</button>
             </div>
           )}
 

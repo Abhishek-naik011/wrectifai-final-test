@@ -427,17 +427,17 @@ function GaragesContent() {
   const [garagesList, setGaragesList] = useState<Garage[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
 
-  const [currentLocation, setCurrentLocation] = useState<string>('Hyderabad');
+  const [currentLocation, setCurrentLocation] = useState<string>('All');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loc = localStorage.getItem('wrectifai_location') || 'Hyderabad';
+    const loc = localStorage.getItem('wrectifai_location') || 'All';
     setCurrentLocation(loc);
 
     const handleLocationChange = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
-      setCurrentLocation(customEvent.detail || 'Hyderabad');
+      setCurrentLocation(customEvent.detail || 'All');
     };
     window.addEventListener('location-changed', handleLocationChange);
     return () => window.removeEventListener('location-changed', handleLocationChange);

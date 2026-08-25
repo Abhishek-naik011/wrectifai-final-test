@@ -29,8 +29,9 @@ export const CITIES = [
 export function TopNavbar() {
   const [query, setQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Hyderabad');
+  const [selectedCity, setSelectedCity] = useState('All');
   const [citySearch, setCitySearch] = useState('');
+  const [dynamicCities, setDynamicCities] = useState<string[]>(['All', ...CITIES]);
   
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
@@ -81,6 +82,22 @@ export function TopNavbar() {
       setSelectedCity(savedLocation);
     }
     
+    // Fetch unique cities dynamically
+    import('@/lib/garages-api').then(({ fetchGarages }) => {
+      fetchGarages('All').then(data => {
+        if (data && Array.isArray(data)) {
+          const uniqueCities = new Set<string>();
+          data.forEach(g => {
+            if (g.location) {
+              const city = g.location.trim();
+              uniqueCities.add(city.charAt(0).toUpperCase() + city.slice(1).toLowerCase());
+            }
+          });
+          setDynamicCities(['All', ...Array.from(uniqueCities).sort()]);
+        }
+      }).catch(console.error);
+    });
+    
     window.addEventListener('cart-updated', updateCart);
     window.addEventListener('wishlist-updated', updateWishlist);
     window.addEventListener('notifications-updated', updateNotifications);
@@ -114,7 +131,7 @@ export function TopNavbar() {
     }
   };
 
-  const filteredCities = CITIES.filter(city =>
+  const filteredCities = dynamicCities.filter(city =>
     city.toLowerCase().includes(citySearch.toLowerCase())
   );
 
