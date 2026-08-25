@@ -111,15 +111,15 @@ export default function AllGaragesPage() {
     if (!g.approvalStatus || g.approvalStatus === 'pending') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-orange-50 text-orange-600 border-orange-100">Pending Approval</span>;
     }
-    // Stage 1 completed: Approved
+    // Stage 1 completed: Approved (not verified yet)
     if (g.verificationStatus !== 'verified') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-50 text-blue-600 border-blue-100">Approved</span>;
     }
-    // Stage 2 completed: Verified
-    if (g.status === 'active') {
+    // Stage 3 explicitly activated
+    if (g.approvalStatus === 'active') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-green-50 text-green-600 border-green-100">Active</span>;
     }
-    // Approved + Verified but not activated (or previously deactivated)
+    // Stage 2 completed: Verified (inactive)
     return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-teal-50 text-teal-700 border-teal-200">Verified</span>;
   };
 
@@ -442,21 +442,21 @@ export default function AllGaragesPage() {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-700 font-bold text-xs">3. Status:</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                        selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
+                        (selectedGarage.approvalStatus !== 'approved' && selectedGarage.approvalStatus !== 'active') || selectedGarage.verificationStatus !== 'verified'
                           ? 'bg-slate-100 text-slate-400 border-slate-200'
-                          : selectedGarage.status === 'active' 
+                          : selectedGarage.approvalStatus === 'active' 
                           ? 'bg-green-50 text-green-600 border-green-200' 
                           : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}>
-                        {selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
+                        {(selectedGarage.approvalStatus !== 'approved' && selectedGarage.approvalStatus !== 'active') || selectedGarage.verificationStatus !== 'verified'
                           ? 'Inactive (Locked)' 
-                          : (selectedGarage.status || 'Inactive')}
+                          : (selectedGarage.approvalStatus === 'active' ? 'Active' : 'Inactive')}
                       </span>
                     </div>
                     {/* Action buttons for Stage 3 - available ONLY after Approval + Verification are completed */}
-                    {selectedGarage.approvalStatus === 'approved' && selectedGarage.verificationStatus === 'verified' ? (
+                    {(selectedGarage.approvalStatus === 'approved' || selectedGarage.approvalStatus === 'active') && selectedGarage.verificationStatus === 'verified' ? (
                       <div className="flex gap-2">
-                        {selectedGarage.status !== 'active' ? (
+                        {selectedGarage.approvalStatus !== 'active' ? (
                           <button
                             onClick={() => triggerAction(selectedGarage.id, 'status', 'activate')}
                             disabled={isSubmitting}
