@@ -152,21 +152,25 @@ export function VehicleSelector({ value, onChange, className = '', error }: Vehi
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className={`flex h-10 w-full items-center justify-between rounded-[10px] border px-3 py-2 text-sm transition-all bg-white text-[#17307a] ${
-              isOpen ? 'border-[#1a56db] ring-2 ring-[#1a56db]/10' : 'border-[#dbe6ff] hover:border-[#bfd1ff]'
-            } ${error ? 'border-red-300 ring-red-500/10' : ''}`}
+            className={`flex min-h-[56px] w-full items-center justify-between rounded-[12px] border px-4 py-3 text-base transition-all bg-white text-[#17307a] shadow-[0_2px_8px_rgba(26,86,219,0.04)] ${
+              isOpen ? 'border-[#1a56db] ring-4 ring-[#1a56db]/10' : 'border-[#dbe6ff] hover:border-[#bfd1ff] hover:shadow-[0_4px_12px_rgba(26,86,219,0.08)]'
+            } ${error ? 'border-red-300 ring-4 ring-red-500/10' : ''}`}
           >
-            <span className="flex items-center gap-2">
-              <Car className="h-4 w-4 text-[#1a56db]" />
-              {selectedVehicle ? (
-                <span className="font-semibold">
-                  {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
-                </span>
-              ) : (
-                <span className="text-[#7a8ab4]">Select your vehicle...</span>
-              )}
-            </span>
-            <ChevronDown className={`h-4 w-4 text-[#7a8ab4] transition-transform duration-200 ${isOpen ? 'rotate-185' : ''}`} />
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f4f8ff] text-[#1a56db]">
+                <Car className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                {selectedVehicle ? (
+                  <span className="font-bold text-[#17307a] truncate w-full text-left text-[15px]">
+                    {selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}
+                  </span>
+                ) : (
+                  <span className="text-[#7a8ab4] font-medium text-[14px]">Select your vehicle...</span>
+                )}
+              </div>
+            </div>
+            <ChevronDown className={`h-5 w-5 shrink-0 text-[#7a8ab4] transition-transform duration-200 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isOpen && (

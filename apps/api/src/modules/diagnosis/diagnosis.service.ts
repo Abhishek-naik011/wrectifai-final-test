@@ -503,8 +503,8 @@ Always output prices in US dollars.`;
       ),
       Promise.all(
         mediaInputs
-          .filter(m => m.mediaType === 'audio')
-          .map(m => DiagnosisService.transcribeAudio(m.base64, 'audio/wav'))
+          .filter(m => m.mediaType === 'audio' || m.mediaType === 'video')
+          .map(m => DiagnosisService.transcribeAudio(m.base64, m.mediaType === 'video' ? 'video/mp4' : 'audio/wav'))
       ),
     ]);
 

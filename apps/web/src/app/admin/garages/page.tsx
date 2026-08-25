@@ -15,12 +15,15 @@ export default function AllGaragesPage() {
   const [selectedGarage, setSelectedGarage] = useState<any>(null);
   const [editingGarage, setEditingGarage] = useState<any>(null);
   const [deletingGarage, setDeletingGarage] = useState<any>(null);
-  const [deleteStats, setDeleteStats] = useState<{bookings: number, customers: number} | null>(null);
+  const [deleteStats, setDeleteStats] = useState<{activeBookings: number, pendingBookings: number, activeCustomers: number} | null>(null);
+  const [deleteStatsError, setDeleteStatsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [approvalModal, setApprovalModal] = useState<{isOpen: boolean, id: string, action: string}>({isOpen: false, id: '', action: ''});
   const [verificationModal, setVerificationModal] = useState<{isOpen: boolean, id: string, action: string}>({isOpen: false, id: '', action: ''});
+  const [statusModal, setStatusModal] = useState<{isOpen: boolean, id: string, action: string}>({isOpen: false, id: '', action: ''});
 
   const loadData = async () => {
     setLoading(true);
@@ -38,6 +41,19 @@ export default function AllGaragesPage() {
     loadData();
   }, []);
 
+  const handleApprove = async (id: string, action: string) => {
+    try {
+      await apiClient.post(`/admin/onboarding/garages/${id}/${action}`);
+      await loadData();
+      if (selectedGarage && selectedGarage.id === id) {
+        setSelectedGarage((prev: any) => ({ ...prev, approvalStatus: action === 'approve' ? 'approved' : 'rejected' }));
+      }
+      setApprovalModal({isOpen: false, id: '', action: ''});
+    } catch (err) {
+      console.error('Failed to update approval', err);
+    }
+  };
+
   const handleVerify = async (id: string, action: string) => {
     try {
       await apiClient.post(`/admin/onboarding/garages/${id}/verify-status`, { action });
@@ -48,6 +64,19 @@ export default function AllGaragesPage() {
       setVerificationModal({isOpen: false, id: '', action: ''});
     } catch (err) {
       console.error('Failed to verify garage', err);
+    }
+  };
+
+  const handleStatus = async (id: string, action: string) => {
+    try {
+      await apiClient.post(`/admin/onboarding/garages/${id}/status`, { status: action });
+      await loadData();
+      if (selectedGarage && selectedGarage.id === id) {
+        setSelectedGarage((prev: any) => ({ ...prev, status: action }));
+      }
+      setStatusModal({isOpen: false, id: '', action: ''});
+    } catch (err) {
+      console.error('Failed to update status', err);
     }
   };
 
@@ -79,11 +108,13 @@ export default function AllGaragesPage() {
   const confirmDelete = async (garage: any) => {
     setDeletingGarage(garage);
     setDeleteStats(null);
+    setDeleteStatsError(false);
     try {
       const stats = await apiClient.get<any>(`/admin/onboarding/garages/${garage.id}/related-data`);
       setDeleteStats(stats);
     } catch (err) {
       console.error(err);
+      setDeleteStatsError(true);
     }
   };
 
@@ -217,8 +248,19 @@ export default function AllGaragesPage() {
                     </td>
                     <td className="p-4 text-xs text-slate-600">{g.city || 'N/A'}</td>
                     <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${g.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : g.approvalStatus === 'pending' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
-                        {g.approvalStatus ? g.approvalStatus.charAt(0).toUpperCase() + g.approvalStatus.slice(1) : 'Unknown'}
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                      g.status === 'active' ? 'bg-green-50 text-green-600 border-green-100' :
+                      g.status === 'inactive' && g.approvalStatus === 'approved' && g.verificationStatus === 'verified' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                      g.approvalStatus === 'rejected' || g.verificationStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' :
+                      g.verificationStatus === 'verified' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                      g.approvalStatus === 'approved' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                      'bg-orange-50 text-orange-600 border-orange-100'
+                    }`}>
+                        {g.status === 'active' ? 'Active' : 
+                         g.status === 'inactive' && g.approvalStatus === 'approved' && g.verificationStatus === 'verified' ? 'Inactive' :
+                         g.approvalStatus === 'rejected' || g.verificationStatus === 'rejected' ? 'Rejected' :
+                         g.verificationStatus === 'verified' ? 'Verified' :
+                         g.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
                     </span>
                     </td>
                     <td className="p-4 text-xs text-slate-600">{formatTime(g.createdAt)}</td>
@@ -291,31 +333,49 @@ export default function AllGaragesPage() {
                 <div className="space-y-3 mt-2 border border-slate-100 rounded-lg p-3 bg-slate-50">
                   <div className="flex justify-between items-center text-sm border-b pb-2">
                     <span className="text-slate-600 font-bold">Approval Status:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                      {selectedGarage.approvalStatus || 'Pending'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : selectedGarage.approvalStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                        {selectedGarage.approvalStatus || 'Pending'}
+                      </span>
+                      {selectedGarage.approvalStatus !== 'approved' && (
+                        <div className="flex gap-1">
+                          <button onClick={() => setApprovalModal({isOpen: true, id: selectedGarage.id, action: 'approve'})} className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-green-200">Approve</button>
+                          {selectedGarage.approvalStatus !== 'rejected' && <button onClick={() => setApprovalModal({isOpen: true, id: selectedGarage.id, action: 'reject'})} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-red-200">Reject</button>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm border-b pb-2">
+                    <span className="text-slate-600 font-bold">Verification:</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.verificationStatus === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : selectedGarage.verificationStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        {selectedGarage.verificationStatus || 'Pending Verification'}
+                      </span>
+                      {selectedGarage.approvalStatus === 'approved' && selectedGarage.verificationStatus !== 'verified' && (
+                        <div className="flex gap-1">
+                          <button onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'verify'})} className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-green-200">Verify</button>
+                          {selectedGarage.verificationStatus !== 'rejected' && <button onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'reject'})} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-red-200">Reject</button>}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600 font-bold">Verification:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.verificationStatus === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : selectedGarage.verificationStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                      {selectedGarage.verificationStatus || 'Pending Verification'}
-                    </span>
-                  </div>
-                  
-                  {selectedGarage.verificationStatus !== 'verified' && selectedGarage.verificationStatus !== 'rejected' && (
-                    <div className="pt-2 mt-2 border-t flex justify-between gap-2">
-                       <button 
-                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'verify'})}
-                         className="flex-1 bg-green-50 text-green-700 font-bold text-xs py-1.5 rounded border border-green-100 hover:bg-green-100">
-                         Verify
-                       </button>
-                       <button 
-                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'reject'})}
-                         className="flex-1 bg-red-50 text-red-700 font-bold text-xs py-1.5 rounded border border-red-100 hover:bg-red-100">
-                         Reject
-                       </button>
+                    <span className="text-slate-600 font-bold">Status:</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.status === 'active' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        {selectedGarage.status || 'Inactive'}
+                      </span>
+                      {selectedGarage.approvalStatus === 'approved' && selectedGarage.verificationStatus === 'verified' && (
+                        <div className="flex gap-1">
+                          {selectedGarage.status !== 'active' ? (
+                            <button onClick={() => setStatusModal({isOpen: true, id: selectedGarage.id, action: 'active'})} className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-green-200">Make Active</button>
+                          ) : (
+                            <button onClick={() => setStatusModal({isOpen: true, id: selectedGarage.id, action: 'inactive'})} className="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-bold hover:bg-slate-300">Make Inactive</button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -328,6 +388,26 @@ export default function AllGaragesPage() {
         <div className="flex justify-end gap-3">
            <button onClick={() => setVerificationModal({isOpen: false, id: '', action: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
            <button onClick={() => handleVerify(verificationModal.id, verificationModal.action)} className={`px-4 py-2 text-sm font-bold text-white rounded-lg ${verificationModal.action === 'verify' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>Confirm</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={approvalModal.isOpen} onClose={() => setApprovalModal({isOpen: false, id: '', action: ''})} title="Confirm Approval Action" className="max-w-md">
+        <p className="text-sm text-slate-600 mb-6">Are you sure you want to {approvalModal.action} this garage?</p>
+        <div className="flex justify-end gap-3">
+           <button onClick={() => setApprovalModal({isOpen: false, id: '', action: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
+           <button onClick={() => handleApprove(approvalModal.id, approvalModal.action)} className={`px-4 py-2 text-sm font-bold text-white rounded-lg ${approvalModal.action === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>Confirm</button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={statusModal.isOpen} onClose={() => setStatusModal({isOpen: false, id: '', action: ''})} title="Confirm Status Change" className="max-w-md">
+        <p className="text-sm text-slate-600 mb-6">
+          {statusModal.action === 'inactive' ? 
+           "Are you sure you want to make this garage inactive? It may currently have customers or bookings. This could affect their services or appointments." : 
+           "Are you sure you want to make this garage active?"}
+        </p>
+        <div className="flex justify-end gap-3">
+           <button onClick={() => setStatusModal({isOpen: false, id: '', action: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
+           <button onClick={() => handleStatus(statusModal.id, statusModal.action)} className={`px-4 py-2 text-sm font-bold text-white rounded-lg ${statusModal.action === 'active' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>{statusModal.action === 'active' ? 'Confirm' : 'Confirm / Make Inactive'}</button>
         </div>
       </Modal>
 
@@ -381,23 +461,40 @@ export default function AllGaragesPage() {
       <Modal isOpen={!!deletingGarage} onClose={() => setDeletingGarage(null)} title="Delete Garage" className="max-w-md">
         {deletingGarage && (
           <div className="space-y-4">
-            <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-              <h3 className="text-red-800 font-bold mb-2">Warning: You are about to delete {deletingGarage.name}</h3>
-              <p className="text-red-600 text-sm mb-4">Deleting this garage will affect its availability in the system. The record will be safely removed without destroying historical booking data.</p>
+            <div className={`p-4 rounded-lg border ${deleteStatsError || (deleteStats && (deleteStats.activeBookings > 0 || deleteStats.pendingBookings > 0 || deleteStats.activeCustomers > 0)) ? 'bg-red-50 border-red-100' : deleteStats ? 'bg-green-50 border-green-100' : 'bg-slate-50 border-slate-100'}`}>
               
-              {deleteStats ? (
-                <ul className="text-sm text-red-700 font-medium list-disc list-inside">
-                  <li>{deleteStats.bookings} bookings associated with this garage</li>
-                  <li>{deleteStats.customers} unique customers associated</li>
-                </ul>
+              {deleteStatsError ? (
+                <p className="text-sm text-red-700 font-bold">Unable to check this garage's active data. Please try again.</p>
+              ) : deleteStats ? (
+                (deleteStats.activeBookings > 0 || deleteStats.activeCustomers > 0 || deleteStats.pendingBookings > 0) ? (
+                  <>
+                    <h3 className="text-red-800 font-bold mb-2">Warning: This garage has active activity</h3>
+                    <ul className="text-sm text-red-700 font-medium list-none space-y-1 mb-4">
+                      <li>Active Customers: {deleteStats.activeCustomers}</li>
+                      <li>Active Bookings: {deleteStats.activeBookings}</li>
+                      <li>Pending Bookings: {deleteStats.pendingBookings}</li>
+                    </ul>
+                    <p className="text-red-600 text-sm mb-4">Deleting this garage may affect active customers or bookings.</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-green-800 font-bold mb-2">This garage has no active customers or bookings.</h3>
+                    <ul className="text-sm text-green-700 font-medium list-none space-y-1 mb-4">
+                      <li>Active Customers: 0</li>
+                      <li>Active Bookings: 0</li>
+                      <li>Pending Bookings: 0</li>
+                    </ul>
+                    <p className="text-green-600 text-sm mb-4">This garage is clear to delete.</p>
+                  </>
+                )
               ) : (
-                <p className="text-sm text-slate-500">Loading related data...</p>
+                <p className="text-sm text-slate-500">Checking garage activity...</p>
               )}
             </div>
-            <p className="text-sm text-slate-700 font-bold">Are you sure you want to delete this garage?</p>
+            {deleteStats && !deleteStatsError && <p className="text-sm text-slate-700 font-bold">Are you sure you want to delete this garage?</p>}
             <div className="flex justify-end gap-3 mt-6">
               <button onClick={() => setDeletingGarage(null)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
-              <button onClick={submitDelete} disabled={isSubmitting || !deleteStats} className="px-4 py-2 text-sm font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+              <button onClick={submitDelete} disabled={isSubmitting || !deleteStats || deleteStatsError} className="px-4 py-2 text-sm font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
                 <Trash2 className="w-4 h-4"/>
                 {isSubmitting ? 'Deleting...' : 'Delete Garage'}
               </button>
