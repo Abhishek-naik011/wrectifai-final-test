@@ -62,6 +62,16 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
     const result = await query(
       `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", 
               g.is_approved as "isApproved",
+              COALESCE(
+                (SELECT CASE 
+                          WHEN gd.verification_status = 'approved' THEN 'verified'
+                          ELSE gd.verification_status 
+                        END 
+                 FROM garage_documents gd 
+                 WHERE gd.garage_id = g.id 
+                 ORDER BY gd.created_at DESC LIMIT 1),
+                'unverified'
+              ) as "verificationStatus",
               g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
               u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail",
               u.status as "status"
@@ -238,27 +248,33 @@ adminRouter.post('/onboarding/garages/:id/verify-status', async (req, res) => {
     if (!['verify', 'reject'].includes(action)) {
       return error(res, 'Invalid action', 'INVALID_ACTION', 400);
     }
-    const status = action === 'verify' ? 'approved' : 'rejected';
-    const is_approved = action === 'verify';
+    const docStatus = action === 'verify' ? 'approved' : 'rejected';
+    const verificationStatus = action === 'verify' ? 'verified' : 'rejected';
     
-    const result = await query(
-      `UPDATE garages 
-       SET approval_status = $1, is_approved = $2
-       WHERE id = $3 
-       RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
-      [status, is_approved, req.params.id]
-    );
-    
-    // Also update document status if applicable
-    await query(`UPDATE garage_documents SET verification_status = $1 WHERE garage_id = $2`, [status, req.params.id]);
+    // Check if garage exists
+    const garageCheck = await query(`SELECT id, approval_status, is_approved FROM garages WHERE id = $1`, [req.params.id]);
+    if (garageCheck.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
 
-    if (result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    // Upsert verification record into garage_documents with valid constraint status ('approved' | 'rejected' | 'pending')
+    const docCheck = await query(`SELECT id FROM garage_documents WHERE garage_id = $1 LIMIT 1`, [req.params.id]);
+    if (docCheck.rows.length > 0) {
+      await query(
+        `UPDATE garage_documents 
+         SET verification_status = $1, reviewed_by = $2, reviewed_at = NOW() 
+         WHERE garage_id = $3`,
+        [docStatus, req.user?.userId || null, req.params.id]
+      );
+    } else {
+      await query(
+        `INSERT INTO garage_documents (garage_id, doc_type, file_url, verification_status, reviewed_by, reviewed_at)
+         VALUES ($1, 'id_proof', '', $2, $3, NOW())`,
+        [req.params.id, docStatus, req.user?.userId || null]
+      );
+    }
     
     return success(res, {
       garageId: req.params.id,
-      approvalStatus: status,
-      isApproved: is_approved,
-      garage: result.rows[0],
+      verificationStatus: verificationStatus,
       reviewedBy: req.user?.userId,
       reviewedAt: new Date().toISOString(),
     });
