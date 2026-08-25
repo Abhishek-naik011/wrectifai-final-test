@@ -60,7 +60,9 @@ adminRouter.get('/stats', async (req, res) => {
 adminRouter.get('/onboarding/garages', async (req, res) => {
   try {
     const result = await query(
-      `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
+      `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", 
+              g.verification_status as "verificationStatus", g.status as "status",
+              g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
               u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail"
        FROM garages g
        LEFT JOIN users u ON g.owner_user_id = u.id
@@ -125,10 +127,10 @@ adminRouter.post('/onboarding/garages', async (req, res) => {
       return success(res, { id: garageId, message: 'Existing garage mapped successfully' }, 200);
     }
 
-    // Only fallback if NO garage existed (though user strictly mandated NO new garages, we'll keep the insert as a fallback but for the demo it should never reach here since the 12 exist).
+    // New garage starts as pending approval, pending verification, inactive status
     const newGarage = await query(
-      `INSERT INTO garages (name, address, city, state, postal_code, owner_user_id, approval_status, is_approved)
-       VALUES ($1, $2, $3, $4, $5, $6, 'approved', true) RETURNING id`,
+      `INSERT INTO garages (name, address, city, state, postal_code, owner_user_id, approval_status, verification_status, status, is_approved)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'pending', 'inactive', false) RETURNING id`,
       [name, address, city, state, pincode, resolvedUserId]
     );
 
@@ -217,7 +219,7 @@ adminRouter.delete('/onboarding/garages/:id', async (req, res) => {
   try {
     const garageId = req.params.id;
     const result = await query(
-      `UPDATE garages SET approval_status = 'deleted', is_approved = false WHERE id = $1 RETURNING id`,
+      `UPDATE garages SET approval_status = 'deleted', is_approved = false, status = 'inactive' WHERE id = $1 RETURNING id`,
       [garageId]
     );
 
@@ -235,48 +237,77 @@ adminRouter.post('/onboarding/garages/:id/verify-status', async (req, res) => {
     if (!['verify', 'reject'].includes(action)) {
       return error(res, 'Invalid action', 'INVALID_ACTION', 400);
     }
-    const status = action === 'verify' ? 'approved' : 'rejected';
-    const is_approved = action === 'verify';
+    const verification_status = action === 'verify' ? 'verified' : 'rejected';
     
-    const result = await query(
-      `UPDATE garages SET approval_status = $1, is_approved = $2 WHERE id = $3 RETURNING id`,
-      [status, is_approved, req.params.id]
-    );
+    // When rejecting verification, also ensure status becomes inactive
+    const result = action === 'verify' 
+      ? await query(
+          `UPDATE garages SET verification_status = 'verified' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+          [req.params.id]
+        )
+      : await query(
+          `UPDATE garages SET verification_status = 'rejected', status = 'inactive' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+          [req.params.id]
+        );
     
     // Also update document status if applicable
-    await query(`UPDATE garage_documents SET verification_status = $1 WHERE garage_id = $2`, [status, req.params.id]);
+    await query(`UPDATE garage_documents SET verification_status = $1 WHERE garage_id = $2`, [verification_status, req.params.id]);
 
     if (result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
     
     return success(res, {
       garageId: req.params.id,
-      approvalStatus: status,
+      verificationStatus: verification_status,
+      garage: result.rows[0],
       reviewedBy: req.user?.userId,
       reviewedAt: new Date().toISOString(),
     });
   } catch (err) {
-    return error(res, 'Failed to update garage', 'DATABASE_ERROR', 500);
+    return error(res, 'Failed to update garage verification status', 'DATABASE_ERROR', 500);
   }
 });
 
 adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
   try {
     const { action } = req.params;
-    if (!['approve', 'reject', 'suspend'].includes(action)) {
+    if (!['approve', 'reject', 'suspend', 'activate', 'deactivate'].includes(action)) {
       return error(res, 'Invalid action', 'INVALID_ACTION', 400);
     }
-    const status = action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'suspended';
-    const is_approved = action === 'approve';
     
-    const result = await query(
-      `UPDATE garages SET approval_status = $1, is_approved = $2 WHERE id = $3 RETURNING id`,
-      [status, is_approved, req.params.id]
-    );
-    if (result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    let result;
+    if (action === 'approve') {
+      result = await query(
+        `UPDATE garages SET approval_status = 'approved', is_approved = true WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+        [req.params.id]
+      );
+    } else if (action === 'reject') {
+      result = await query(
+        `UPDATE garages SET approval_status = 'rejected', is_approved = false, status = 'inactive' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+        [req.params.id]
+      );
+    } else if (action === 'suspend') {
+      result = await query(
+        `UPDATE garages SET approval_status = 'suspended', is_approved = false, status = 'inactive' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+        [req.params.id]
+      );
+    } else if (action === 'activate') {
+      result = await query(
+        `UPDATE garages SET status = 'active' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+        [req.params.id]
+      );
+    } else if (action === 'deactivate') {
+      result = await query(
+        `UPDATE garages SET status = 'inactive' WHERE id = $1 RETURNING id, approval_status, verification_status, status`,
+        [req.params.id]
+      );
+    }
+
+    if (!result || result.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
     
     return success(res, {
       garageId: req.params.id,
-      approvalStatus: status,
+      action,
+      garage: result.rows[0],
       reviewedBy: req.user?.userId,
       reviewedAt: new Date().toISOString(),
     });

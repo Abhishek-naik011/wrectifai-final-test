@@ -20,13 +20,30 @@ export default function AllGaragesPage() {
   const [toastMessage, setToastMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [verificationModal, setVerificationModal] = useState<{isOpen: boolean, id: string, action: string}>({isOpen: false, id: '', action: ''});
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    stage: 'approval' | 'verification' | 'status';
+    action: string;
+    title: string;
+    warningMessage?: string;
+  }>({
+    isOpen: false,
+    id: '',
+    stage: 'approval',
+    action: '',
+    title: '',
+  });
 
   const loadData = async () => {
     setLoading(true);
     try {
       const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
       setGarages(garagesData);
+      if (selectedGarage) {
+        const updated = garagesData.find((g: any) => g.id === selectedGarage.id);
+        if (updated) setSelectedGarage(updated);
+      }
     } catch (err) {
       console.error('Failed to load garages', err);
     } finally {
@@ -38,17 +55,74 @@ export default function AllGaragesPage() {
     loadData();
   }, []);
 
-  const handleVerify = async (id: string, action: string) => {
+  const handleStageAction = async (id: string, stage: 'approval' | 'verification' | 'status', action: string) => {
     try {
-      await apiClient.post(`/admin/onboarding/garages/${id}/verify-status`, { action });
-      await loadData();
-      if (selectedGarage && selectedGarage.id === id) {
-        setSelectedGarage((prev: any) => ({ ...prev, verificationStatus: action === 'verify' ? 'verified' : 'rejected' }));
+      setIsSubmitting(true);
+      if (stage === 'verification') {
+        await apiClient.post(`/admin/onboarding/garages/${id}/verify-status`, { action });
+      } else {
+        await apiClient.post(`/admin/onboarding/garages/${id}/${action}`, {});
       }
-      setVerificationModal({isOpen: false, id: '', action: ''});
+      
+      const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
+      setGarages(garagesData);
+      const updated = garagesData.find((g: any) => g.id === id);
+      if (updated) {
+        setSelectedGarage(updated);
+      }
+      
+      setConfirmModal({ isOpen: false, id: '', stage: 'approval', action: '', title: '' });
+      setToastMessage({ type: 'success', text: 'Status updated successfully!' });
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err) {
-      console.error('Failed to verify garage', err);
+      console.error('Failed to update status', err);
+      setToastMessage({ type: 'error', text: 'Failed to update status.' });
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const triggerAction = (id: string, stage: 'approval' | 'verification' | 'status', action: string) => {
+    const isDestructive = action === 'reject' || action === 'deactivate';
+    if (isDestructive) {
+      setConfirmModal({
+        isOpen: true,
+        id,
+        stage,
+        action,
+        title: action === 'reject' 
+          ? `Reject Garage ${stage === 'approval' ? 'Approval' : 'Verification'}` 
+          : 'Set Garage Inactive',
+        warningMessage: 'Are you sure you want to make this change? This garage may currently have customers and bookings.',
+      });
+    } else {
+      handleStageAction(id, stage, action);
+    }
+  };
+
+  const getWorkflowBadge = (g: any) => {
+    if (g.approvalStatus === 'rejected') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-red-50 text-red-600 border-red-100">Rejected</span>;
+    }
+    if (g.approvalStatus === 'suspended') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-purple-50 text-purple-600 border-purple-100">Suspended</span>;
+    }
+    if (!g.approvalStatus || g.approvalStatus === 'pending') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-orange-50 text-orange-600 border-orange-100">Pending Approval</span>;
+    }
+    // Approved
+    if (g.verificationStatus === 'rejected') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-red-50 text-red-600 border-red-100">Verification Rejected</span>;
+    }
+    if (g.verificationStatus !== 'verified') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-50 text-blue-600 border-blue-100">Approved</span>;
+    }
+    // Verified
+    if (g.status === 'active') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-green-50 text-green-600 border-green-100">Active</span>;
+    }
+    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-100 text-slate-600 border-slate-200">Inactive</span>;
   };
 
   const submitEdit = async () => {
@@ -217,9 +291,7 @@ export default function AllGaragesPage() {
                     </td>
                     <td className="p-4 text-xs text-slate-600">{g.city || 'N/A'}</td>
                     <td className="p-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${g.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : g.approvalStatus === 'pending' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
-                        {g.approvalStatus ? g.approvalStatus.charAt(0).toUpperCase() + g.approvalStatus.slice(1) : 'Unknown'}
-                    </span>
+                      {getWorkflowBadge(g)}
                     </td>
                     <td className="p-4 text-xs text-slate-600">{formatTime(g.createdAt)}</td>
                     <td className="p-4">
@@ -288,34 +360,124 @@ export default function AllGaragesPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 font-bold mb-1">Status Information</p>
-                <div className="space-y-3 mt-2 border border-slate-100 rounded-lg p-3 bg-slate-50">
-                  <div className="flex justify-between items-center text-sm border-b pb-2">
-                    <span className="text-slate-600 font-bold">Approval Status:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.approvalStatus === 'approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
-                      {selectedGarage.approvalStatus || 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600 font-bold">Verification:</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${selectedGarage.verificationStatus === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : selectedGarage.verificationStatus === 'rejected' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                      {selectedGarage.verificationStatus || 'Pending Verification'}
-                    </span>
-                  </div>
-                  
-                  {selectedGarage.verificationStatus !== 'verified' && selectedGarage.verificationStatus !== 'rejected' && (
-                    <div className="pt-2 mt-2 border-t flex justify-between gap-2">
-                       <button 
-                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'verify'})}
-                         className="flex-1 bg-green-50 text-green-700 font-bold text-xs py-1.5 rounded border border-green-100 hover:bg-green-100">
-                         Verify
-                       </button>
-                       <button 
-                         onClick={() => setVerificationModal({isOpen: true, id: selectedGarage.id, action: 'reject'})}
-                         className="flex-1 bg-red-50 text-red-700 font-bold text-xs py-1.5 rounded border border-red-100 hover:bg-red-100">
-                         Reject
-                       </button>
+                <div className="space-y-3 mt-2 border border-slate-100 rounded-lg p-3.5 bg-slate-50">
+                  {/* Stage 1: Approval */}
+                  <div className="space-y-2 pb-2.5 border-b border-slate-200">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-700 font-bold text-xs">1. Approval Status:</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                        selectedGarage.approvalStatus === 'approved' 
+                          ? 'bg-green-50 text-green-600 border-green-200' 
+                          : selectedGarage.approvalStatus === 'rejected'
+                          ? 'bg-red-50 text-red-600 border-red-200'
+                          : 'bg-orange-50 text-orange-600 border-orange-200'
+                      }`}>
+                        {selectedGarage.approvalStatus || 'Pending'}
+                      </span>
                     </div>
-                  )}
+                    {/* Action buttons for Stage 1 */}
+                    <div className="flex gap-2">
+                      {selectedGarage.approvalStatus !== 'approved' && (
+                        <button
+                          onClick={() => triggerAction(selectedGarage.id, 'approval', 'approve')}
+                          disabled={isSubmitting}
+                          className="flex-1 bg-green-600 text-white font-bold text-xs py-1.5 rounded shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50">
+                          Approve
+                        </button>
+                      )}
+                      {selectedGarage.approvalStatus !== 'rejected' && (
+                        <button
+                          onClick={() => triggerAction(selectedGarage.id, 'approval', 'reject')}
+                          disabled={isSubmitting}
+                          className={`${selectedGarage.approvalStatus === 'approved' ? 'w-full' : 'flex-1'} bg-red-50 text-red-600 font-bold text-xs py-1.5 rounded border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50`}>
+                          Reject
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stage 2: Verification */}
+                  <div className="space-y-2 pb-2.5 border-b border-slate-200">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-700 font-bold text-xs">2. Verification:</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                        selectedGarage.approvalStatus !== 'approved'
+                          ? 'bg-slate-100 text-slate-400 border-slate-200'
+                          : selectedGarage.verificationStatus === 'verified' 
+                          ? 'bg-green-50 text-green-600 border-green-200' 
+                          : selectedGarage.verificationStatus === 'rejected' 
+                          ? 'bg-red-50 text-red-600 border-red-200' 
+                          : 'bg-orange-50 text-orange-600 border-orange-200'
+                      }`}>
+                        {selectedGarage.approvalStatus !== 'approved' 
+                          ? 'Locked' 
+                          : (selectedGarage.verificationStatus || 'Pending Verification')}
+                      </span>
+                    </div>
+                    {/* Action buttons for Stage 2 - available ONLY after Approval is completed */}
+                    {selectedGarage.approvalStatus === 'approved' ? (
+                      <div className="flex gap-2">
+                        {selectedGarage.verificationStatus !== 'verified' && (
+                          <button
+                            onClick={() => triggerAction(selectedGarage.id, 'verification', 'verify')}
+                            disabled={isSubmitting}
+                            className="flex-1 bg-green-600 text-white font-bold text-xs py-1.5 rounded shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50">
+                            Verify
+                          </button>
+                        )}
+                        {selectedGarage.verificationStatus !== 'rejected' && (
+                          <button
+                            onClick={() => triggerAction(selectedGarage.id, 'verification', 'reject')}
+                            disabled={isSubmitting}
+                            className={`${selectedGarage.verificationStatus === 'verified' ? 'w-full' : 'flex-1'} bg-red-50 text-red-600 font-bold text-xs py-1.5 rounded border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50`}>
+                            Reject
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic">Complete Approval stage first to enable Verification.</p>
+                    )}
+                  </div>
+
+                  {/* Stage 3: Active / Inactive */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-700 font-bold text-xs">3. Status:</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                        selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
+                          ? 'bg-slate-100 text-slate-400 border-slate-200'
+                          : selectedGarage.status === 'active' 
+                          ? 'bg-green-50 text-green-600 border-green-200' 
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}>
+                        {selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
+                          ? 'Inactive (Locked)' 
+                          : (selectedGarage.status || 'Inactive')}
+                      </span>
+                    </div>
+                    {/* Action buttons for Stage 3 - available ONLY after Approval + Verification are completed */}
+                    {selectedGarage.approvalStatus === 'approved' && selectedGarage.verificationStatus === 'verified' ? (
+                      <div className="flex gap-2">
+                        {selectedGarage.status !== 'active' ? (
+                          <button
+                            onClick={() => triggerAction(selectedGarage.id, 'status', 'activate')}
+                            disabled={isSubmitting}
+                            className="w-full bg-green-600 text-white font-bold text-xs py-1.5 rounded shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50">
+                            Set Active
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => triggerAction(selectedGarage.id, 'status', 'deactivate')}
+                            disabled={isSubmitting}
+                            className="w-full bg-orange-50 text-orange-600 font-bold text-xs py-1.5 rounded border border-orange-200 hover:bg-orange-100 transition-colors disabled:opacity-50">
+                            Set Inactive
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic">Complete Approval and Verification to activate this garage.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -323,11 +485,27 @@ export default function AllGaragesPage() {
         )}
       </Modal>
 
-      <Modal isOpen={verificationModal.isOpen} onClose={() => setVerificationModal({isOpen: false, id: '', action: ''})} title="Confirm Verification Action" className="max-w-md">
-        <p className="text-sm text-slate-600 mb-6">Are you sure you want to {verificationModal.action} this garage?</p>
-        <div className="flex justify-end gap-3">
-           <button onClick={() => setVerificationModal({isOpen: false, id: '', action: ''})} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Cancel</button>
-           <button onClick={() => handleVerify(verificationModal.id, verificationModal.action)} className={`px-4 py-2 text-sm font-bold text-white rounded-lg ${verificationModal.action === 'verify' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>Confirm</button>
+      <Modal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal({isOpen: false, id: '', stage: 'approval', action: '', title: ''})} title={confirmModal.title} className="max-w-md">
+        <div className="space-y-4">
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <p className="text-sm text-amber-900 font-medium leading-relaxed">
+              {confirmModal.warningMessage || 'Are you sure you want to apply this action?'}
+            </p>
+          </div>
+          <p className="text-xs text-slate-500">Please confirm if you want to proceed with this status change.</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <button 
+              onClick={() => setConfirmModal({isOpen: false, id: '', stage: 'approval', action: '', title: ''})} 
+              className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+              Cancel
+            </button>
+            <button 
+              onClick={() => handleStageAction(confirmModal.id, confirmModal.stage, confirmModal.action)} 
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
+              Confirm
+            </button>
+          </div>
         </div>
       </Modal>
 
