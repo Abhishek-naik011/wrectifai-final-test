@@ -19,11 +19,6 @@ import { useGoogleLogin } from '@react-oauth/google';
 export default function LoginPage() {
   const { isAuthenticated, login, user } = useAuth();
   const router = useRouter();
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      window.location.href = '/admin/dashboard';
-    }
-  }, [isAuthenticated, user, router]);
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -123,7 +118,7 @@ export default function LoginPage() {
       }
 
       login(data.accessToken, data.refreshToken, data.user);
-      setIsSubmitting(false);
+      window.location.href = '/admin/dashboard';
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Verification failed. Please check the OTP code.';
       setErrorMsg(message);
@@ -151,6 +146,7 @@ export default function LoginPage() {
       }
 
       login(data.accessToken, data.refreshToken, data.user);
+      window.location.href = '/admin/dashboard';
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
       setErrorMsg(message);
@@ -195,6 +191,7 @@ export default function LoginPage() {
       // After successful update, actually log them in!
       if (tempAuthData) {
         login(tempAuthData.accessToken, tempAuthData.refreshToken, tempAuthData.user);
+        window.location.href = '/admin/dashboard';
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Password reset failed.';
@@ -211,6 +208,7 @@ export default function LoginPage() {
     try {
       const data = await apiClient.post<AuthResponse>('/auth/login', { provider });
       login(data.accessToken, data.refreshToken, data.user);
+      window.location.href = '/admin/dashboard';
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : `${provider === 'google' ? 'Google' : 'Apple'} login failed.`;
       setErrorMsg(message);
