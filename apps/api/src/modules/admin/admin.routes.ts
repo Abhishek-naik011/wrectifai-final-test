@@ -61,9 +61,9 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
   try {
     const result = await query(
       `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", 
-              g.verification_status as "verificationStatus", g.status as "status",
               g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
-              u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail"
+              u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail",
+              u.status as "status"
        FROM garages g
        LEFT JOIN users u ON g.owner_user_id = u.id
        WHERE g.approval_status != 'deleted' OR g.approval_status IS NULL
