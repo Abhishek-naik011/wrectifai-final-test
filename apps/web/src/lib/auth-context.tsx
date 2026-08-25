@@ -121,8 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(accessToken);
     setIsAuthenticated(true);
 
-    // Tokens are securely stored as HttpOnly cookies by the backend.
-    // We intentionally avoid exposing them to localStorage or client JS.
+    // Architectural fix: Since the backend API (.onrender.com) and frontend (.vercel.app)
+    // are on different domains, HttpOnly cookies set by the backend are NOT sent to the 
+    // Next.js server during navigation. We must sync the token to the frontend domain 
+    // so middleware.ts can read it.
+    if (typeof window !== 'undefined') {
+      document.cookie = `accessToken=${accessToken}; path=/; max-age=604800; SameSite=Lax; ${process.env.NODE_ENV === 'production' ? 'Secure' : ''}`;
+      if (refreshToken) {
+        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=604800; SameSite=Lax; ${process.env.NODE_ENV === 'production' ? 'Secure' : ''}`;
+      }
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -140,10 +148,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear any app-specific cached data for complete session isolation
       for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('wrectifai_') || key === 'garage_favorites') {
+        if (
+          key.startsWith('wrectifai_') ||
+          key === 'garage_favorites'
+        ) {
           localStorage.removeItem(key);
         }
       }
+      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
 
     setUser(null);
