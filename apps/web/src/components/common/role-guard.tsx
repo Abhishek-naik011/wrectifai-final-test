@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
 export function RoleGuard({
@@ -11,9 +10,8 @@ export function RoleGuard({
   children: React.ReactNode;
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const pathname = usePathname();
 
-  // Wait until AuthProvider finishes checking the current session.
+  // Never decide anything until auth check is fully done.
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f6f8fe]">
@@ -24,43 +22,31 @@ export function RoleGuard({
     );
   }
 
-  // Auth check is complete. If there is no authenticated user,
-  // show Unauthorized Access.
+  // Auth check finished. No user at all.
   if (!isAuthenticated || !user) {
-    if (pathname?.startsWith('/admin')) {
-      return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-[#f6f8fe]">
-          <h1 className="mb-2 text-4xl font-bold text-red-600">401</h1>
-          <div className="text-[16px] font-medium text-slate-700">
-            Unauthorized Access
-          </div>
-          <a
-            href="/"
-            className="mt-6 text-blue-600 hover:underline"
-          >
-            Go to Homepage
-          </a>
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f6f8fe]">
+        <h1 className="mb-2 text-4xl font-bold text-red-600">401</h1>
+        <div className="text-[16px] font-medium text-slate-700">
+          Unauthorized Access
         </div>
-      );
-    }
-
-    return null;
+        <a href="/" className="mt-6 text-blue-600 hover:underline">
+          Go to Homepage
+        </a>
+      </div>
+    );
   }
 
-  // Map the existing "user" role to "customer" as before.
   const mappedUserRoles = user.roles.map((role) =>
     role === 'user' ? 'customer' : role
   );
-
   const mappedAllowedRoles = allowedRoles.map((role) =>
     role === 'user' ? 'customer' : role
   );
-
   const isAuthorized = mappedUserRoles.some((role) =>
     mappedAllowedRoles.includes(role)
   );
 
-  // Authenticated but does not have the required role.
   if (!isAuthorized) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#f6f8fe]">
@@ -68,10 +54,7 @@ export function RoleGuard({
         <div className="text-[16px] font-medium text-slate-700">
           Unauthorized Access
         </div>
-        <a
-          href="/"
-          className="mt-6 text-blue-600 hover:underline"
-        >
+        <a href="/" className="mt-6 text-blue-600 hover:underline">
           Go to Homepage
         </a>
       </div>
