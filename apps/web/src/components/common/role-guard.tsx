@@ -11,6 +11,8 @@ export function RoleGuard({
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  console.log('RoleGuard render:', { isLoading, isAuthenticated, user });
+
   // Never decide anything until auth check is fully done.
   if (isLoading) {
     return (
