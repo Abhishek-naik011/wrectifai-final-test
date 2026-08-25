@@ -102,7 +102,7 @@ export default function AllGaragesPage() {
   };
 
   const getWorkflowBadge = (g: any) => {
-    if (g.approvalStatus === 'rejected') {
+    if (g.approvalStatus === 'rejected' || g.verificationStatus === 'rejected') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-red-50 text-red-600 border-red-100">Rejected</span>;
     }
     if (g.approvalStatus === 'suspended') {
@@ -111,18 +111,16 @@ export default function AllGaragesPage() {
     if (!g.approvalStatus || g.approvalStatus === 'pending') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-orange-50 text-orange-600 border-orange-100">Pending Approval</span>;
     }
-    // Approved
-    if (g.verificationStatus === 'rejected') {
-      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-red-50 text-red-600 border-red-100">Verification Rejected</span>;
-    }
+    // Stage 1 completed: Approved
     if (g.verificationStatus !== 'verified') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-50 text-blue-600 border-blue-100">Approved</span>;
     }
-    // Verified
+    // Stage 2 completed: Verified
     if (g.status === 'active') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-green-50 text-green-600 border-green-100">Active</span>;
     }
-    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-100 text-slate-600 border-slate-200">Inactive</span>;
+    // Approved + Verified but not activated (or previously deactivated)
+    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-teal-50 text-teal-700 border-teal-200">Verified</span>;
   };
 
   const submitEdit = async () => {
