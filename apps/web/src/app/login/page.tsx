@@ -146,7 +146,14 @@ export default function LoginPage() {
       }
 
       login(data.accessToken, data.refreshToken, data.user);
-      window.location.href = '/admin/dashboard';
+
+      if (data.user.roles.includes('admin')) {
+        window.location.href = '/admin/dashboard';
+      } else if (data.user.roles.includes('garage')) {
+        window.location.href = '/garage/dashboard';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
       setErrorMsg(message);
