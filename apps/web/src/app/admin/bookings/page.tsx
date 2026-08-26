@@ -79,9 +79,6 @@ export default function AdminBookingsPage() {
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-900">Bookings</h1>
-        <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
-          New Booking
-        </button>
       </div>
 
       <Card className="shadow-sm border-slate-200">
@@ -107,23 +104,27 @@ export default function AdminBookingsPage() {
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-50/50 text-xs font-semibold text-slate-500 border-b border-slate-100">
-                <th className="p-4 font-semibold w-1/4">Booking ID</th>
-                <th className="p-4 font-semibold w-1/4">Customer</th>
-                <th className="p-4 font-semibold w-1/4">Garage</th>
-                <th className="p-4 font-semibold w-1/4 text-right">Actions</th>
+                <th className="p-4 font-semibold w-1/5">Customer</th>
+                <th className="p-4 font-semibold w-1/5">Garage</th>
+                <th className="p-4 font-semibold w-1/5">Status</th>
+                <th className="p-4 font-semibold w-1/5">Booking Date</th>
+                <th className="p-4 font-semibold w-1/5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                 <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
               ) : paginatedBookings.length === 0 ? (
-                 <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">No Records Found</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">No Records Found</td></tr>
               ) : (
                 paginatedBookings.map((b) => (
                   <tr key={b.id} onClick={() => { setSelectedBooking(b); setIsModalOpen(true); }} className="hover:bg-slate-50/50 cursor-pointer transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-900">{b.id.substring(0,8)}</td>
-                    <td className="p-4 text-sm text-slate-700">{b.customerName || 'N/A'}</td>
+                    <td className="p-4 text-sm font-semibold text-slate-900">{b.customerName || 'N/A'}</td>
                     <td className="p-4 text-sm text-slate-700">{b.garageName || 'N/A'}</td>
+                    <td className="p-4 text-sm text-slate-700">{formatAdminStatus(b.status)}</td>
+                    <td className="p-4 text-sm text-slate-700">
+                      {b.serviceDate ? new Date(b.serviceDate).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : (b.createdAt ? new Date(b.createdAt).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A')}
+                    </td>
                     <td className="p-4 text-right">
                        <button className="text-slate-400 hover:text-blue-600 px-2"><Eye className="w-4 h-4 inline"/></button>
                     </td>
@@ -147,8 +148,6 @@ export default function AdminBookingsPage() {
          <div className="space-y-4">
              {selectedBooking ? (
                   <div className="grid grid-cols-2 gap-4">
-                    <p><strong>Booking ID:</strong> {selectedBooking.id}</p>
-                    <p><strong>Quote ID:</strong> {selectedBooking.quoteId || 'N/A'}</p>
                     <p><strong>Status:</strong> <span className="capitalize">{formatAdminStatus(selectedBooking.status)}</span></p>
                     <p><strong>Payment Status:</strong> <span className="capitalize">{formatAdminStatus(selectedBooking.paymentStatus || 'unpaid')}</span></p>
                     <p><strong>Customer:</strong> {selectedBooking.customerName || 'N/A'}</p>

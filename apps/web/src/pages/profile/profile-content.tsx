@@ -31,8 +31,11 @@ export function ProfileContent() {
       const updatedUser = await apiClient.put<any>('/users/profile', formData);
       setIsEditing(false);
       showToast('Profile updated successfully', 'success');
-      if (token) {
-        login(token, undefined, { ...user, ...updatedUser, roles: user?.roles || [] });
+      const activeToken = token || (typeof document !== 'undefined' ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1] : null);
+      if (activeToken) {
+        login(activeToken, undefined, { ...user, ...updatedUser, roles: user?.roles || [] });
+      } else {
+        setTimeout(() => window.location.reload(), 1000);
       }
     } catch (err: any) {
       console.error(err);

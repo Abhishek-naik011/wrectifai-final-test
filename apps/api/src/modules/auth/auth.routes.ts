@@ -113,14 +113,34 @@ authRouter.post('/google', async (req, res) => {
 
     setTokensInCookies(res, authResult.accessToken, authResult.refreshToken);
 
-    return success(res, { user: authResult.user }, 200);
+    return success(res, { 
+      user: authResult.user,
+      accessToken: authResult.accessToken,
+      refreshToken: authResult.refreshToken
+    }, 200);
   } catch (err) {
     return error(res, err instanceof Error ? err.message : 'Google authentication failed', 'UNAUTHORIZED', 401);
   }
 });
 
+authRouter.post('/check-phone', async (req, res, next) => {
+  const mobileNumber = req.body.mobileNumber?.replace(/\s+/g, '');
+  if (!mobileNumber) return error(res, 'Phone number is required', 'BAD_REQUEST', 400);
+
+  try {
+    const existingUser = await query('SELECT id FROM users WHERE mobile_number = $1', [mobileNumber]);
+    if (existingUser.rows.length > 0) {
+      return error(res, 'This phone number is already registered. Please use a different phone number.', 'CONFLICT', 409);
+    }
+    return success(res, { available: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 authRouter.post('/register', async (req, res, next) => {
-  const { mobileNumber, name, otp, role = 'user' } = req.body;
+  const { name, otp, role = 'user' } = req.body;
+  const mobileNumber = req.body.mobileNumber?.replace(/\s+/g, '');
   if (!mobileNumber || !name || !otp) {
     return error(res, 'Phone number, name, and OTP are required', 'BAD_REQUEST', 400);
   }
@@ -131,29 +151,22 @@ authRouter.post('/register', async (req, res, next) => {
 
   try {
     const existingUser = await query('SELECT * FROM users WHERE mobile_number = $1', [mobileNumber]);
-    let user;
-    let isNew = false;
 
     if (existingUser.rows.length > 0) {
-      user = existingUser.rows[0];
-      await query('UPDATE users SET name = $1 WHERE id = $2', [name, user.id]);
-      user.name = name;
-    } else {
-      const userResult = await query(
-        "INSERT INTO users (mobile_number, name, status) VALUES ($1, $2, 'active') RETURNING id, email, name, mobile_number, status",
-        [mobileNumber, name]
-      );
-      user = userResult.rows[0];
-      isNew = true;
+      return error(res, 'This phone number is already registered. Please use a different phone number.', 'CONFLICT', 409);
     }
 
-    if (isNew) {
-      const resolvedRole = role === 'customer' ? 'user' : role;
-      const roleResult = await query('SELECT id FROM roles WHERE code = $1', [resolvedRole]);
-      if (roleResult.rows.length > 0) {
-        const roleId = roleResult.rows[0].id;
-        await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
-      }
+    const userResult = await query(
+      "INSERT INTO users (mobile_number, name, status) VALUES ($1, $2, 'active') RETURNING id, email, name, mobile_number, status",
+      [mobileNumber, name]
+    );
+    const user = userResult.rows[0];
+
+    const resolvedRole = 'user'; // Force role to 'user' for public signups
+    const roleResult = await query('SELECT id FROM roles WHERE code = $1', [resolvedRole]);
+    if (roleResult.rows.length > 0) {
+      const roleId = roleResult.rows[0].id;
+      await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
     }
 
     const rolesResult = await query(
@@ -192,7 +205,8 @@ authRouter.post('/register', async (req, res, next) => {
 });
 
 authRouter.post('/login', async (req, res, next) => {
-  const { mobileNumber, otp, provider, email, password } = req.body;
+  const { otp, provider, email, password } = req.body;
+  const mobileNumber = req.body.mobileNumber?.replace(/\s+/g, '');
 
   try {
     let user;
@@ -223,35 +237,8 @@ authRouter.post('/login', async (req, res, next) => {
       }
 
       const DEMO_OTP = '123456';
-
-      const demoPhones = new Set([
-        '9876543210',
-        '0000000000',
-        '9999999901',
-        '9999999902',
-        '9999999903',
-        '9999999904',
-        '9999999905',
-        '9999999906',
-        '9999999907',
-        '9999999908',
-        '9999999909',
-        '9999999910',
-        '9999999911',
-        '9999999912',
-      ]);
-
       if (otp !== DEMO_OTP) {
         return error(res, 'Invalid OTP', 'UNAUTHORIZED', 401);
-      }
-
-      if (!demoPhones.has(mobileNumber)) {
-        return error(
-          res,
-          'Invalid mobile number for demo OTP login',
-          'UNAUTHORIZED',
-          401
-        );
       }
 
       const userResult = await query(

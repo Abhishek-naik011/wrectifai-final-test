@@ -13,8 +13,8 @@ adminRouter.get('/stats', async (req, res) => {
   try {
     const customersCount = await query(`SELECT COUNT(*) FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.code = 'user'`);
     const totalGaragesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status != 'deleted' OR approval_status IS NULL`);
-    const approvedGaragesCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'approved'`);
-    const pendingCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'pending'`);
+    const approvedGaragesCount = await query(`SELECT COUNT(*) FROM garages WHERE (approval_status = 'approved' OR is_approved = true) AND approval_status != 'deleted'`);
+    const pendingCount = await query(`SELECT COUNT(*) FROM garages WHERE (approval_status = 'pending' OR (approval_status != 'approved' AND (is_approved = false OR is_approved IS NULL))) AND (approval_status != 'deleted' AND approval_status != 'rejected' AND approval_status != 'suspended' OR approval_status IS NULL)`);
     const suspendedCount = await query(`SELECT COUNT(*) FROM garages WHERE approval_status = 'suspended'`);
     const bookingsCount = await query(`SELECT COUNT(*) FROM bookings WHERE status IN ('confirmed', 'inService')`);
     const quotesCount = await query(`SELECT COUNT(*) FROM quotes`);
@@ -22,7 +22,14 @@ adminRouter.get('/stats', async (req, res) => {
     const completedJobsCount = await query(`SELECT COUNT(*) FROM bookings WHERE status = 'completed'`);
 
     const recentGarages = await query(`
-      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", g.approval_status as "approvalStatus"
+      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt",
+             CASE 
+               WHEN g.approval_status = 'rejected' THEN 'rejected'
+               WHEN g.approval_status = 'suspended' THEN 'suspended'
+               WHEN g.approval_status = 'deleted' THEN 'deleted'
+               WHEN g.approval_status = 'approved' OR g.is_approved = true THEN 'approved'
+               ELSE 'pending'
+             END as "approvalStatus"
       FROM garages g
       LEFT JOIN users u ON g.owner_user_id = u.id
       WHERE g.approval_status != 'deleted' OR g.approval_status IS NULL
@@ -31,10 +38,11 @@ adminRouter.get('/stats', async (req, res) => {
     `);
 
     const pendingGarageList = await query(`
-      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", g.approval_status as "approvalStatus"
+      SELECT g.id, g.name, u.name as "ownerName", u.mobile_number as phone, g.city, g.created_at as "createdAt", 'pending' as "approvalStatus"
       FROM garages g
       LEFT JOIN users u ON g.owner_user_id = u.id
-      WHERE g.approval_status = 'pending'
+      WHERE (g.approval_status = 'pending' OR (g.approval_status != 'approved' AND (g.is_approved = false OR g.is_approved IS NULL)))
+        AND (g.approval_status != 'deleted' AND g.approval_status != 'rejected' AND g.approval_status != 'suspended' OR g.approval_status IS NULL)
       ORDER BY g.created_at DESC
       LIMIT 10
     `);
@@ -60,8 +68,16 @@ adminRouter.get('/stats', async (req, res) => {
 adminRouter.get('/onboarding/garages', async (req, res) => {
   try {
     const result = await query(
-      `SELECT g.id, g.name, g.address, g.approval_status as "approvalStatus", 
+      `SELECT g.id, g.name, g.address, 
+              CASE 
+                WHEN g.approval_status = 'rejected' THEN 'rejected'
+                WHEN g.approval_status = 'suspended' THEN 'suspended'
+                WHEN g.approval_status = 'deleted' THEN 'deleted'
+                WHEN g.approval_status = 'approved' OR g.is_approved = true THEN 'approved'
+                ELSE 'pending'
+              END as "approvalStatus", 
               g.is_approved as "isApproved",
+              COALESCE(g.status, 'inactive') as "status",
               COALESCE(
                 (SELECT CASE 
                           WHEN gd.verification_status = 'approved' THEN 'verified'
@@ -74,7 +90,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
               ) as "verificationStatus",
               g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
               u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail",
-              u.status as "status"
+              u.status as "userStatus"
        FROM garages g
        LEFT JOIN users u ON g.owner_user_id = u.id
        WHERE g.approval_status != 'deleted' OR g.approval_status IS NULL
@@ -88,54 +104,28 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
 
 adminRouter.post('/onboarding/garages', async (req, res) => {
   try {
-    const { name, phone, email, registrationNumber, address, city, state, pincode, ownerName } = req.body;
+    const { name, email, registrationNumber, address, city, state, pincode, ownerName } = req.body;
+    const phone = req.body.phone?.replace(/\s+/g, '');
     
-    // Enforce idempotency: find existing garage
-    const duplicateCheck = await query(
-      `SELECT g.id, g.owner_user_id FROM garages g
-       LEFT JOIN users u ON g.owner_user_id = u.id
-       WHERE LOWER(g.name) = LOWER($1)
-          OR (u.mobile_number = $2 AND $2 IS NOT NULL AND $2 != '')
-          OR (u.email = $3 AND $3 IS NOT NULL AND $3 != '')
-          OR (g.address = $4 AND $4 IS NOT NULL AND $4 != '')
-       LIMIT 1`,
-      [name, phone || '', email || '', address || '']
+    // Enforce ONE PHONE = ONE ACCOUNT
+    const userCheck = await query(
+      `SELECT id FROM users WHERE (mobile_number = $1 AND $1 IS NOT NULL AND $1 != '') OR (email = $2 AND $2 IS NOT NULL AND $2 != '') LIMIT 1`,
+      [phone || null, email || null]
     );
 
-    let garageId = null;
-
-    if (duplicateCheck.rows.length > 0) {
-      garageId = duplicateCheck.rows[0].id;
-    }
-
-    // Always fetch or create a user for this email/phone to map the garage correctly
-    const userCheck = await query(`SELECT id FROM users WHERE (mobile_number = $1 AND $1 != '') OR (email = $2 AND $2 != '') LIMIT 1`, [phone || '', email || '']);
-    
-    let resolvedUserId = null;
     if (userCheck.rows.length > 0) {
-      resolvedUserId = userCheck.rows[0].id;
-      // Ensure this existing user has the garage role
-      const roleResult = await query("SELECT id FROM roles WHERE code = 'garage'");
-      if (roleResult.rows.length > 0) {
-        await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [resolvedUserId, roleResult.rows[0].id]);
-      }
-    } else {
-      const newUser = await query(
-        `INSERT INTO users (name, mobile_number, email, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
-        [ownerName || 'Garage Owner', phone || null, email || null]
-      );
-      resolvedUserId = newUser.rows[0].id;
-      
-      const roleResult = await query("SELECT id FROM roles WHERE code = 'garage'");
-      if (roleResult.rows.length > 0) {
-        await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [resolvedUserId, roleResult.rows[0].id]);
-      }
+      return error(res, 'This phone number is already registered. Please use a different phone number.', 'CONFLICT', 409);
     }
 
-    if (garageId) {
-      // Map the garage to the newly resolved user
-      await query(`UPDATE garages SET owner_user_id = $1 WHERE id = $2`, [resolvedUserId, garageId]);
-      return success(res, { id: garageId, message: 'Existing garage mapped successfully' }, 200);
+    const newUser = await query(
+      `INSERT INTO users (name, mobile_number, email, status) VALUES ($1, $2, $3, 'active') RETURNING id`,
+      [ownerName || 'Garage Owner', phone || null, email || null]
+    );
+    const resolvedUserId = newUser.rows[0].id;
+    
+    const roleResult = await query("SELECT id FROM roles WHERE code = 'garage'");
+    if (roleResult.rows.length > 0) {
+      await query('INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)', [resolvedUserId, roleResult.rows[0].id]);
     }
 
     // New garage starts as pending approval
@@ -255,6 +245,11 @@ adminRouter.post('/onboarding/garages/:id/verify-status', async (req, res) => {
     const garageCheck = await query(`SELECT id, approval_status, is_approved FROM garages WHERE id = $1`, [req.params.id]);
     if (garageCheck.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
 
+    const isApproved = garageCheck.rows[0].approval_status === 'approved' || garageCheck.rows[0].is_approved === true;
+    if (!isApproved) {
+      return error(res, 'Garage must be approved before verification', 'INVALID_ACTION', 400);
+    }
+
     // Upsert verification record into garage_documents with valid constraint status ('approved' | 'rejected' | 'pending')
     const docCheck = await query(`SELECT id FROM garage_documents WHERE garage_id = $1 LIMIT 1`, [req.params.id]);
     if (docCheck.rows.length > 0) {
@@ -290,6 +285,25 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
       return error(res, 'Invalid action', 'INVALID_ACTION', 400);
     }
     
+    const garageQuery = await query(
+      `SELECT g.id, 
+              CASE 
+                WHEN g.approval_status = 'rejected' THEN 'rejected'
+                WHEN g.approval_status = 'suspended' THEN 'suspended'
+                WHEN g.approval_status = 'deleted' THEN 'deleted'
+                WHEN g.approval_status = 'approved' OR g.is_approved = true THEN 'approved'
+                ELSE 'pending'
+              END as "approvalStatus", 
+              COALESCE(g.status, 'inactive') as "status",
+              COALESCE((SELECT CASE WHEN gd.verification_status = 'approved' THEN 'verified' ELSE gd.verification_status END 
+               FROM garage_documents gd WHERE gd.garage_id = g.id ORDER BY gd.created_at DESC LIMIT 1), 'unverified') as "verificationStatus"
+       FROM garages g WHERE g.id = $1`,
+      [req.params.id]
+    );
+
+    if (garageQuery.rows.length === 0) return error(res, 'Garage not found', 'NOT_FOUND', 404);
+    const garageState = garageQuery.rows[0];
+
     let result;
     if (action === 'approve') {
       result = await query(
@@ -316,19 +330,25 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
         [req.params.id]
       );
     } else if (action === 'activate') {
+      if (garageState.approvalStatus !== 'approved' || garageState.verificationStatus !== 'verified') {
+        return error(res, 'Garage must be approved and verified before activation', 'INVALID_ACTION', 400);
+      }
       result = await query(
         `UPDATE garages 
-         SET approval_status = 'active', is_approved = true 
+         SET status = 'active' 
          WHERE id = $1 
-         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
+         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", status`,
         [req.params.id]
       );
     } else if (action === 'deactivate') {
+      if (garageState.status !== 'active') {
+        return error(res, 'Garage must be active before deactivation', 'INVALID_ACTION', 400);
+      }
       result = await query(
         `UPDATE garages 
-         SET approval_status = 'approved', is_approved = true 
+         SET status = 'inactive' 
          WHERE id = $1 
-         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
+         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", status`,
         [req.params.id]
       );
     }
@@ -369,9 +389,14 @@ adminRouter.get('/users', async (req, res) => {
 // Add a customer manually
 adminRouter.post('/users', async (req, res) => {
   try {
-    const { name, email, phone, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, status } = req.body;
+    const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, status } = req.body;
+    const phone = req.body.phone?.replace(/\s+/g, '');
     if (!name || !email) return error(res, 'Name and email are required', 'BAD_REQUEST', 400);
     
+    // Check if user already exists
+    const existing = await query('SELECT id FROM users WHERE email = $1 OR (mobile_number = $2 AND mobile_number IS NOT NULL)', [email, phone || null]);
+    if (existing.rows.length > 0) return error(res, 'A user with this email or phone already exists', 'CONFLICT', 409);
+
     // 1. Insert user
     const userRes = await query(
       `INSERT INTO users (name, email, mobile_number, status)
@@ -380,21 +405,34 @@ adminRouter.post('/users', async (req, res) => {
     );
     const user = userRes.rows[0];
 
-    // 2. Get user role id
-    const roleRes = await query(`SELECT id FROM roles WHERE code = 'user'`);
-    if (roleRes.rows.length > 0) {
-      await query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, [user.id, roleRes.rows[0].id]);
-    }
+    try {
+      // 2. Get user role id
+      const roleRes = await query(`SELECT id FROM roles WHERE code = 'user'`);
+      if (roleRes.rows.length > 0) {
+        await query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, [user.id, roleRes.rows[0].id]);
+      }
 
-    // (Profile insert removed since profiles table was deleted)
+      // 3. Insert profile if address is provided
+      if (address || city || state || pincode) {
+        await query(
+          `INSERT INTO profiles (id, user_id, address_line, city, state, postal_code)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+          [user.id, address || null, city || null, state || null, pincode || null]
+        );
+      }
 
-    // 4. Insert vehicle if provided
-    if (vehicleNumber || vehicleModel || vehicleBrand) {
-      await query(
-        `INSERT INTO vehicles (customer_id, plate_number, model, make, trim, fuel_type)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, 'Petrol'] // default fuel
-      );
+      // 4. Insert vehicle if provided
+      if (vehicleNumber || vehicleModel || vehicleBrand) {
+        await query(
+          `INSERT INTO vehicles (customer_id, plate_number, model, make, trim, fuel_type, year)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, 'Petrol', new Date().getFullYear()] 
+        );
+      }
+    } catch (insertErr) {
+      console.error('Partial insert failed, cleaning up user:', insertErr);
+      await query(`DELETE FROM users WHERE id = $1`, [user.id]);
+      return error(res, 'Failed to save customer details', 'DATABASE_ERROR', 500);
     }
     
     return success(res, user);
@@ -449,7 +487,7 @@ adminRouter.delete('/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     await query('DELETE FROM bookings WHERE customer_id = $1', [userId]);
-    await query('DELETE FROM vehicles WHERE owner_id = $1', [userId]);
+    await query('DELETE FROM vehicles WHERE customer_id = $1', [userId]);
     const result = await query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
     
     if (result.rows.length === 0) return error(res, 'User not found', 'NOT_FOUND', 404);
@@ -495,7 +533,8 @@ adminRouter.get('/service-requests', async (req, res) => {
                   NULLIF(qr.issue_summary, ''),
                   'Issue not provided'
                 ) as details, 
-                qr.status
+                qr.status,
+                qr.created_at as "createdAt"
          FROM quote_requests qr
          LEFT JOIN users u ON qr.customer_id = u.id
          LEFT JOIN garages g ON qr.garage_id = g.id
@@ -512,12 +551,14 @@ adminRouter.get('/service-requests', async (req, res) => {
 adminRouter.get('/quotes', async (req, res) => {
   try {
     const result = await query(
-      `SELECT q.id, u.name as "customerName", g.name as "garageName", q.amount as "totalAmount"
-       FROM quotes q
-       LEFT JOIN quote_requests qr ON q.quote_request_id = qr.id
+      `SELECT qr.id, u.name as "customerName", g.name as "garageName", q.amount as "totalAmount", 
+              COALESCE(q.status, qr.status) as status, 
+              qr.created_at as "createdAt"
+       FROM quote_requests qr
+       LEFT JOIN quotes q ON q.quote_request_id = qr.id
        LEFT JOIN users u ON qr.customer_id = u.id
-       LEFT JOIN garages g ON q.garage_id = g.id
-       ORDER BY q.created_at DESC`
+       LEFT JOIN garages g ON qr.garage_id = g.id
+       ORDER BY qr.created_at DESC`
     );
     return success(res, result.rows);
   } catch (err) {

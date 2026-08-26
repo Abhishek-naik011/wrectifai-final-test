@@ -68,9 +68,6 @@ export default function AdminQuotesPage() {
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-900">Quotes</h1>
-        <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
-          New Quote
-        </button>
       </div>
 
       <Card className="shadow-sm border-slate-200">
@@ -96,23 +93,27 @@ export default function AdminQuotesPage() {
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-slate-50/50 text-xs font-semibold text-slate-500 border-b border-slate-100">
-                <th className="p-4 font-semibold w-1/4">Quote ID</th>
-                <th className="p-4 font-semibold w-1/4">Customer</th>
-                <th className="p-4 font-semibold w-1/4">Garage</th>
-                <th className="p-4 font-semibold w-1/4 text-right">Actions</th>
+                <th className="p-4 font-semibold w-1/5">Customer</th>
+                <th className="p-4 font-semibold w-1/5">Garage</th>
+                <th className="p-4 font-semibold w-1/5">Status</th>
+                <th className="p-4 font-semibold w-1/5">Quote Date</th>
+                <th className="p-4 font-semibold w-1/5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                 <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
               ) : paginatedQuotes.length === 0 ? (
-                 <tr><td colSpan={4} className="p-8 text-center text-sm text-slate-500">No Records Found</td></tr>
+                 <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">No Records Found</td></tr>
               ) : (
                 paginatedQuotes.map((q) => (
                   <tr key={q.id} onClick={() => { setSelectedQuote(q); setIsModalOpen(true); }} className="hover:bg-slate-50/50 cursor-pointer transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-900">{q.id.substring(0,8)}</td>
-                    <td className="p-4 text-sm text-slate-700">{q.customerName || 'N/A'}</td>
+                    <td className="p-4 text-sm font-semibold text-slate-900">{q.customerName || 'N/A'}</td>
                     <td className="p-4 text-sm text-slate-700">{q.garageName || 'N/A'}</td>
+                    <td className="p-4 text-sm text-slate-700">{formatAdminStatus(q.status)}</td>
+                    <td className="p-4 text-sm text-slate-700">
+                      {q.createdAt ? new Date(q.createdAt).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                    </td>
                     <td className="p-4 text-right">
                        <button className="text-slate-400 hover:text-blue-600 px-2"><Eye className="w-4 h-4 inline"/></button>
                     </td>
@@ -137,7 +138,6 @@ export default function AdminQuotesPage() {
             {selectedQuote ? (
                <div className="text-sm text-slate-600 space-y-2">
                  <div className="grid grid-cols-2 gap-4">
-                   <p><strong>Quote ID:</strong> {selectedQuote.id}</p>
                    <p><strong>Status:</strong> <span className="capitalize">{formatAdminStatus(selectedQuote.status)}</span></p>
                    <p><strong>Customer:</strong> {selectedQuote.customerName || 'N/A'}</p>
                    <p><strong>Garage:</strong> {selectedQuote.garageName || 'N/A'}</p>

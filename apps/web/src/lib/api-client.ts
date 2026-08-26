@@ -164,7 +164,7 @@ async function handleResponse<T = unknown>(response: Response): Promise<T> {
 }
 
 apiClient.get = <T = unknown>(path: string, options?: RequestOptions) =>
-  apiClient<T>(path, { ...options, method: 'GET' });
+  apiClient<T>(path, { cache: 'no-store', ...options, method: 'GET' });
 
 apiClient.post = <T = unknown>(path: string, body?: unknown, options?: RequestOptions) =>
   apiClient<T>(path, {

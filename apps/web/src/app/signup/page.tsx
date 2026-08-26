@@ -29,7 +29,7 @@ export default function SignupPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
@@ -44,21 +44,23 @@ export default function SignupPage() {
       return;
     }
 
-    // Accept hardcoded ones
-    const validPhones = ['9876543210', '1234567890'];
     const sanitizedPhone = mobileNumber.replace(/\s+/g, '');
-    if (!validPhones.includes(sanitizedPhone)) {
+    if (sanitizedPhone.length < 10) {
       setErrorMsg('error: Invalid phone number.');
       return;
     }
 
     setIsSubmitting(true);
-    // Simulate sending OTP
-    setTimeout(() => {
+    try {
+      await apiClient.post('/auth/check-phone', { mobileNumber: sanitizedPhone });
       setIsOtpSent(true);
+      setSuccessMsg('OTP code sent successfully!');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'This phone number is already registered. Please use a different phone number.';
+      setErrorMsg(message);
+    } finally {
       setIsSubmitting(false);
-      setSuccessMsg('OTP code sent successfully! Use 123456');
-    }, 600);
+    }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -166,7 +168,11 @@ export default function SignupPage() {
                   required
                   autoComplete="off"
                   value={mobileNumber}
-                  onChange={(e) => setMobileNumber(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const digits = val.replace(/\D/g, '').slice(0, 10);
+                    setMobileNumber(digits);
+                  }}
                   placeholder="e.g., 9876543210"
                   className="h-11 w-full rounded-xl border border-[#dbe6ff] bg-white pl-10 pr-3.5 text-[13px] text-[#17307a] placeholder-[#8ea0c7] outline-none transition-all focus:border-[#1a56db] focus:ring-2 focus:ring-[#1a56db]/10"
                 />
@@ -220,7 +226,7 @@ export default function SignupPage() {
         <div className="grid grid-cols-2 gap-3.5">
           {/* Google */}
           <button
-            onClick={() => handleOAuthLogin('google')}
+            onClick={() => setErrorMsg('Google login is coming soon.')}
             disabled={isSubmitting}
             type="button"
             className="h-11 rounded-xl border border-[#dbe6ff] bg-white hover:bg-[#fcfdff] text-[#17307a] text-[12.5px] font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm disabled:opacity-50"
@@ -248,7 +254,7 @@ export default function SignupPage() {
 
           {/* Apple */}
           <button
-            onClick={() => handleOAuthLogin('apple')}
+            onClick={() => setErrorMsg('Apple login is coming soon.')}
             disabled={isSubmitting}
             type="button"
             className="h-11 rounded-xl border border-[#dbe6ff] bg-white hover:bg-[#fcfdff] text-[#17307a] text-[12.5px] font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm disabled:opacity-50"

@@ -50,12 +50,14 @@ export default function LoginPage() {
       setMobileNumber('');
     } else {
       setIsEmailMode(false);
-      setMobileNumber(val);
+      const sanitizedPhone = val.replace(/\D/g, '').slice(0, 10);
+      setMobileNumber(sanitizedPhone);
       setEmail('');
     }
   };
 
   const googleLogin = useGoogleLogin({
+    prompt: 'select_account',
     onSuccess: async (credentialResponse) => {
       setErrorMsg('');
       setSuccessMsg('');
@@ -65,7 +67,14 @@ export default function LoginPage() {
           credential: credentialResponse.access_token
         });
         login(data.accessToken, data.refreshToken, data.user);
-        setIsSubmitting(false);
+
+        if (data.user.roles.includes('admin')) {
+          window.location.href = '/admin/dashboard';
+        } else if (data.user.roles.includes('garage')) {
+          window.location.href = '/garage/dashboard';
+        } else {
+          window.location.href = '/dashboard';
+        }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Google login failed.';
         setErrorMsg(message);
@@ -459,7 +468,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={() => handleOAuthLogin('apple')}
+            onClick={() => setErrorMsg('Apple login is coming soon.')}
             disabled={isSubmitting}
             type="button"
             className="h-10 rounded-2xl border border-[#dbe6ff] bg-white hover:bg-[#fcfdff] text-[#17307a] text-[12.5px] font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm disabled:opacity-50"

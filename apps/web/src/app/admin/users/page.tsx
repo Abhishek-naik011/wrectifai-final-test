@@ -1,19 +1,78 @@
 
 'use client';
 import { Card } from '@/components/common/card';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Modal } from '@/components/common/modal';
+import { CITIES } from '@/components/home/top-navbar';
+
+const STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 
+  'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+];
+
+function SearchableSelect({ value, onChange, options, placeholder }: { value: string, onChange: (v: string) => void, options: string[], placeholder: string }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  
+  const filtered = options.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  
+  return (
+    <div className="relative">
+      <div 
+        className="w-full border rounded p-2 text-sm cursor-pointer bg-white"
+        onClick={() => { setOpen(!open); setSearch(''); }}
+      >
+        {value || placeholder}
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)}></div>
+          <div className="absolute z-20 w-full mt-1 bg-white border rounded shadow-lg max-h-48 overflow-y-auto">
+            <input 
+              type="text" 
+              className="w-full p-2 border-b text-sm focus:outline-none sticky top-0 bg-white" 
+              placeholder="Search..."
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {filtered.length === 0 && <div className="p-2 text-sm text-gray-500">No options found</div>}
+            {filtered.map(opt => (
+              <div 
+                key={opt}
+                className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                  onChange(opt);
+                  setOpen(false);
+                }}
+              >
+                {opt}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const [errorModal, setErrorModal] = useState<{isOpen: boolean, message: string}>({isOpen: false, message: ''});
   const [actionModal, setActionModal] = useState<{isOpen: boolean, id: string, action: string, type: 'confirm' | 'error', message: string}>({isOpen: false, id: '', action: '', type: 'confirm', message: ''});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [viewCustomer, setViewCustomer] = useState<any>(null);
+  const [toastMessage, setToastMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
     vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
@@ -46,8 +105,10 @@ export default function CustomersPage() {
         name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
         vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
       });
-    } catch (err) {
-      setErrorModal({isOpen: true, message: 'Error creating customer'});
+      setToastMessage({ type: 'success', text: 'Customer created successfully.' });
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      setErrorModal({isOpen: true, message: err?.message || 'Error creating customer'});
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +134,20 @@ export default function CustomersPage() {
     const q = searchQuery.toLowerCase();
     return c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q);
   });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+  
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedCustomers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -111,10 +186,10 @@ export default function CustomersPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                  <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">Loading...</td></tr>
-              ) : filtered.length === 0 ? (
+              ) : paginatedCustomers.length === 0 ? (
                  <tr><td colSpan={5} className="p-8 text-center text-sm text-slate-500">No Records Found.</td></tr>
               ) : (
-                filtered.map((c) => (
+                paginatedCustomers.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-900">{c.name}</td>
                     <td className="p-4 text-sm text-slate-700">{c.email}</td>
@@ -128,7 +203,10 @@ export default function CustomersPage() {
                        </span>
                     </td>
                     <td className="p-4 text-sm text-slate-700">{new Date(c.joined).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                    <td className="p-4 text-right flex gap-2 justify-end">
+                    <td className="p-4 text-right flex gap-2 justify-end items-center">
+                       <button onClick={() => setViewCustomer(c)} className="text-slate-500 hover:text-blue-600 transition-colors p-1" title="View Customer Details">
+                         <Eye className="w-4 h-4" />
+                       </button>
                        {c.status !== 'active' && (
                          <button onClick={() => setActionModal({isOpen: true, id: c.id, action: 'verify', type: 'confirm', message: 'Are you sure you want to verify this customer?'})} className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">Verify</button>
                        )}
@@ -147,6 +225,16 @@ export default function CustomersPage() {
               )}
             </tbody>
           </table>
+          
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-white">
+              <span className="text-sm text-slate-500">Page {currentPage} of {totalPages}</span>
+              <div className="flex gap-2">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Prev</button>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Next</button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -167,8 +255,8 @@ export default function CustomersPage() {
            <h3 className="text-sm font-bold border-b pb-1 mt-4">Address Details</h3>
            <div className="grid grid-cols-2 gap-4">
              <div className="col-span-2"><label className="block text-xs font-semibold mb-1">Address</label><input className="w-full border rounded p-2 text-sm" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">City</label><input className="w-full border rounded p-2 text-sm" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">State</label><input className="w-full border rounded p-2 text-sm" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} /></div>
+             <div><label className="block text-xs font-semibold mb-1">City</label><SearchableSelect value={formData.city} onChange={v => setFormData({...formData, city: v})} options={CITIES} placeholder="Select City" /></div>
+             <div><label className="block text-xs font-semibold mb-1">State</label><SearchableSelect value={formData.state} onChange={v => setFormData({...formData, state: v})} options={STATES} placeholder="Select State" /></div>
              <div><label className="block text-xs font-semibold mb-1">Pincode</label><input className="w-full border rounded p-2 text-sm" value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} /></div>
            </div>
 
@@ -223,6 +311,94 @@ export default function CustomersPage() {
            <button onClick={() => setActionModal({isOpen: false, id: '', action: '', type: 'confirm', message: ''})} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Close</button>
         </div>
       </Modal>
+
+      <Modal isOpen={!!viewCustomer} onClose={() => setViewCustomer(null)} title="Customer Details" className="max-w-2xl">
+        {viewCustomer && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-slate-500 font-bold mb-1">Customer Name</p>
+                <p className="text-sm font-semibold text-slate-900">{viewCustomer.name || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-bold mb-1">Email</p>
+                <p className="text-sm font-semibold text-slate-900">{viewCustomer.email || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-bold mb-1">Phone</p>
+                <p className="text-sm font-semibold text-slate-900">{viewCustomer.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-bold mb-1">Status</p>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border inline-block ${
+                  viewCustomer.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 
+                  viewCustomer.status === 'suspended' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                  'bg-red-50 text-red-700 border-red-100'
+                }`}>
+                  {viewCustomer.status || 'Unknown'}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-bold mb-1">Created Date</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {viewCustomer.joined ? new Date(viewCustomer.joined).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-sm font-bold text-[#17307a] mb-3">Location Information</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 font-bold mb-1">Address</p>
+                  <p className="text-sm font-semibold text-slate-900">{viewCustomer.address || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-bold mb-1">City / State</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {[viewCustomer.city, viewCustomer.state].filter(Boolean).join(', ') || 'N/A'}
+                    {viewCustomer.pincode ? ` - ${viewCustomer.pincode}` : ''}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {(viewCustomer.vehicleNumber || viewCustomer.vehicleModel || viewCustomer.vehicleBrand) && (
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-sm font-bold text-[#17307a] mb-3">Vehicle Details</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {viewCustomer.vehicleNumber && (
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold mb-1">Vehicle Number</p>
+                      <p className="text-sm font-semibold text-slate-900">{viewCustomer.vehicleNumber}</p>
+                    </div>
+                  )}
+                  {viewCustomer.vehicleBrand && (
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold mb-1">Brand</p>
+                      <p className="text-sm font-semibold text-slate-900">{viewCustomer.vehicleBrand}</p>
+                    </div>
+                  )}
+                  {viewCustomer.vehicleModel && (
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold mb-1">Model / Type</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {[viewCustomer.vehicleModel, viewCustomer.vehicleType].filter(Boolean).join(' - ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {toastMessage && (
+        <div className={`fixed bottom-6 right-6 p-4 rounded-lg shadow-xl text-white font-bold z-50 flex items-center gap-3 transition-all transform translate-y-0 ${toastMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          {toastMessage.text}
+        </div>
+      )}
     </div>
   );
 }

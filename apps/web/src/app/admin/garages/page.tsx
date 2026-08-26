@@ -19,6 +19,8 @@ export default function AllGaragesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -108,19 +110,17 @@ export default function AllGaragesPage() {
     if (g.approvalStatus === 'suspended') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-purple-50 text-purple-600 border-purple-100">Suspended</span>;
     }
-    if (!g.approvalStatus || g.approvalStatus === 'pending') {
-      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-orange-50 text-orange-600 border-orange-100">Pending Approval</span>;
+    const isApproved = g.approvalStatus === 'approved' || g.isApproved === true;
+    if (!isApproved) {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-orange-50 text-orange-600 border-orange-100">Pending</span>;
     }
-    // Stage 1 completed: Approved (not verified yet)
     if (g.verificationStatus !== 'verified') {
       return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-blue-50 text-blue-600 border-blue-100">Approved</span>;
     }
-    // Stage 3 explicitly activated
-    if (g.approvalStatus === 'active') {
-      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-green-50 text-green-600 border-green-100">Active</span>;
+    if (g.status !== 'active') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-teal-50 text-teal-700 border-teal-200">Verified</span>;
     }
-    // Stage 2 completed: Verified (inactive)
-    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-teal-50 text-teal-700 border-teal-200">Verified</span>;
+    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-green-50 text-green-600 border-green-100">Active</span>;
   };
 
   const submitEdit = async () => {
@@ -178,7 +178,7 @@ export default function AllGaragesPage() {
 
   const totalGarages = garages.length;
   const approvedGarages = garages.filter(g => g.approvalStatus === 'approved').length;
-  const pendingApprovals = garages.filter(g => g.approvalStatus === 'pending').length;
+  const pendingApprovals = garages.filter(g => !g.approvalStatus || g.approvalStatus === 'pending').length;
   const suspendedGarages = garages.filter(g => g.approvalStatus === 'suspended').length;
 
   const formatTime = (isoString: string) => {
@@ -202,6 +202,20 @@ export default function AllGaragesPage() {
       const dateB = new Date(b.createdAt || 0).getTime();
       return dateB - dateA;
     });
+
+  const totalPages = Math.ceil(filteredGarages.length / itemsPerPage) || 1;
+  
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredGarages.length, totalPages, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const paginatedGarages = filteredGarages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -267,12 +281,12 @@ export default function AllGaragesPage() {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">Loading garages...</td>
                 </tr>
-            ) : filteredGarages.length === 0 ? (
+            ) : paginatedGarages.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">{searchQuery ? 'No garages found matching your search.' : 'No garages registered yet.'}</td>
                 </tr>
             ) : (
-                filteredGarages.map(g => (
+                paginatedGarages.map(g => (
                 <tr key={g.id} className="hover:bg-slate-50 bg-white transition-colors">
                     <td className="p-4">
                     <div className="flex gap-3 items-center">
@@ -304,6 +318,14 @@ export default function AllGaragesPage() {
             )}
           </tbody>
         </table>
+
+        <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-white">
+          <span className="text-sm text-slate-500">Page {currentPage} of {totalPages}</span>
+          <div className="flex gap-2">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Prev</button>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Next</button>
+          </div>
+        </div>
       </Card>
 
       <Modal isOpen={!!selectedGarage} onClose={() => setSelectedGarage(null)} title="Garage Details" className="max-w-2xl">
@@ -314,10 +336,7 @@ export default function AllGaragesPage() {
                 <p className="text-xs text-slate-500 font-bold mb-1">Garage Name</p>
                 <p className="text-sm font-semibold text-slate-900">{selectedGarage.name}</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Garage ID</p>
-                <p className="text-xs font-mono text-slate-700 bg-slate-100 p-1 rounded inline-block">{selectedGarage.id}</p>
-              </div>
+
               <div>
                 <p className="text-xs text-slate-500 font-bold mb-1">Owner Name</p>
                 <p className="text-sm font-semibold text-slate-900">{selectedGarage.ownerName || 'N/A'}</p>
@@ -442,21 +461,21 @@ export default function AllGaragesPage() {
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-slate-700 font-bold text-xs">3. Status:</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                        (selectedGarage.approvalStatus !== 'approved' && selectedGarage.approvalStatus !== 'active') || selectedGarage.verificationStatus !== 'verified'
+                        selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
                           ? 'bg-slate-100 text-slate-400 border-slate-200'
-                          : selectedGarage.approvalStatus === 'active' 
+                          : selectedGarage.status === 'active' 
                           ? 'bg-green-50 text-green-600 border-green-200' 
                           : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}>
-                        {(selectedGarage.approvalStatus !== 'approved' && selectedGarage.approvalStatus !== 'active') || selectedGarage.verificationStatus !== 'verified'
+                        {selectedGarage.approvalStatus !== 'approved' || selectedGarage.verificationStatus !== 'verified'
                           ? 'Inactive (Locked)' 
-                          : (selectedGarage.approvalStatus === 'active' ? 'Active' : 'Inactive')}
+                          : (selectedGarage.status === 'active' ? 'Active' : 'Inactive')}
                       </span>
                     </div>
                     {/* Action buttons for Stage 3 - available ONLY after Approval + Verification are completed */}
-                    {(selectedGarage.approvalStatus === 'approved' || selectedGarage.approvalStatus === 'active') && selectedGarage.verificationStatus === 'verified' ? (
+                    {selectedGarage.approvalStatus === 'approved' && selectedGarage.verificationStatus === 'verified' ? (
                       <div className="flex gap-2">
-                        {selectedGarage.approvalStatus !== 'active' ? (
+                        {selectedGarage.status !== 'active' ? (
                           <button
                             onClick={() => triggerAction(selectedGarage.id, 'status', 'activate')}
                             disabled={isSubmitting}
