@@ -88,7 +88,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
                  ORDER BY gd.created_at DESC LIMIT 1),
                 'unverified'
               ) as "verificationStatus",
-              g.created_at as "createdAt", g.city, g.state, g.postal_code as pincode, g.specializations,
+              g.created_at as "createdAt", g.updated_at as "updatedAt", g.city, g.state, g.postal_code as pincode, g.specializations,
               u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail",
               u.status as "userStatus"
        FROM garages g
@@ -281,7 +281,7 @@ adminRouter.post('/onboarding/garages/:id/verify-status', async (req, res) => {
 adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
   try {
     const { action } = req.params;
-    if (!['approve', 'reject', 'suspend', 'activate', 'deactivate'].includes(action)) {
+    if (!['approve', 'reject', 'suspend', 'restore', 'activate', 'deactivate'].includes(action)) {
       return error(res, 'Invalid action', 'INVALID_ACTION', 400);
     }
     
@@ -325,6 +325,14 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
       result = await query(
         `UPDATE garages 
          SET approval_status = 'suspended', is_approved = false 
+         WHERE id = $1 
+         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
+        [req.params.id]
+      );
+    } else if (action === 'restore') {
+      result = await query(
+        `UPDATE garages 
+         SET approval_status = 'approved', is_approved = true 
          WHERE id = $1 
          RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
         [req.params.id]

@@ -1,9 +1,9 @@
 
 'use client';
 import { Card } from '@/components/common/card';
-import { Search, Filter, Download, Plus, MoreVertical, Eye, Edit2, PauseCircle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
+import { Search, Filter, Download, Plus, MoreVertical, Eye, Edit2, PauseCircle, CheckCircle2, Clock, Trash2, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/common/modal';
@@ -69,7 +69,7 @@ export default function AllGaragesPage() {
       const garagesData = await apiClient.get<any[]>('/admin/onboarding/garages');
       setGarages(garagesData);
       const updated = garagesData.find((g: any) => g.id === id);
-      if (updated) {
+      if (updated && selectedGarage?.id === id) {
         setSelectedGarage(updated);
       }
       
@@ -86,7 +86,7 @@ export default function AllGaragesPage() {
   };
 
   const triggerAction = (id: string, stage: 'approval' | 'verification' | 'status', action: string) => {
-    const isDestructive = action === 'reject' || action === 'deactivate';
+    const isDestructive = action === 'reject' || action === 'deactivate' || action === 'suspend';
     if (isDestructive) {
       setConfirmModal({
         isOpen: true,
@@ -95,8 +95,10 @@ export default function AllGaragesPage() {
         action,
         title: action === 'reject' 
           ? `Reject Garage ${stage === 'approval' ? 'Approval' : 'Verification'}` 
-          : 'Set Garage Inactive',
-        warningMessage: 'Are you sure you want to make this change? This garage may currently have customers and bookings.',
+          : action === 'suspend' ? 'Suspend Garage?' : 'Set Garage Inactive',
+        warningMessage: action === 'suspend' 
+          ? 'Are you sure you want to suspend this garage? This garage will be removed from the active garage listings and moved to Suspended Garages.' 
+          : 'Are you sure you want to make this change? This garage may currently have customers and bookings.',
       });
     } else {
       handleStageAction(id, stage, action);
@@ -180,6 +182,13 @@ export default function AllGaragesPage() {
   const approvedGarages = garages.filter(g => g.approvalStatus === 'approved').length;
   const pendingApprovals = garages.filter(g => !g.approvalStatus || g.approvalStatus === 'pending').length;
   const suspendedGarages = garages.filter(g => g.approvalStatus === 'suspended').length;
+  const activeGarages = garages.filter(g => 
+    g.approvalStatus !== 'rejected' && 
+    g.approvalStatus !== 'suspended' && 
+    (g.approvalStatus === 'approved' || g.isApproved === true) && 
+    g.verificationStatus === 'verified' && 
+    g.status === 'active'
+  ).length;
 
   const formatTime = (isoString: string) => {
     if (!isoString) return '';
@@ -187,6 +196,7 @@ export default function AllGaragesPage() {
   };
 
   const filteredGarages = garages
+    .filter(g => g.approvalStatus !== 'suspended')
     .filter(g => {
       if (!searchQuery) return true;
       const sq = searchQuery.toLowerCase();
@@ -217,6 +227,28 @@ export default function AllGaragesPage() {
 
   const paginatedGarages = filteredGarages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const pageButtons = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+    if (currentPage <= 3) {
+      return [1, 2, 3, 'ellipsis', totalPages] as const;
+    }
+    if (currentPage >= totalPages - 2) {
+      return [
+        1,
+        'ellipsis',
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ] as const;
+    }
+    return [1, 'ellipsis', currentPage, 'ellipsis-2', totalPages] as const;
+  }, [currentPage, totalPages]);
+
+  const startIndex = filteredGarages.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredGarages.length);
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
@@ -227,7 +259,7 @@ export default function AllGaragesPage() {
         <Link href="/admin/garages/register" className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-blue-700 transition-colors"><Plus className="w-4 h-4"/> Register Garage</Link>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-5 gap-4 mb-6">
         <Card className="p-5 bg-white border border-blue-100 flex items-center gap-4 shadow-sm">
           <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><div className="text-xl font-bold">G</div></div>
           <div>
@@ -240,6 +272,13 @@ export default function AllGaragesPage() {
           <div>
             <p className="text-xs font-bold text-slate-500 mb-0.5">Approved Garages</p>
             <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : approvedGarages}</p>
+          </div>
+        </Card>
+        <Card className="p-5 bg-white border border-teal-100 flex items-center gap-4 shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center"><Activity className="w-6 h-6"/></div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 mb-0.5">Active Garages</p>
+            <p className="text-2xl font-black text-[#17307a]">{loading ? '-' : activeGarages}</p>
           </div>
         </Card>
         <Card className="p-5 bg-white border border-orange-100 flex items-center gap-4 shadow-sm">
@@ -310,6 +349,7 @@ export default function AllGaragesPage() {
                     <div className="flex gap-1.5 justify-center">
                         <button onClick={() => setSelectedGarage(g)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-500 border border-slate-200 bg-white" title="View"><Eye className="w-3.5 h-3.5"/></button>
                         <button onClick={() => setEditingGarage({...g})} className="p-1.5 rounded-md hover:bg-orange-50 text-orange-500 border border-slate-200 bg-white" title="Edit"><Edit2 className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => triggerAction(g.id, 'status', 'suspend')} className="p-1.5 rounded-md hover:bg-purple-50 text-purple-500 border border-slate-200 bg-white" title="Suspend"><PauseCircle className="w-3.5 h-3.5"/></button>
                         <button onClick={() => confirmDelete(g)} className="p-1.5 rounded-md hover:bg-red-50 text-red-500 border border-slate-200 bg-white" title="Delete"><Trash2 className="w-3.5 h-3.5"/></button>
                     </div>
                     </td>
@@ -319,11 +359,51 @@ export default function AllGaragesPage() {
           </tbody>
         </table>
 
-        <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-white">
-          <span className="text-sm text-slate-500">Page {currentPage} of {totalPages}</span>
-          <div className="flex gap-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Prev</button>
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Next</button>
+        <div className="p-4 border-t border-slate-100 grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center bg-white rounded-b-xl">
+          <div className="hidden lg:block" />
+          <div className="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((current) => Math.max(1, current - 1))}
+              disabled={currentPage === 1}
+              className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            {pageButtons.map((entry, index) =>
+              entry === 'ellipsis' || entry === 'ellipsis-2' ? (
+                <div
+                  key={`${entry}-${index}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[12px] font-semibold text-[#6173a1]"
+                >
+                  ...
+                </div>
+              ) : (
+                <button
+                  key={entry}
+                  type="button"
+                  onClick={() => setCurrentPage(entry as number)}
+                  className={`flex h-10 w-10 items-center justify-center rounded-[12px] border text-[12px] font-semibold ${
+                    entry === currentPage
+                      ? 'border-[#1a56db] bg-[#1a56db] text-white shadow-[0_10px_20px_rgba(26,86,219,0.18)]'
+                      : 'border-[#dbe6ff] bg-white text-[#6173a1]'
+                  }`}
+                >
+                  {entry}
+                </button>
+              )
+            )}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((current) => Math.min(totalPages, current + 1))}
+              disabled={currentPage === totalPages}
+              className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="text-center text-[12.5px] font-medium text-[#4f67a2] lg:text-right">
+            Showing {startIndex} - {endIndex} of {filteredGarages.length} garages
           </div>
         </div>
       </Card>
@@ -519,8 +599,8 @@ export default function AllGaragesPage() {
             <button 
               onClick={() => handleStageAction(confirmModal.id, confirmModal.stage, confirmModal.action)} 
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-bold text-white rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
-              Confirm
+              className={`px-4 py-2 text-sm font-bold text-white rounded-lg transition-colors disabled:opacity-50 ${confirmModal.action === 'suspend' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700'}`}>
+              {confirmModal.action === 'suspend' ? 'Suspend Garage' : 'Confirm'}
             </button>
           </div>
         </div>

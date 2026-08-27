@@ -2,7 +2,7 @@
 import { RoleGuard } from '@/components/common/role-guard';
 import { Card } from '@/components/common/card';
 import { Modal } from '@/components/common/modal';
-import { Users, Building2, ClipboardCheck, CalendarRange, ChevronRight, MoreVertical, Search, Bell, MessageSquare, Plus, FileText, CheckCircle2, Activity, MapPin } from 'lucide-react';
+import { Users, Building2, ClipboardCheck, CalendarRange, ChevronRight, MoreVertical, Search, Bell, MessageSquare, Plus, FileText, CheckCircle2, Activity, MapPin, Eye, Check, X } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -329,11 +329,11 @@ export default function AdminDashboardPage() {
                             </span>
                           </td>
                           <td className="px-2 py-3 text-xs sm:text-sm text-slate-500">{formatTime(g.createdAt)}</td>
-                          <td className="px-2 py-3 text-right">
-                            <div className="flex flex-wrap justify-end gap-1.5 sm:gap-2">
-                              <button onClick={() => setSelectedGarage(g)} className="text-[10px] sm:text-xs font-bold text-slate-600 border border-slate-200 bg-white px-2 py-1 rounded hover:bg-slate-50 transition-colors shadow-sm">View</button>
-                              <button onClick={() => setActionModal({ isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?` })} className="text-[10px] sm:text-xs font-bold text-white bg-green-600 px-2 py-1 rounded hover:bg-green-700 transition-colors shadow-sm">Approve</button>
-                              <button onClick={() => setActionModal({ isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?` })} className="text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors">Reject</button>
+                          <td className="px-2 py-3 text-right whitespace-nowrap">
+                            <div className="flex flex-nowrap justify-end gap-1.5 sm:gap-2">
+                              <button onClick={() => setSelectedGarage(g)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-500 border border-slate-200 bg-white transition-colors shadow-sm shrink-0" title="View"><Eye className="w-3.5 h-3.5"/></button>
+                              <button onClick={() => setActionModal({ isOpen: true, id: g.id, action: 'approve', type: 'confirm', message: `Are you sure you want to approve ${g.name}?` })} className="p-1.5 rounded-md hover:bg-green-50 text-green-600 border border-slate-200 bg-white transition-colors shadow-sm shrink-0" title="Approve"><Check className="w-3.5 h-3.5"/></button>
+                              <button onClick={() => setActionModal({ isOpen: true, id: g.id, action: 'reject', type: 'confirm', message: `Are you sure you want to reject ${g.name}?` })} className="p-1.5 rounded-md hover:bg-red-50 text-red-500 border border-slate-200 bg-white transition-colors shadow-sm shrink-0" title="Reject"><X className="w-3.5 h-3.5"/></button>
                             </div>
                           </td>
                         </tr>
@@ -482,12 +482,14 @@ export default function AdminDashboardPage() {
                               Suspend
                             </button>
                           )}
-                          <Link
-                            href="/admin/garages"
-                            className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-bold hover:bg-slate-200 transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGarage(g)}
+                            className="p-1.5 rounded-md hover:bg-blue-50 text-blue-500 border border-slate-200 bg-white"
+                            title="View"
                           >
-                            View
-                          </Link>
+                            <Eye className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>

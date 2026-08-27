@@ -34,7 +34,11 @@ function mapGarageDbRow(g: any) {
 garagesRouter.get('/', async (req, res) => {
   try {
     const location = req.query.location as string;
-    const conditions: string[] = ["g.is_approved = true"];
+    const conditions: string[] = [
+      "g.is_approved = true",
+      "(g.approval_status IS NULL OR g.approval_status NOT IN ('suspended', 'rejected', 'deleted'))",
+      "(SELECT gd.verification_status FROM garage_documents gd WHERE gd.garage_id = g.id ORDER BY gd.created_at DESC LIMIT 1) = 'approved'"
+    ];
     const params: any[] = [];
     
     if (location && location !== 'All') {
@@ -123,7 +127,11 @@ garagesRouter.get('/search', async (req, res) => {
   try {
     const { rating, specialization, price_range, lat, lng, distance, location } = req.query;
 
-    const conditions: string[] = ["g.is_approved = true"];
+    const conditions: string[] = [
+      "g.is_approved = true",
+      "(g.approval_status IS NULL OR g.approval_status NOT IN ('suspended', 'rejected', 'deleted'))",
+      "(SELECT gd.verification_status FROM garage_documents gd WHERE gd.garage_id = g.id ORDER BY gd.created_at DESC LIMIT 1) = 'approved'"
+    ];
     const params: any[] = [];
 
     if (location && location !== 'All') {

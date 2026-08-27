@@ -1,8 +1,8 @@
 
 'use client';
 import { Card } from '@/components/common/card';
-import { Search, UserPlus, Eye } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Search, UserPlus, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Modal } from '@/components/common/modal';
 import { CITIES } from '@/components/home/top-navbar';
@@ -149,6 +149,28 @@ export default function CustomersPage() {
 
   const paginatedCustomers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const pageButtons = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+    if (currentPage <= 3) {
+      return [1, 2, 3, 'ellipsis', totalPages] as const;
+    }
+    if (currentPage >= totalPages - 2) {
+      return [
+        1,
+        'ellipsis',
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ] as const;
+    }
+    return [1, 'ellipsis', currentPage, 'ellipsis-2', totalPages] as const;
+  }, [currentPage, totalPages]);
+
+  const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, filtered.length);
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <div className="mb-6 flex justify-between items-center">
@@ -227,11 +249,51 @@ export default function CustomersPage() {
           </table>
           
           {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-white">
-              <span className="text-sm text-slate-500">Page {currentPage} of {totalPages}</span>
-              <div className="flex gap-2">
-                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Prev</button>
-                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 bg-slate-100 rounded text-sm disabled:opacity-50 hover:bg-slate-200 transition-colors">Next</button>
+            <div className="p-4 border-t border-slate-100 grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center bg-white rounded-b-xl">
+              <div className="hidden lg:block" />
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((current) => Math.max(1, current - 1))}
+                  disabled={currentPage === 1}
+                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {pageButtons.map((entry, index) =>
+                  entry === 'ellipsis' || entry === 'ellipsis-2' ? (
+                    <div
+                      key={`${entry}-${index}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[12px] font-semibold text-[#6173a1]"
+                    >
+                      ...
+                    </div>
+                  ) : (
+                    <button
+                      key={entry}
+                      type="button"
+                      onClick={() => setCurrentPage(entry as number)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-[12px] border text-[12px] font-semibold ${
+                        entry === currentPage
+                          ? 'border-[#1a56db] bg-[#1a56db] text-white shadow-[0_10px_20px_rgba(26,86,219,0.18)]'
+                          : 'border-[#dbe6ff] bg-white text-[#6173a1]'
+                      }`}
+                    >
+                      {entry}
+                    </button>
+                  )
+                )}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="text-center text-[12.5px] font-medium text-[#4f67a2] lg:text-right">
+                Showing {startIndex} - {endIndex} of {filtered.length} customers
               </div>
             </div>
           )}
