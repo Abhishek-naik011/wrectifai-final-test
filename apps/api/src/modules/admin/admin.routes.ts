@@ -77,7 +77,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
                 ELSE 'pending'
               END as "approvalStatus", 
               g.is_approved as "isApproved",
-              COALESCE(g.status, 'inactive') as "status",
+              'active' as "status",
               COALESCE(
                 (SELECT CASE 
                           WHEN gd.verification_status = 'approved' THEN 'verified'
@@ -294,7 +294,7 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
                 WHEN g.approval_status = 'approved' OR g.is_approved = true THEN 'approved'
                 ELSE 'pending'
               END as "approvalStatus", 
-              COALESCE(g.status, 'inactive') as "status",
+              'active' as "status",
               COALESCE((SELECT CASE WHEN gd.verification_status = 'approved' THEN 'verified' ELSE gd.verification_status END 
                FROM garage_documents gd WHERE gd.garage_id = g.id ORDER BY gd.created_at DESC LIMIT 1), 'unverified') as "verificationStatus"
        FROM garages g WHERE g.id = $1`,
