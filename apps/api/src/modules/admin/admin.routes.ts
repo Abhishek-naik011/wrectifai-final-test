@@ -77,7 +77,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
                 ELSE 'pending'
               END as "approvalStatus", 
               g.is_approved as "isApproved",
-              'active' as "status",
+              CASE WHEN g.is_approved = true THEN 'active' ELSE 'inactive' END as "status",
               COALESCE(
                 (SELECT CASE 
                           WHEN gd.verification_status = 'approved' THEN 'verified'
@@ -294,7 +294,7 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
                 WHEN g.approval_status = 'approved' OR g.is_approved = true THEN 'approved'
                 ELSE 'pending'
               END as "approvalStatus", 
-              'active' as "status",
+              CASE WHEN g.is_approved = true THEN 'active' ELSE 'inactive' END as "status",
               COALESCE((SELECT CASE WHEN gd.verification_status = 'approved' THEN 'verified' ELSE gd.verification_status END 
                FROM garage_documents gd WHERE gd.garage_id = g.id ORDER BY gd.created_at DESC LIMIT 1), 'unverified') as "verificationStatus"
        FROM garages g WHERE g.id = $1`,
@@ -308,7 +308,7 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
     if (action === 'approve') {
       result = await query(
         `UPDATE garages 
-         SET approval_status = 'approved', is_approved = true 
+         SET approval_status = 'approved' 
          WHERE id = $1 
          RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved"`,
         [req.params.id]
@@ -335,9 +335,9 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
       }
       result = await query(
         `UPDATE garages 
-         SET status = 'active' 
+         SET is_approved = true 
          WHERE id = $1 
-         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", status`,
+         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", 'active' as status`,
         [req.params.id]
       );
     } else if (action === 'deactivate') {
@@ -346,9 +346,9 @@ adminRouter.post('/onboarding/garages/:id/:action', async (req, res) => {
       }
       result = await query(
         `UPDATE garages 
-         SET status = 'inactive' 
+         SET is_approved = false 
          WHERE id = $1 
-         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", status`,
+         RETURNING id, approval_status as "approvalStatus", is_approved as "isApproved", 'inactive' as status`,
         [req.params.id]
       );
     }
