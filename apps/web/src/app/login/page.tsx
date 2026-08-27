@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth, User } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -312,8 +313,16 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-6 sm:p-8 shadow-[0_20px_50px_rgba(23,48,122,0.08)] relative z-10">
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-[#1a56db]/10 text-[#1a56db] mb-3">
-            <ShieldCheck className="h-6 w-6" />
+          <div className="relative h-[62px] w-[180px] overflow-hidden mx-auto mb-2">
+            <Image
+              src="/fin_logo.png"
+              alt="WrectifAI"
+              width={1024}
+              height={1024}
+              priority
+              className="absolute left-0 top-[-38px] h-[150px] w-full object-contain object-center"
+              style={{ width: '100%', height: '150px' }}
+            />
           </div>
           <h1 className="text-[22px] font-bold text-[#17307a] tracking-tight">Welcome Back</h1>
           <p className="text-[12.5px] text-[#5f7099] mt-1 font-medium">Log in to manage your account</p>
