@@ -97,10 +97,10 @@ function OverviewPanel() {
   return (
     <Card id="overview" className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+        <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           My Overview
         </h2>
-        <div className="flex h-9 items-center gap-2 rounded-[10px] border border-[#dbe6ff] px-3 text-[11.5px] font-semibold text-[#17307a]">
+        <div className="flex h-9 items-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] px-3 text-[11.5px] font-semibold text-[#17307a] dark:text-white">
           This Month
           <ChevronDown className="h-4 w-4" />
         </div>
@@ -118,11 +118,11 @@ function OverviewPanel() {
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-[#17307a]">{title}</p>
+              <p className="text-[12px] font-semibold text-[#17307a] dark:text-white">{title}</p>
               <div className="mt-0.5 flex items-end gap-2">
-                <span className="text-[14.5px] font-semibold text-[#17307a]">{value}</span>
+                <span className="text-[14.5px] font-semibold text-[#17307a] dark:text-white">{value}</span>
               </div>
-              <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">{description}</p>
+              <p className="mt-0.5 text-[11px] font-normal text-[#17307a] dark:text-white">{description}</p>
             </div>
             <a href={href} className="self-center text-[11.5px] font-semibold text-[#1a56db] cursor-pointer hover:underline">{cta}</a>
           </div>
@@ -134,15 +134,15 @@ function OverviewPanel() {
 
 function EmergencyHelp() {
   return (
-    <Card id="emergency" className="p-4 border-[#fff0f0] bg-[#fffbfa]">
+    <Card id="emergency" className="p-4 border-[#fff0f0] dark:border-[#2A3446] bg-[#fffbfa] dark:bg-[#1A2233]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#ff3b30]">
             Emergency Help
           </h2>
-          <p className="mt-1 text-[11px] font-normal text-[#17307a]">Quick assistance, anytime</p>
+          <p className="mt-1 text-[11px] font-normal text-[#17307a] dark:text-white">Quick assistance, anytime</p>
         </div>
-        <div className="rounded-full bg-[#ffeeee] px-3 py-1 text-[11.5px] font-bold text-[#ff3b30]">
+        <div className="rounded-full bg-[#ffeeee] dark:bg-red-900/30 px-3 py-1 text-[11.5px] font-bold text-[#ff3b30]">
           24/7
         </div>
       </div>
@@ -154,7 +154,7 @@ function EmergencyHelp() {
           return (
             <div
               key={title}
-              className="flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[14px] border border-[#f0f4ff] bg-white px-1 py-1 text-center shadow-[0_4px_12px_rgba(20,44,112,0.03)] cursor-pointer hover:border-[#ffcccc] transition-all hover:bg-[#fffdfd]"
+              className="flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[14px] border border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-1 py-1 text-center shadow-[0_4px_12px_rgba(20,44,112,0.03)] cursor-pointer hover:border-[#ffcccc] dark:hover:border-slate-700 transition-all hover:bg-[#fffdfd] dark:hover:bg-slate-800"
             >
               <div
                 className={cn(
@@ -171,7 +171,7 @@ function EmergencyHelp() {
                   style={{ width: `${size}px`, height: `${size}px` }}
                 />
               </div>
-              <span className="max-w-[72px] text-[10.5px] font-semibold leading-tight text-[#17307a]">
+              <span className="max-w-[72px] text-[10.5px] font-semibold leading-tight text-[#17307a] dark:text-white">
                 {title}
               </span>
             </div>
@@ -215,7 +215,7 @@ function OfferCard({
       <div className="grid min-h-[138px] grid-cols-[1.18fr_0.82fr] items-center">
         <div className="p-4 pr-0">
           <p className={cn('text-[11px] font-bold uppercase tracking-[0.02em]', theme.accentClass)}>{eyebrow}</p>
-          <p className="mt-2 text-[12px] font-semibold leading-6 text-[#17307a]">{title}</p>
+          <p className="mt-2 text-[12px] font-semibold leading-6 text-[#17307a] dark:text-white">{title}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className={cn('text-[11px] font-bold', theme.accentClass)}>Starting</span>
             <span className={cn('text-[14.5px] font-bold leading-none', theme.accentClass)}>{price}</span>
@@ -243,7 +243,7 @@ function OfferCard({
               />
             </>
           ) : (
-            <div className="m-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/50 bg-white/55 text-[#17307a] shadow-[0_12px_24px_rgba(20,44,112,0.15)] backdrop-blur">
+            <div className="m-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/50 bg-white/55 text-[#17307a] dark:text-white shadow-[0_12px_24px_rgba(20,44,112,0.15)] backdrop-blur">
               <Icon className="h-8 w-8" />
             </div>
           )}
@@ -298,9 +298,9 @@ function OffersPanel() {
   }, []);
 
   return (
-    <Card id="offers" className="p-4 border-[#f0f4ff] bg-white">
+    <Card id="offers" className="p-4 border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233]">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+        <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           Offers &amp; Promos
         </h2>
         <span className="cursor-pointer text-[11.5px] font-bold text-[#1a56db] hover:underline">

@@ -106,8 +106,8 @@ export function ShopPage() {
         {/* Main Content */}
         <div className="flex-1 space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Auto Parts Shop</h1>
-            <p className="text-slate-500 text-sm">Find the best parts and accessories for your vehicle</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Auto Parts Shop</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Find the best parts and accessories for your vehicle</p>
           </div>
 
           {/* Filters */}
@@ -120,7 +120,7 @@ export function ShopPage() {
                   "px-5 py-2 rounded-full text-sm font-semibold transition-colors",
                   selectedCategory === category 
                     ? 'bg-blue-600 text-white shadow-sm' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    : 'bg-white dark:bg-[#1A2233] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:bg-[#121826]'
                 )}
               >
                 {category}
@@ -133,18 +133,18 @@ export function ShopPage() {
             <div className="relative z-10">
               <h2 className="text-2xl font-bold text-white mb-2">Summer Mega Sale</h2>
               <p className="text-blue-100 mb-4 max-w-sm">Up to 40% off on all engine oils and maintenance products.</p>
-              <Button className="bg-white text-blue-900 hover:bg-slate-50">Shop Now</Button>
+              <Button className="bg-white dark:bg-[#1A2233] text-blue-900 hover:bg-slate-50 dark:bg-[#121826]">Shop Now</Button>
             </div>
           </Card>
 
           {/* Products Grid */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-900">Popular Products</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">Popular Products</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredProducts.map((product) => (
-                <Card key={product.id} className="p-4 flex flex-col group relative rounded-[16px] border-slate-200 hover:shadow-lg transition-shadow">
+                <Card key={product.id} className="p-4 flex flex-col group relative rounded-[16px] border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow">
                   <button 
                     onClick={() => toggleWishlist(product)} 
                     className={cn(
@@ -157,9 +157,9 @@ export function ShopPage() {
                   <div className="relative h-32 flex items-center justify-center mb-4">
                     <Image src={product.img} alt={product.name} width={100} height={100} className="object-contain group-hover:scale-110 transition-transform" />
                   </div>
-                  <h4 className="font-bold text-sm text-slate-900 line-clamp-2 h-10 mb-2">{product.name}</h4>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 h-10 mb-2">{product.name}</h4>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-slate-900">{product.price}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{product.price}</span>
                     <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{product.discount}</span>
                   </div>
                   <div className="flex items-center gap-1 text-xs font-semibold text-amber-500 mb-4">
@@ -176,37 +176,37 @@ export function ShopPage() {
 
         {/* Sidebar */}
         <div className="w-full lg:w-[300px] space-y-6">
-          <Card className="p-5 shadow-sm border-slate-100 rounded-[20px]">
-            <h3 className="font-bold text-slate-900 mb-4">Shop with Confidence</h3>
-            <ul className="space-y-4 text-sm text-slate-600">
+          <Card className="p-5 shadow-sm border-slate-100 dark:border-slate-800 rounded-[20px]">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Shop with Confidence</h3>
+            <ul className="space-y-4 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex gap-3">
                  <Shield className="w-5 h-5 text-blue-500 shrink-0" />
                  <div>
-                   <p className="font-bold text-slate-900">Genuine Parts</p>
-                   <p className="text-xs text-slate-500">100% authentic products</p>
+                   <p className="font-bold text-slate-900 dark:text-white">Genuine Parts</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">100% authentic products</p>
                  </div>
               </li>
               <li className="flex gap-3">
                  <CheckCircle className="w-5 h-5 text-blue-500 shrink-0" />
                  <div>
-                   <p className="font-bold text-slate-900">Best Prices</p>
-                   <p className="text-xs text-slate-500">Competitive prices guaranteed</p>
+                   <p className="font-bold text-slate-900 dark:text-white">Best Prices</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">Competitive prices guaranteed</p>
                  </div>
               </li>
               <li className="flex gap-3">
                  <Clock className="w-5 h-5 text-blue-500 shrink-0" />
                  <div>
-                   <p className="font-bold text-slate-900">Fast Delivery</p>
-                   <p className="text-xs text-slate-500">Quick delivery to your doorstep</p>
+                   <p className="font-bold text-slate-900 dark:text-white">Fast Delivery</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">Quick delivery to your doorstep</p>
                  </div>
               </li>
             </ul>
           </Card>
 
-          <Card className="p-5 shadow-sm border-slate-100 bg-blue-50/50 rounded-[20px]">
-            <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-slate-500 mb-4">Can&apos;t find what you&apos;re looking for? Our experts are here to help you.</p>
-            <Button variant="outline" className="w-full bg-white border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => router.push('/help-support')}>
+          <Card className="p-5 shadow-sm border-slate-100 dark:border-slate-800 bg-blue-50/50 rounded-[20px]">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">Need Help?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Can&apos;t find what you&apos;re looking for? Our experts are here to help you.</p>
+            <Button variant="outline" className="w-full bg-white dark:bg-[#1A2233] border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => router.push('/help-support')}>
               Contact Support
             </Button>
           </Card>

@@ -74,14 +74,14 @@ export function GarageMoreMenu({
         <span
           className={
             compact
-              ? 'flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[#dbe5ff] bg-white text-[#2451f6] transition-colors hover:bg-[#f5f8ff]'
+              ? 'flex h-[32px] w-[32px] items-center justify-center rounded-full border border-[#dbe5ff] bg-white dark:bg-[#1A2233] text-[#2451f6] transition-colors hover:bg-[#f5f8ff]'
               : smallTrigger
-              ? `flex h-[32px] w-[32px] items-center justify-center rounded-full border bg-white transition-colors ${
+              ? `flex h-[32px] w-[32px] items-center justify-center rounded-full border bg-white dark:bg-[#1A2233] transition-colors ${
                   open
                     ? 'border-[#1a56db] bg-[#f5f8ff] text-[#1a56db]'
                     : 'border-[#dbe5ff] text-[#1a56db] hover:bg-[#f5f8ff]'
                 }`
-              : `flex h-[48px] w-[48px] items-center justify-center rounded-full border bg-white transition-colors ${
+              : `flex h-[48px] w-[48px] items-center justify-center rounded-full border bg-white dark:bg-[#1A2233] transition-colors ${
                   open
                     ? 'border-[#1a56db] bg-[#f5f8ff] text-[#1a56db]'
                     : 'border-[#dfe7fb] text-[#1a56db] hover:bg-[#f5f8ff]'
@@ -97,7 +97,7 @@ export function GarageMoreMenu({
             className={
               smallTrigger
                 ? 'text-[10px] font-medium leading-4 text-[#1a56db]'
-                : 'text-[10.5px] leading-4 text-[#5f7099]'
+                : 'text-[10.5px] leading-4 text-[#5f7099] dark:text-slate-400'
             }
           >
             {triggerLabel}
@@ -106,14 +106,14 @@ export function GarageMoreMenu({
       </button>
 
       {open ? (
-        <div className="absolute left-1/2 top-[calc(100%+12px)] z-50 w-[205px] -translate-x-1/2 rounded-[16px] border border-[#e4ecff] bg-white p-1.5 shadow-[0_12px_30px_rgba(23,48,122,0.12)] text-left">
-          <div className="absolute left-1/2 top-[-6px] h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-l border-t border-[#e4ecff] bg-white" />
+        <div className="absolute left-1/2 top-[calc(100%+12px)] z-50 w-[205px] -translate-x-1/2 rounded-[16px] border border-[#e4ecff] bg-white dark:bg-[#1A2233] p-1.5 shadow-[0_12px_30px_rgba(23,48,122,0.12)] text-left">
+          <div className="absolute left-1/2 top-[-6px] h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-l border-t border-[#e4ecff] bg-white dark:bg-[#1A2233]" />
 
           <div className="relative z-10 flex flex-col gap-0.5">
             <button
               type="button"
               onClick={() => runAndClose(onViewGarageProfile)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <Store className="h-4 w-4 shrink-0 text-[#1ea15f]" />
               <span>View Garage Profile</span>
@@ -121,7 +121,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onViewReviews)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <Star className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>View Reviews</span>
@@ -129,7 +129,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onViewServices)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <ClipboardList className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>View Services</span>
@@ -137,7 +137,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onPriceBreakup)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <FileText className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>Price Breakup</span>
@@ -145,7 +145,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onCompareDetails)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <Scale className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>Compare Details</span>
@@ -153,7 +153,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onSaveGarage)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <Star className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>Save Garage</span>
@@ -161,7 +161,7 @@ export function GarageMoreMenu({
             <button
               type="button"
               onClick={() => runAndClose(onShareGarage)}
-              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] transition-colors hover:bg-[#f5f8ff]"
+              className="flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#17307a] dark:text-white transition-colors hover:bg-[#f5f8ff]"
             >
               <Share2 className="h-4 w-4 shrink-0 text-[#7a8bb8]" />
               <span>Share Garage</span>

@@ -21,7 +21,7 @@ export function AdminDashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   
   const pathname = usePathname() || '';
-  const basePath = pathname.startsWith('/admin') ? '/admin' : pathname.startsWith('/garage') ? '/garage' : '';
+  const basePath = pathname.startsWith('/admin') ? '/admin' : (pathname === '/garage' || pathname.startsWith('/garage/')) ? '/garage' : '';
   const roleKey = basePath === '/admin' ? 'admin' : basePath === '/garage' ? 'garage' : 'customer';
 
   const [theme, setTheme] = useState('light');
@@ -35,10 +35,18 @@ export function AdminDashboardShell({
     window.addEventListener('toggle-mobile-sidebar', handleToggleMobile);
 
     const stored = localStorage.getItem(`theme-${roleKey}`);
-    if (stored) setTheme(stored);
+    if (stored) {
+      setTheme(stored);
+      if (stored === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
 
     const onThemeChange = (e: any) => {
-      if (e.detail.role === roleKey) setTheme(e.detail.theme);
+      if (e.detail.role === roleKey) {
+        setTheme(e.detail.theme);
+        if (e.detail.theme === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      }
     };
     window.addEventListener('theme-change', onThemeChange);
 
@@ -49,7 +57,7 @@ export function AdminDashboardShell({
   }, [roleKey]);
 
   return (
-    <main id="top" className={cn("min-h-screen bg-[#f6f8fe]", theme === 'dark' ? 'dark text-foreground' : '')}>
+    <main id="top" className="min-h-screen bg-[#f6f8fe] dark:bg-[#0B0F19] text-foreground transition-colors duration-200">
       <div className="mx-auto max-w-[1600px] px-3 py-3 sm:px-4 lg:px-5 lg:h-screen lg:overflow-hidden lg:py-4">
         <div
           className={cn(

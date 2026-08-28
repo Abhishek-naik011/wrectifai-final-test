@@ -53,7 +53,7 @@ function SectionHeader({
 }) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
-      <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a]">{title}</h2>
+      <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">{title}</h2>
       {href ? (
         <Link href={href} className="text-[12px] font-semibold text-[#1a56db] hover:underline">
           {linkLabel}
@@ -121,14 +121,14 @@ function CategoriesModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto md:overflow-y-hidden bg-[rgba(10,18,45,0.24)] px-4 py-5 backdrop-blur-[1px]">
-      <div className="max-h-[calc(100vh-40px)] md:max-h-none w-full max-w-[740px] overflow-y-auto md:overflow-hidden rounded-[20px] border border-white/70 bg-white shadow-[0_24px_70px_rgba(16,35,86,0.18)]">
+      <div className="max-h-[calc(100vh-40px)] md:max-h-none w-full max-w-[740px] overflow-y-auto md:overflow-hidden rounded-[20px] border border-white/70 bg-white dark:bg-[#1A2233] shadow-[0_24px_70px_rgba(16,35,86,0.18)]">
         <div className="px-5 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+              <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
                 All Categories
               </h2>
-              <p className="mt-1 text-[11px] font-normal text-[#17307a]">
+              <p className="mt-1 text-[11px] font-normal text-[#17307a] dark:text-white">
                 Explore our wide range of services and products for your car
               </p>
             </div>
@@ -136,14 +136,14 @@ function CategoriesModal({
               type="button"
               onClick={onClose}
               aria-label="Close categories modal"
-              className="mt-0.5 text-[#17307a] transition-all hover:text-black hover:scale-110 active:scale-90 duration-150"
+              className="mt-0.5 text-[#17307a] dark:text-white transition-all hover:text-black hover:scale-110 active:scale-90 duration-150"
             >
               <X className="h-5 w-5 stroke-[2.5]" />
             </button>
           </div>
 
           <div className="mt-4">
-            <h3 className="text-[13px] font-semibold tracking-[-0.03em] text-[#17307a]">
+            <h3 className="text-[13px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
               Top Categories
             </h3>
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-7">
@@ -166,7 +166,7 @@ function CategoriesModal({
                         <Icon className="h-5.5 w-5.5" strokeWidth={1.8} />
                       </div>
                     )}
-                    <div className="max-w-[82px] text-[10.5px] font-semibold leading-[1.25] text-[#17307a]">
+                    <div className="max-w-[82px] text-[10.5px] font-semibold leading-[1.25] text-[#17307a] dark:text-white">
                       {label}
                     </div>
                   </Card>
@@ -176,7 +176,7 @@ function CategoriesModal({
           </div>
 
           <div className="mt-5">
-            <h3 className="text-[13px] font-semibold tracking-[-0.03em] text-[#17307a]">
+            <h3 className="text-[13px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
               More Categories
             </h3>
             <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
@@ -199,7 +199,7 @@ function CategoriesModal({
                         <Icon className="h-5 w-5 stroke-[1.8]" />
                       </div>
                     )}
-                    <div className="max-w-[124px] text-[10.5px] font-semibold leading-[1.35] text-[#17307a]">
+                    <div className="max-w-[124px] text-[10.5px] font-semibold leading-[1.35] text-[#17307a] dark:text-white">
                       {label === 'Vehicle Protection & Safety' ? (
                         <>
                           <span className="block whitespace-nowrap">Vehicle Protection</span>
@@ -217,14 +217,14 @@ function CategoriesModal({
 
           <Card className="mt-5 flex flex-col gap-3 rounded-[16px] border-[#e8eefc] bg-[linear-gradient(180deg,#f7faff_0%,#f2f6ff_100%)] px-4 py-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_6px_18px_rgba(26,86,219,0.08)]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_6px_18px_rgba(26,86,219,0.08)]">
                 <Sparkles className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h4 className="text-[12.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+                <h4 className="text-[12.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
                   Can&apos;t find what you&apos;re looking for?
                 </h4>
-                <p className="mt-0.5 text-[11px] font-normal text-[#17307a]">
+                <p className="mt-0.5 text-[11px] font-normal text-[#17307a] dark:text-white">
                   Let us help you find the right service for your car.
                 </p>
               </div>
@@ -362,7 +362,7 @@ function HeroBanner() {
 
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="min-w-max space-y-3.5">
-              <div className="rounded-[12px] bg-white p-1.5 shadow-[0_10px_24px_rgba(4,13,38,0.25)] max-w-[480px]">
+              <div className="rounded-[12px] bg-white dark:bg-[#1A2233] p-1.5 shadow-[0_10px_24px_rgba(4,13,38,0.25)] max-w-[480px]">
                 <div className="flex flex-col gap-2 md:flex-row">
                   <div className="relative flex-1 min-w-[280px]">
                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#526693]" />
@@ -418,7 +418,7 @@ function CategoryGrid({
   return (
     <section id="categories">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+        <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           Shop by Categories
         </h2>
         <button
@@ -449,7 +449,7 @@ function CategoryGrid({
                       <Icon className="h-6 w-6" strokeWidth={1.8} />
                     </div>
                   )}
-                  <div className="max-w-full text-[11.5px] font-semibold leading-[1.3] text-[#17307a] px-1">
+                  <div className="max-w-full text-[11.5px] font-semibold leading-[1.3] text-[#17307a] dark:text-white px-1">
                     {label}
                   </div>
                 </Card>
@@ -470,7 +470,7 @@ function MaintenanceStrip({
   return (
     <section id="maintenance">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a]">Recommended Preventive Maintenance Services</h2>
+        <h2 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">Recommended Preventive Maintenance Services</h2>
         <Link href="/services" className="text-[12px] font-semibold text-[#1a56db] hover:underline">
           View All
         </Link>
@@ -495,10 +495,10 @@ function MaintenanceStrip({
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h3 className="truncate whitespace-nowrap text-[9.5px] font-semibold leading-3 text-[#17307a]">
+                  <h3 className="truncate whitespace-nowrap text-[9.5px] font-semibold leading-3 text-[#17307a] dark:text-white">
                     {label}
                   </h3>
-                  <p className="mt-0.5 whitespace-nowrap text-[9px] font-normal leading-3 text-[#17307a]">{due}</p>
+                  <p className="mt-0.5 whitespace-nowrap text-[9px] font-normal leading-3 text-[#17307a] dark:text-white">{due}</p>
                 </div>
               </Card>
             </HoverComingSoon>
@@ -562,7 +562,7 @@ function GarageCard({
               e.stopPropagation();
               toggleFavorite(name);
             }}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md transition-transform hover:scale-110 active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-md transition-transform hover:scale-110 active:scale-95"
           >
             <Heart className={cn("h-4 w-4", favorite ? "fill-[#1a56db]" : "")} />
           </button>
@@ -574,8 +574,8 @@ function GarageCard({
         </div>
       </div>
       <div className="p-3 pb-2.5">
-        <h3 className="text-[13.5px] font-bold tracking-[-0.03em] text-[#17307a]">{name}</h3>
-        <div className="mt-1 flex items-center gap-1.5 text-[11px] font-normal text-[#17307a]">
+        <h3 className="text-[13.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">{name}</h3>
+        <div className="mt-1 flex items-center gap-1.5 text-[11px] font-normal text-[#17307a] dark:text-white">
           <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
           {Number(rating) > 0 ? (
             <>
@@ -586,14 +586,14 @@ function GarageCard({
             <span className="text-gray-400">No reviews yet</span>
           )}
         </div>
-        <div className="mt-1.5 space-y-1 text-[11px] font-normal text-[#17307a]">
+        <div className="mt-1.5 space-y-1 text-[11px] font-normal text-[#17307a] dark:text-white">
           <div className="flex items-center gap-1.5 truncate">
-            <MapPin className="h-3.5 w-3.5 shrink-0 text-[#17307a]" />
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-[#17307a] dark:text-white" />
             <span className="truncate">{location}</span>
           </div>
           <div className="flex items-center justify-between gap-2 pt-0.5">
             <div className="flex items-center gap-1.5 shrink-0">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-[#17307a]" />
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-[#17307a] dark:text-white" />
               <span>{distance || '2.5 km'}</span>
             </div>
             {price && <span className="font-bold text-[#16a34a]">{price}</span>}
@@ -694,7 +694,7 @@ function FeaturedGarages({
             type="button"
             onClick={() => scrollRow(scrollRef.current, -286)}
             aria-label="Show previous garages"
-            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -704,7 +704,7 @@ function FeaturedGarages({
             type="button"
             onClick={() => scrollRow(scrollRef.current, 286)}
             aria-label="Show more garages"
-            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -810,7 +810,7 @@ function SeasonalDeals({
                         {DealIcon ? <DealIcon className="h-3.5 w-3.5 shrink-0" /> : null}
                         {deal.title}
                       </div>
-                      <p className="mt-1 max-w-[175px] text-[10.5px] leading-[1.35] font-normal text-[#17307a] line-clamp-2">{deal.subtitle}</p>
+                      <p className="mt-1 max-w-[175px] text-[10.5px] leading-[1.35] font-normal text-[#17307a] dark:text-white line-clamp-2">{deal.subtitle}</p>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap">
                       <span className={cn('text-[17px] font-bold leading-none', deal.textColor)}>{deal.price}</span>
@@ -852,7 +852,7 @@ function SeasonalDeals({
             type="button"
             onClick={() => scrollRow(scrollRef.current, -286)}
             aria-label="Show previous seasonal deals"
-            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -862,7 +862,7 @@ function SeasonalDeals({
             type="button"
             onClick={() => scrollRow(scrollRef.current, 286)}
             aria-label="Show more seasonal deals"
-            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -913,7 +913,7 @@ function CareTips({
           {tips.map(({ title, icon: Icon, image }, index) => (
             <Card key={title} className="grid min-h-[86px] w-[220px] shrink-0 grid-cols-[1fr_75px] items-center overflow-hidden p-0 border border-[#e5e9f2]/50 shadow-[0_3px_10px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_4px_12px_-1px_rgba(0,0,0,0.05)] hover:-translate-y-0.5">
               <div className="p-3 py-2.5">
-                <p className="text-[11px] font-medium leading-[1.3] text-[#17307a] line-clamp-4">{title}</p>
+                <p className="text-[11px] font-medium leading-[1.3] text-[#17307a] dark:text-white line-clamp-4">{title}</p>
               </div>
               <div className="relative h-full overflow-hidden">
                 {image ? (
@@ -929,7 +929,7 @@ function CareTips({
                 ) : (
                   <div
                     className={cn(
-                      'absolute inset-0 bg-gradient-to-br flex items-center justify-center text-[#17307a]',
+                      'absolute inset-0 bg-gradient-to-br flex items-center justify-center text-[#17307a] dark:text-white',
                       index === 0
                         ? 'from-[#f5f8ff] to-[#dfe9ff]'
                         : index === 1
@@ -953,7 +953,7 @@ function CareTips({
             type="button"
             onClick={() => scrollRow(scrollRef.current, -220)}
             aria-label="Show previous care tips"
-            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute left-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -963,7 +963,7 @@ function CareTips({
             type="button"
             onClick={() => scrollRow(scrollRef.current, 220)}
             aria-label="Show more care tips"
-            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
+            className="absolute right-[-14px] top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_25px_rgba(20,44,112,0.18)] xl:flex z-10 animate-in fade-in duration-200"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -1143,7 +1143,7 @@ export function MainContent() {
       <div className="space-y-7 pb-5">
         <HeroBanner />
         {normalizedSearch ? (
-          <div className="rounded-[16px] border border-[#e4ecff] bg-white px-4 py-3 text-[12px] font-medium text-[#4f67a2] shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
+          <div className="rounded-[16px] border border-[#e4ecff] bg-white dark:bg-[#1A2233] px-4 py-3 text-[12px] font-medium text-[#4f67a2] dark:text-slate-400 shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
             Showing results for <span className="font-bold text-[#1a56db]">{searchTerm}</span>
           </div>
         ) : null}
@@ -1156,7 +1156,7 @@ export function MainContent() {
         {filteredTips.length > 0 ? <CareTips tips={filteredTips} /> : null}
         {!hasResults ? (
           <Card className="rounded-[18px] border-[#e4ecff] px-5 py-6 text-center shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
-            <div className="text-[14.5px] font-bold text-[#17307a]">No dashboard matches found</div>
+            <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">No dashboard matches found</div>
             <div className="mt-2 text-[12px] text-[#66759e]">
               Try another search term for services, parts, garages, or tips.
             </div>

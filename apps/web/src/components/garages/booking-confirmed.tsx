@@ -176,7 +176,7 @@ export function BookingConfirmed({
           Garages
         </button>
         <ChevronRight className="h-3.5 w-3.5 text-[#a4b3d1]" />
-        <span className="text-[#17307a] font-bold">Booking Confirmed</span>
+        <span className="text-[#17307a] dark:text-white font-bold">Booking Confirmed</span>
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_320px]">
@@ -213,13 +213,13 @@ export function BookingConfirmed({
                 <div className="mt-2.5 flex items-center justify-center sm:justify-start gap-1.5">
                   <span className="text-[12px] font-bold text-[#475569]">
                     Booking ID:{' '}
-                    <span className="text-[#0f172a] font-extrabold font-mono tracking-tight">
+                    <span className="text-[#0f172a] dark:text-white font-extrabold font-mono tracking-tight">
                       {bookingId}
                     </span>
                   </span>
                   <button
                     onClick={handleCopy}
-                    className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-white border border-[#e2eefc] text-[#1a56db] hover:bg-[#f0f4ff] active:scale-95 transition-all shadow-sm"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-white dark:bg-[#1A2233] border border-[#e2eefc] text-[#1a56db] hover:bg-[#f0f4ff] active:scale-95 transition-all shadow-sm"
                     title="Copy Booking ID"
                   >
                     {copied ? (
@@ -241,8 +241,8 @@ export function BookingConfirmed({
           </div>
 
           {/* Booking Details Grid Box */}
-          <Card className="rounded-[22px] border-[#e7eefc] bg-white p-5 shadow-[0_12px_32px_rgba(21,48,122,0.05)] space-y-4">
-            <h2 className="text-[14px] font-extrabold tracking-tight text-[#17307a]">
+          <Card className="rounded-[22px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_12px_32px_rgba(21,48,122,0.05)] space-y-4">
+            <h2 className="text-[14px] font-extrabold tracking-tight text-[#17307a] dark:text-white">
               Booking Details
             </h2>
 
@@ -256,7 +256,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Date &amp; Time
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     {selectedDateObj.day}, {selectedDateObj.date} {selectedDateObj.month} {selectedDateObj.year} • {selectedSlot}
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Garage
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     {garage.name}
                   </div>
                   <div className="text-[11px] font-semibold text-[#64748b]">
@@ -289,7 +289,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Service
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     {quoteContext
                       ? `Quote-based repair booking`
                       : 'General Service (Standard Service)'}
@@ -311,7 +311,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Response Time
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     {garage.responseMins} mins
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Vehicle
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City'}
                   </div>
                   <div className="text-[11px] font-semibold text-[#64748b]">
@@ -346,7 +346,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Payment Mode
                   </div>
-                  <div className="text-[13px] font-extrabold text-[#0f172a]">
+                  <div className="text-[13px] font-extrabold text-[#0f172a] dark:text-white">
                     Pay after service
                   </div>
                   <div className="pt-0.5">
@@ -360,8 +360,8 @@ export function BookingConfirmed({
           </Card>
 
           {quoteContext ? (
-            <Card className="rounded-[22px] border-[#e7eefc] bg-white p-5 shadow-[0_12px_32px_rgba(21,48,122,0.05)] space-y-4">
-              <h2 className="text-[14px] font-extrabold tracking-tight text-[#17307a]">
+            <Card className="rounded-[22px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_12px_32px_rgba(21,48,122,0.05)] space-y-4">
+              <h2 className="text-[14px] font-extrabold tracking-tight text-[#17307a] dark:text-white">
                 Quote Booking Summary
               </h2>
 
@@ -370,7 +370,7 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Current Quote
                   </div>
-                  <div className="mt-2 text-[18px] font-extrabold text-[#0f172a]">
+                  <div className="mt-2 text-[18px] font-extrabold text-[#0f172a] dark:text-white">
                     {quoteContext.quote.price}
                   </div>
                 </div>
@@ -386,15 +386,15 @@ export function BookingConfirmed({
                   <div className="text-[11.5px] font-semibold text-[#64748b]">
                     Savings
                   </div>
-                  <div className="mt-2 text-[16px] font-extrabold text-[#0f172a]">
+                  <div className="mt-2 text-[16px] font-extrabold text-[#0f172a] dark:text-white">
                     {quoteContext.quote.savings}
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[18px] border border-[#e2eefc] bg-[#f8fbff] p-4">
+              <div className="rounded-[18px] border border-[#e2eefc] bg-[#f8fbff] dark:bg-[#1A2233] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-[12px] font-bold text-[#17307a]">
+                  <div className="text-[12px] font-bold text-[#17307a] dark:text-white">
                     Issues Booked
                   </div>
                   <span className="rounded-full bg-[#e8f0ff] px-2.5 py-0.5 text-[10px] font-bold text-[#1a56db]">
@@ -405,7 +405,7 @@ export function BookingConfirmed({
                   {quoteContext.issues.map((issue) => (
                     <span
                       key={issue.id}
-                      className="inline-flex items-center rounded-full border border-[#d8e5ff] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#17307a] shadow-[0_4px_10px_rgba(26,86,219,0.04)]"
+                      className="inline-flex items-center rounded-full border border-[#d8e5ff] bg-white dark:bg-[#1A2233] px-3 py-1.5 text-[11px] font-semibold text-[#17307a] dark:text-white shadow-[0_4px_10px_rgba(26,86,219,0.04)]"
                     >
                       {issue.title}
                     </span>
@@ -416,8 +416,8 @@ export function BookingConfirmed({
           ) : null}
 
           {/* Process Steps Timeline ("What's Next") */}
-          <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white space-y-6">
-            <h2 className="text-[14.5px] font-extrabold tracking-tight text-[#17307a]">
+          <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white dark:bg-[#1A2233] space-y-6">
+            <h2 className="text-[14.5px] font-extrabold tracking-tight text-[#17307a] dark:text-white">
               What&apos;s Next?
             </h2>
 
@@ -441,7 +441,7 @@ export function BookingConfirmed({
                         'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all',
                         isFirstStep
                           ? 'border-[#d3eedc] bg-[#eefbf3] text-[#228453] shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-                          : 'border-[#dbe6ff] bg-[#f0f4ff] text-[#1a56db]'
+                          : 'border-[#dbe6ff] dark:border-[#2A3446] bg-[#f0f4ff] text-[#1a56db]'
                       )}
                     >
                       <StepIcon className="h-4.5 w-4.5" />
@@ -451,7 +451,7 @@ export function BookingConfirmed({
                       <h4
                         className={cn(
                           'text-[12px] font-bold',
-                          isFirstStep ? 'text-[#228453]' : 'text-[#17307a]'
+                          isFirstStep ? 'text-[#228453]' : 'text-[#17307a] dark:text-white'
                         )}
                       >
                         {step.title}
@@ -480,8 +480,8 @@ export function BookingConfirmed({
         {/* Right Column: Summaries & widgets */}
         <div className="space-y-6">
           {/* Booking Summary sidebar widget */}
-          <Card className="rounded-[24px] border-[#e7eefc] bg-white p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
-            <h3 className="text-[14px] font-extrabold tracking-tight text-[#17307a]">
+          <Card className="rounded-[24px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
+            <h3 className="text-[14px] font-extrabold tracking-tight text-[#17307a] dark:text-white">
               Booking Summary
             </h3>
 
@@ -497,7 +497,7 @@ export function BookingConfirmed({
                 />
               )}
               <div className="min-w-0">
-                <h4 className="text-[12.5px] font-bold text-[#17307a] truncate">
+                <h4 className="text-[12.5px] font-bold text-[#17307a] dark:text-white truncate">
                   {garage.name}
                 </h4>
                 <p className="text-[10.5px] font-semibold text-[#8a99ad] truncate mt-0.5">
@@ -529,7 +529,7 @@ export function BookingConfirmed({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#8a99ad] block">
                     {row.label}
                   </span>
-                  <span className="text-[12px] font-extrabold text-[#17307a] block leading-tight">
+                  <span className="text-[12px] font-extrabold text-[#17307a] dark:text-white block leading-tight">
                     {row.val}
                   </span>
                 </div>
@@ -537,7 +537,7 @@ export function BookingConfirmed({
             </div>
 
             <div className="border-t border-[#eef3ff] pt-3.5 space-y-2">
-              <span className="text-[10.5px] font-bold tracking-tight text-[#17307a] block">
+              <span className="text-[10.5px] font-bold tracking-tight text-[#17307a] dark:text-white block">
                 What&apos;s Included
               </span>
               <ul className="space-y-1.5">
@@ -556,7 +556,7 @@ export function BookingConfirmed({
               </ul>
             </div>
 
-            <div className="rounded-xl bg-[#f0f4ff] p-3 text-center border border-[#dbe6ff]">
+            <div className="rounded-xl bg-[#f0f4ff] p-3 text-center border border-[#dbe6ff] dark:border-[#2A3446]">
               <span className="flex items-center justify-center gap-1.5 text-[11px] font-extrabold text-[#1a56db]">
                 <ShieldCheck
                   className="h-4 w-4 text-[#1a56db]"
@@ -568,9 +568,9 @@ export function BookingConfirmed({
           </Card>
 
           {/* Change / cancellation widget */}
-          <Card className="rounded-[24px] border-[#e7eefc] bg-white p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
+          <Card className="rounded-[24px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
             <div className="space-y-1.5">
-              <h3 className="text-[12.5px] font-bold tracking-tight text-[#17307a]">
+              <h3 className="text-[12.5px] font-bold tracking-tight text-[#17307a] dark:text-white">
                 Need to make changes?
               </h3>
               <p className="text-[11px] font-semibold text-[#8a99ad] leading-normal">
@@ -583,7 +583,7 @@ export function BookingConfirmed({
               <Button
                 variant="outline"
                 disabled
-                className="flex-1 h-10 rounded-[12px] text-[11px] font-bold border-[#cbd4e6] text-[#17307a] disabled:cursor-not-allowed disabled:opacity-100"
+                className="flex-1 h-10 rounded-[12px] text-[11px] font-bold border-[#cbd4e6] text-[#17307a] dark:text-white disabled:cursor-not-allowed disabled:opacity-100"
               >
                 Reschedule
               </Button>
@@ -597,9 +597,9 @@ export function BookingConfirmed({
             </div>
           </Card>
 
-          <Card className="rounded-[24px] border-[#e7eefc] bg-white p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
+          <Card className="rounded-[24px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
             <div className="space-y-1.5">
-              <h3 className="text-[12.5px] font-bold tracking-tight text-[#17307a]">
+              <h3 className="text-[12.5px] font-bold tracking-tight text-[#17307a] dark:text-white">
                 Need Help?
               </h3>
               <p className="text-[11px] font-semibold leading-normal text-[#8a99ad]">
@@ -611,7 +611,7 @@ export function BookingConfirmed({
               <Button
                 variant="outline"
                 disabled
-                className="h-10 w-full rounded-[12px] border-[#cbd4e6] px-2 text-[10.5px] font-bold text-[#17307a] disabled:cursor-not-allowed disabled:opacity-100"
+                className="h-10 w-full rounded-[12px] border-[#cbd4e6] px-2 text-[10.5px] font-bold text-[#17307a] dark:text-white disabled:cursor-not-allowed disabled:opacity-100"
               >
                 <MessageSquare className="h-4 w-4 text-[#1a56db]" />
                 Chat with Us
@@ -619,7 +619,7 @@ export function BookingConfirmed({
               <Button
                 variant="outline"
                 disabled
-                className="h-10 w-full rounded-[12px] border-[#cbd4e6] px-2 text-[10.5px] font-bold text-[#17307a] disabled:cursor-not-allowed disabled:opacity-100"
+                className="h-10 w-full rounded-[12px] border-[#cbd4e6] px-2 text-[10.5px] font-bold text-[#17307a] dark:text-white disabled:cursor-not-allowed disabled:opacity-100"
               >
                 <Phone className="h-4 w-4 text-[#1a56db]" />
                 Call Garage

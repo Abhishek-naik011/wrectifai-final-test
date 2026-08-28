@@ -648,7 +648,7 @@ function FilterChip({
         'inline-flex h-[34px] items-center gap-1.5 rounded-[11px] border px-2.5 xl:px-3 text-[11.5px] xl:text-[12px] font-semibold transition-colors shadow-sm whitespace-nowrap',
         active
           ? 'border-[#1f5cff] bg-[#1f5cff] text-white shadow-[0_10px_22px_rgba(31,92,255,0.22)]'
-          : 'border-[#dbe6ff] bg-white text-[#17307a] hover:bg-[#f7faff] hover:border-[#bfd1ff]'
+          : 'border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white hover:bg-[#f7faff] hover:border-[#bfd1ff]'
       )}
     >
       {Icon ? <Icon className="h-4 w-4 shrink-0" strokeWidth={active ? 2.2 : 1.8} /> : null}
@@ -677,7 +677,7 @@ function DealCard({ deal }: { deal: DealItem }) {
               <DealIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
               <span>{deal.badge}</span>
             </div>
-            <h3 className="mt-1 text-[13.5px] font-bold leading-[1.25] tracking-[-0.02em] text-[#17307a]">
+            <h3 className="mt-1 text-[13.5px] font-bold leading-[1.25] tracking-[-0.02em] text-[#17307a] dark:text-white">
               {deal.title}
             </h3>
             <ul className="mt-1.5 space-y-0.5">
@@ -990,9 +990,9 @@ function DealsPageContent() {
               <span>Home</span>
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-[#a4b3d1]" />
-            <span className="text-[#17307a] font-bold">Deals &amp; Offers</span>
+            <span className="text-[#17307a] dark:text-white font-bold">Deals &amp; Offers</span>
           </nav>
-          <h1 className="text-[22px] font-bold tracking-[-0.04em] text-[#17307a] sm:text-[24px]">
+          <h1 className="text-[22px] font-bold tracking-[-0.04em] text-[#17307a] dark:text-white sm:text-[24px]">
             View All Deals
           </h1>
           <p className="mt-1 text-[14px] font-medium text-[#536891]">
@@ -1014,9 +1014,9 @@ function DealsPageContent() {
                       onClick={() => setShowMoreFilters((curr) => !curr)}
                     />
                     {showMoreFilters ? (
-                      <div className="absolute left-0 top-[42px] z-50 min-w-[260px] sm:min-w-[280px] rounded-[16px] border border-[#dbe6ff] bg-white p-3 shadow-[0_20px_50px_rgba(30,58,138,0.16)] animate-in fade-in-50 duration-200 flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2 rounded-[10px] border border-[#dbe6ff] bg-[#f8fbff] px-3 py-2 text-[12px] text-[#17307a]">
-                          <Search className="h-4 w-4 text-[#6173a1] shrink-0" />
+                      <div className="absolute left-0 top-[42px] z-50 min-w-[260px] sm:min-w-[280px] rounded-[16px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-3 shadow-[0_20px_50px_rgba(30,58,138,0.16)] animate-in fade-in-50 duration-200 flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f8fbff] dark:bg-[#1A2233] px-3 py-2 text-[12px] text-[#17307a] dark:text-white">
+                          <Search className="h-4 w-4 text-[#6173a1] dark:text-slate-400 shrink-0" />
                           <input 
                             type="text" 
                             placeholder="Search filters..." 
@@ -1044,7 +1044,7 @@ function DealsPageContent() {
                                         'flex w-full items-center justify-between rounded-[10px] px-3 py-2 text-left text-[13px] font-medium transition-colors',
                                         isSelected
                                           ? 'bg-[#1f5cff] text-white font-bold shadow-sm'
-                                          : 'text-[#17307a] hover:bg-[#f7faff]'
+                                          : 'text-[#17307a] dark:text-white hover:bg-[#f7faff]'
                                       )}
                                     >
                                       <span>{option.label}</span>
@@ -1084,7 +1084,7 @@ function DealsPageContent() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="flex h-[34px] items-center justify-center gap-1.5 rounded-[11px] border border-[#ffd2d2] bg-white px-3 text-[11.5px] xl:text-[12px] font-semibold text-[#d14343] shadow-sm hover:bg-[#fff9f9] whitespace-nowrap"
+                className="flex h-[34px] items-center justify-center gap-1.5 rounded-[11px] border border-[#ffd2d2] bg-white dark:bg-[#1A2233] px-3 text-[11.5px] xl:text-[12px] font-semibold text-[#d14343] shadow-sm hover:bg-[#fff9f9] whitespace-nowrap"
               >
                 <X className="h-4 w-4" />
                 Clear Filters
@@ -1093,14 +1093,14 @@ function DealsPageContent() {
           </div>
 
           <div className="relative flex items-center gap-2 xl:gap-2.5 shrink-0 lg:justify-end">
-            <span className="text-[12px] xl:text-[13px] font-semibold text-[#17307a] whitespace-nowrap">Sort By:</span>
+            <span className="text-[12px] xl:text-[13px] font-semibold text-[#17307a] dark:text-white whitespace-nowrap">Sort By:</span>
             <div className="relative" ref={sortRef}>
               <button
                 type="button"
                 onClick={() => setSortOpen((curr) => !curr)}
                 className={cn(
-                  "flex h-[34px] min-w-[130px] xl:min-w-[145px] items-center justify-between rounded-[11px] border px-2.5 xl:px-3 text-[11px] xl:text-[12px] font-semibold transition-colors bg-white border-[#dbe6ff] text-[#17307a] shadow-sm hover:bg-[#f7faff]",
-                  sortOpen && "border-[#bfd0ff] bg-[#f8fbff] text-[#1a56db]"
+                  "flex h-[34px] min-w-[130px] xl:min-w-[145px] items-center justify-between rounded-[11px] border px-2.5 xl:px-3 text-[11px] xl:text-[12px] font-semibold transition-colors bg-white dark:bg-[#1A2233] border-[#dbe6ff] dark:border-[#2A3446] text-[#17307a] dark:text-white shadow-sm hover:bg-[#f7faff]",
+                  sortOpen && "border-[#bfd0ff] bg-[#f8fbff] dark:bg-[#1A2233] text-[#1a56db]"
                 )}
               >
                 <span className="truncate">{sortBy}</span>
@@ -1108,7 +1108,7 @@ function DealsPageContent() {
               </button>
 
               {sortOpen && (
-                <div className="absolute right-0 top-[42px] z-50 min-w-[190px] rounded-[14px] border border-[#dbe6ff] bg-white p-2 shadow-[0_18px_40px_rgba(30,58,138,0.14)]">
+                <div className="absolute right-0 top-[42px] z-50 min-w-[190px] rounded-[14px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-2 shadow-[0_18px_40px_rgba(30,58,138,0.14)]">
                   {[
                     'Most Relevant',
                     'Price: Low to High',
@@ -1128,7 +1128,7 @@ function DealsPageContent() {
                         "flex w-full items-center justify-between rounded-[10px] px-3 py-2.5 text-left text-[13px] font-medium transition-colors",
                         sortBy === option
                           ? "bg-[#1f5cff] text-white font-bold shadow-sm"
-                          : "text-[#17307a] hover:bg-[#f8fbff]"
+                          : "text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800"
                       )}
                     >
                       <span className="truncate">{option}</span>
@@ -1148,7 +1148,7 @@ function DealsPageContent() {
       </div>
 
       {searchTerm ? (
-        <div className="rounded-[16px] border border-[#e4ecff] bg-white px-4 py-3 text-[13px] font-medium text-[#4f67a2] shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
+        <div className="rounded-[16px] border border-[#e4ecff] bg-white dark:bg-[#1A2233] px-4 py-3 text-[13px] font-medium text-[#4f67a2] dark:text-slate-400 shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
           Showing deals for <span className="font-bold text-[#1a56db]">{searchTerm}</span>
         </div>
       ) : null}
@@ -1161,7 +1161,7 @@ function DealsPageContent() {
         </section>
       ) : (
         <Card className="rounded-[20px] border-[#e3eaf9] px-6 py-10 text-center shadow-[0_12px_28px_rgba(22,48,112,0.05)]">
-          <div className="text-[18.5px] font-bold text-[#17307a]">No deals match these filters</div>
+          <div className="text-[18.5px] font-bold text-[#17307a] dark:text-white">No deals match these filters</div>
           <p className="mt-2 text-[13px] text-[#6477a1]">
             Try another category, remove a filter, or reset the search.
           </p>
@@ -1180,7 +1180,7 @@ function DealsPageContent() {
             type="button"
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             disabled={activePage === 1}
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#dbe6ff] bg-white text-[#3d5afe] disabled:cursor-not-allowed disabled:opacity-45 shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#3d5afe] disabled:cursor-not-allowed disabled:opacity-45 shadow-sm"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -1199,7 +1199,7 @@ function DealsPageContent() {
                     'flex h-9 w-9 items-center justify-center rounded-[10px] border text-[12px] font-semibold shadow-sm',
                     activePage === page
                       ? 'border-[#3d5afe] bg-[#eef3ff] font-bold text-[#3156f5]'
-                      : 'border-[#dbe6ff] bg-white text-[#4d6295] hover:bg-[#f7faff]'
+                      : 'border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#4d6295] hover:bg-[#f7faff]'
                   )}
                 >
                   {page}
@@ -1212,7 +1212,7 @@ function DealsPageContent() {
             type="button"
             onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
             disabled={activePage === totalPages}
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#dbe6ff] bg-white text-[#3d5afe] disabled:cursor-not-allowed disabled:opacity-45 shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#3d5afe] disabled:cursor-not-allowed disabled:opacity-45 shadow-sm"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

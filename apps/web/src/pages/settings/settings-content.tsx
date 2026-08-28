@@ -12,9 +12,10 @@ export function SettingsContent() {
   const { logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname() || '';
-  const basePath = pathname.startsWith('/admin') ? '/admin' : pathname.startsWith('/garage') ? '/garage' : '';
+  const basePath = pathname.startsWith('/admin') ? '/admin' : (pathname === '/garage' || pathname.startsWith('/garage/')) ? '/garage' : '';
 
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
   const roleKey = basePath === '/admin' ? 'admin' : basePath === '/garage' ? 'garage' : 'customer';
   const [theme, setTheme] = useState('light');
   const [mounted, setMounted] = useState(false);
@@ -28,7 +29,9 @@ export function SettingsContent() {
   const displayTheme = mounted ? (theme === 'dark' ? 'Dark Mode' : 'Light Mode') : 'Light Mode';
 
   const handleAction = (item: any) => {
-    if (item.link) {
+    if (item.title === 'Payment & Wallet Settings') {
+      setIsComingSoonModalOpen(true);
+    } else if (item.link) {
       router.push(`${basePath}${item.link}`);
     } else if (item.title === 'Appearance') {
       const next = theme === 'dark' ? 'light' : 'dark';
@@ -54,19 +57,19 @@ export function SettingsContent() {
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 space-y-4">
         {settingItems.map((item, idx) => (
-           <Card key={idx} className="p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer border-slate-100 shadow-sm rounded-[16px]" onClick={() => handleAction(item)}>
+           <Card key={idx} className="p-4 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer border-slate-100 dark:border-slate-800 shadow-sm rounded-[16px]" onClick={() => handleAction(item)}>
              <div className="flex items-center gap-4">
-               <div className="w-10 h-10 rounded-full bg-slate-50 border flex items-center justify-center text-slate-600">
+               <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-[#121826] border flex items-center justify-center text-slate-600 dark:text-slate-400">
                   <item.icon className="w-5 h-5" />
                </div>
                <div>
-                 <h3 className="font-bold text-slate-900 text-sm">{item.title}</h3>
-                 <p className="text-xs text-slate-500">{item.desc}</p>
+                 <h3 className="font-bold text-slate-900 dark:text-white text-sm">{item.title}</h3>
+                 <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
                </div>
              </div>
              <div className="flex items-center gap-3">
                {item.action && (
-                  <span className="text-sm font-bold text-blue-600 flex items-center gap-1 border border-slate-200 px-3 py-1.5 rounded-lg bg-white"><item.icon className="w-4 h-4"/> {item.action}</span>
+                  <span className="text-sm font-bold text-blue-600 flex items-center gap-1 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1A2233]"><item.icon className="w-4 h-4"/> {item.action}</span>
                )}
                {item.actionText && (
                   <span className="text-sm font-bold text-blue-600 flex items-center gap-1">{item.actionText} {item.hasDropdown && <ChevronRight className="w-4 h-4 rotate-90" />}</span>
@@ -78,9 +81,9 @@ export function SettingsContent() {
       </div>
 
       <div className="w-full lg:w-80 flex flex-col gap-6">
-        <Card className="p-6 shadow-sm border-slate-100 rounded-[20px]">
-          <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
-          <p className="text-sm text-slate-500 mb-4">We&apos;re here to help you with any issues or questions.</p>
+        <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[20px]">
+          <h3 className="font-bold text-slate-900 dark:text-white mb-2">Need Help?</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">We&apos;re here to help you with any issues or questions.</p>
           <Button variant="outline" className="w-full font-bold text-blue-600 border-blue-200" onClick={() => {
              const helpPath = basePath === '/admin' ? '/admin/support' : basePath === '/garage' ? '/garage/help' : '/help-support';
              router.push(helpPath);
@@ -91,9 +94,9 @@ export function SettingsContent() {
 
 
 
-        <Card className="p-6 shadow-sm border-slate-100 rounded-[20px]">
-           <h3 className="font-bold text-slate-900 mb-2">Log Out</h3>
-           <p className="text-xs text-slate-500 mb-4">Log out from your account</p>
+        <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[20px]">
+           <h3 className="font-bold text-slate-900 dark:text-white mb-2">Log Out</h3>
+           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Log out from your account</p>
            <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50 font-bold" onClick={() => logout()}>
               <LogOut className="w-4 h-4 mr-2" /> Log Out
            </Button>
@@ -103,21 +106,30 @@ export function SettingsContent() {
       <Modal isOpen={isAboutModalOpen} onClose={() => setIsAboutModalOpen(false)} title="About WrectifAI">
         <div className="space-y-4">
           <h4 className="font-bold text-blue-600">What is WrectifAI?</h4>
-          <p className="text-sm text-slate-600">WrectifAI is your complete ecosystem for vehicle management, providing AI-powered diagnosis, seamless service booking, quote comparison, and access to verified garages.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">WrectifAI is your complete ecosystem for vehicle management, providing AI-powered diagnosis, seamless service booking, quote comparison, and access to verified garages.</p>
           
-          <ul className="text-sm text-slate-600 list-disc pl-5 space-y-1">
+          <ul className="text-sm text-slate-600 dark:text-slate-400 list-disc pl-5 space-y-1">
             <li>AI-powered vehicle diagnosis</li>
             <li>Service booking</li>
             <li>Quote comparison</li>
             <li>Verified garages</li>
           </ul>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
             <p>Version 1.0.0</p>
             <p>&copy; {new Date().getFullYear()} WrectifAI. All rights reserved.</p>
           </div>
           
-          <Button className="w-full mt-4 bg-blue-600 text-white" onClick={() => setIsAboutModalOpen(false)}>Close</Button>
+          <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsAboutModalOpen(false)}>Close</Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isComingSoonModalOpen} onClose={() => setIsComingSoonModalOpen(false)} title="Coming Soon">
+        <div className="space-y-4 text-center py-4">
+          <p className="text-[14px] text-slate-600 dark:text-slate-400">
+            This feature is currently under development and will be available in a future update.
+          </p>
+          <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold" onClick={() => setIsComingSoonModalOpen(false)}>Close</Button>
         </div>
       </Modal>
     </div>

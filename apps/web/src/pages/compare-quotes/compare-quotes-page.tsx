@@ -390,7 +390,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a]">
+                  <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">
                     Compare Quotes
                   </h1>
                   <span className="rounded-full bg-[#dff5e7] px-3 py-1 text-[12px] font-semibold text-[#18965c]">
@@ -398,14 +398,14 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                     Selected
                   </span>
                 </div>
-                <p className="mt-2 text-[12px] text-[#5f7099]">
+                <p className="mt-2 text-[12px] text-[#5f7099] dark:text-slate-400">
                   Compare prices, services, ratings and more to choose the best
                   garage for your car.
                 </p>
               </div>
 
               <div className="flex flex-col items-start gap-4 lg:items-end">
-                <div className="flex items-center gap-3 text-[12px] font-medium text-[#5f7099]">
+                <div className="flex items-center gap-3 text-[12px] font-medium text-[#5f7099] dark:text-slate-400">
                   <span className="inline-flex items-center gap-1.5">
                     Show only key differences
                     <Info className="h-3.5 w-3.5 text-[#7f92c7]" />
@@ -423,16 +423,16 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                         : 'bg-[#d9deef]'
                     )}
                   >
-                    <span className="h-4 w-4 rounded-full bg-white shadow-[0_2px_4px_rgba(35,61,128,0.18)]" />
+                    <span className="h-4 w-4 rounded-full bg-white dark:bg-[#1A2233] shadow-[0_2px_4px_rgba(35,61,128,0.18)]" />
                   </button>
                 </div>
               </div>
             </div>
 
             <div className="grid gap-3" style={topCardsGridStyle}>
-              <Card className="h-[364px] rounded-[16px] border-[#e3eafc] bg-white px-3.5 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+              <Card className="h-[364px] rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] px-3.5 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-[#cdddff] bg-white text-[#1a56db]">
+                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-[#cdddff] bg-white dark:bg-[#1A2233] text-[#1a56db]">
                     <Image
                       src="/assets/Robo_icon.png"
                       alt="WrectifAI"
@@ -448,13 +448,13 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                   </div>
                 </div>
 
-                <div className="mt-3 border-t border-[#edf2fb] pt-3 text-[12px] leading-6 text-[#5f7099]">
+                <div className="mt-3 border-t border-[#edf2fb] pt-3 text-[12px] leading-6 text-[#5f7099] dark:text-slate-400">
                   Based on your selected
                   <br />
                   issues and market data
                 </div>
 
-                <div className="mt-[54px] text-center text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a]">
+                <div className="mt-[54px] text-center text-[15.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
                   {DOLLAR}2,800 - {DOLLAR}3,600
                 </div>
 
@@ -470,7 +470,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
               {selectedQuotes.map((quote) => (
                 <Card
                   key={quote.id}
-                  className="flex h-[364px] flex-col rounded-[16px] border-[#e3eafc] bg-white px-3.5 py-3.5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
+                  className="flex h-[364px] flex-col rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] px-3.5 py-3.5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
                 >
                   <div className="flex items-start justify-between">
                     <input
@@ -501,14 +501,14 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       >
                         {quote.garage}
                       </div>
-                      <div className="mt-2 flex items-center gap-2 text-[12px] text-[#5f7099]">
-                        <span className="font-semibold text-[#17307a]">
+                      <div className="mt-2 flex items-center gap-2 text-[12px] text-[#5f7099] dark:text-slate-400">
+                        <span className="font-semibold text-[#17307a] dark:text-white">
                           {quote.rating}
                         </span>
                         <Star className="h-3.5 w-3.5 fill-[#ffb800] text-[#ffb800]" />
                         <span>({quote.reviews})</span>
                       </div>
-                      <div className="mt-1.5 text-[12px] text-[#5f7099]">
+                      <div className="mt-1.5 text-[12px] text-[#5f7099] dark:text-slate-400">
                         {quote.distance}
                       </div>
                       <div className="mt-2 min-h-[24px]">
@@ -586,7 +586,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                         >
                           <span
                             className={cn(
-                              'flex h-[32px] w-[32px] items-center justify-center rounded-full border bg-white',
+                              'flex h-[32px] w-[32px] items-center justify-center rounded-full border bg-white dark:bg-[#1A2233]',
                               tone === 'purple'
                                 ? 'border-[#eedaff] text-[#d145ff]'
                                 : 'border-[#dbe5ff] text-[#1a56db]'
@@ -621,7 +621,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       <div className={homeCardHeadingClass}>
                         Add Another Garage
                       </div>
-                      <div className="mt-1 text-[11px] text-[#5f7099]">
+                      <div className="mt-1 text-[11px] text-[#5f7099] dark:text-slate-400">
                         You can compare up to 3 garages.
                       </div>
                     </div>
@@ -631,7 +631,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                     {availableQuotes.map((quote) => (
                       <div
                         key={`available-${quote.id}`}
-                        className="grid grid-cols-[48px_minmax(0,1fr)] gap-x-2.5 gap-y-1.5 rounded-[12px] border border-[#e5ecff] bg-white px-2.5 py-2.5"
+                        className="grid grid-cols-[48px_minmax(0,1fr)] gap-x-2.5 gap-y-1.5 rounded-[12px] border border-[#e5ecff] bg-white dark:bg-[#1A2233] px-2.5 py-2.5"
                       >
                         <Image
                           src={quote.image}
@@ -642,11 +642,11 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                         />
 
                         <div className="min-w-0">
-                          <div className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 text-[#17307a]">
+                          <div className="truncate whitespace-nowrap text-[12px] font-semibold leading-4 text-[#17307a] dark:text-white">
                             {quote.garage}
                           </div>
-                          <div className="mt-1 text-[10px] leading-4 text-[#5f7099]">
-                            <span className="font-semibold text-[#17307a]">
+                          <div className="mt-1 text-[10px] leading-4 text-[#5f7099] dark:text-slate-400">
+                            <span className="font-semibold text-[#17307a] dark:text-white">
                               {quote.rating}
                             </span>{' '}
                             <span className="text-[#ffb800]">{'\u2605'}</span> (
@@ -672,10 +672,10 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
 
             <Card
               id="price-breakup"
-              className="overflow-hidden rounded-[16px] border-[#e3eafc] bg-white shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
+              className="overflow-hidden rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
             >
               <div
-                className="grid border-b border-[#e9eefb] bg-white"
+                className="grid border-b border-[#e9eefb] bg-white dark:bg-[#1A2233]"
                 style={tableGridStyle}
               >
                 <div className="px-4 py-3 ui-subheading">
@@ -684,7 +684,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                     (Incl. taxes)
                   </span>
                 </div>
-                <div className="px-3 py-3 text-center text-[12px] font-semibold leading-5 text-[#17307a]">
+                <div className="px-3 py-3 text-center text-[12px] font-semibold leading-5 text-[#17307a] dark:text-white">
                   WrectifAI Estimated Price
                   <div className="text-[11px] font-medium text-[#7c8bb5]">
                     (For reference)
@@ -693,7 +693,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                 {selectedQuotes.map((quote) => (
                   <div
                     key={`header-${quote.id}`}
-                    className="px-3 py-3 text-center text-[12px] font-semibold leading-5 text-[#17307a]"
+                    className="px-3 py-3 text-center text-[12px] font-semibold leading-5 text-[#17307a] dark:text-white"
                   >
                     {quote.garage}
                   </div>
@@ -716,7 +716,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       'px-4 py-2.5 text-[13px]',
                       row.emphasize
                         ? 'font-semibold text-[#1a56db]'
-                        : 'text-[#5f7099]',
+                        : 'text-[#5f7099] dark:text-slate-400',
                       row.savings &&
                         'whitespace-nowrap font-semibold text-[#6277ab]'
                     )}
@@ -728,7 +728,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       'px-3 py-2.5 text-center text-[13px]',
                       row.emphasize
                         ? 'text-[15px] font-semibold text-[#159a5d]'
-                        : 'text-[#5f7099]',
+                        : 'text-[#5f7099] dark:text-slate-400',
                       row.savings && 'font-medium text-[#6277ab]'
                     )}
                   >
@@ -744,7 +744,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                         'px-3 py-2.5 text-center text-[13px]',
                         row.emphasize
                           ? 'text-[15px] font-semibold text-[#159a5d]'
-                          : 'text-[#5f7099]',
+                          : 'text-[#5f7099] dark:text-slate-400',
                         row.savings && 'font-semibold text-[#159a5d]'
                       )}
                     >
@@ -757,7 +757,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
 
             <Card
               id="compare-details"
-              className="overflow-hidden rounded-[16px] border-[#e3eafc] bg-white shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
+              className="overflow-hidden rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] shadow-[0_8px_24px_rgba(37,73,153,0.04)]"
             >
               <div className="border-b border-[#e9eefb] px-4 py-3 ui-subheading">
                 Service &amp; Other Details
@@ -775,7 +775,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                     )}
                     style={tableGridStyle}
                   >
-                    <div className="flex items-center gap-2 px-4 py-2.5 text-[13px] text-[#5f7099]">
+                    <div className="flex items-center gap-2 px-4 py-2.5 text-[13px] text-[#5f7099] dark:text-slate-400">
                       <RowIcon
                         className={cn(
                           'h-3.5 w-3.5 shrink-0',
@@ -786,7 +786,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       />
                       <span>{row.label}</span>
                     </div>
-                    <div className="px-3 py-2.5 text-center text-[13px] text-[#5f7099]">
+                    <div className="px-3 py-2.5 text-center text-[13px] text-[#5f7099] dark:text-slate-400">
                       {row.aiValue}
                     </div>
 
@@ -795,7 +795,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                       return (
                         <div
                           key={`${row.label}-${quote.id}`}
-                          className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-[13px] text-[#17307a]"
+                          className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-[13px] text-[#17307a] dark:text-white"
                         >
                           {item ? serviceIcon(item.state) : null}
                           <span>{item?.value ?? '\u2013'}</span>
@@ -816,7 +816,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                     'flex h-[26px] min-w-[26px] items-center justify-center rounded-[6px] border text-[13px] font-semibold',
                     item === '1'
                       ? 'border-[#1a56db] bg-[#1a56db] px-2.5 text-white'
-                      : 'border-[#dbe5ff] bg-white px-2 text-[#5f7099]'
+                      : 'border-[#dbe5ff] bg-white dark:bg-[#1A2233] px-2 text-[#5f7099] dark:text-slate-400'
                   )}
                 >
                   {item}
@@ -824,7 +824,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
               ))}
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-center text-[12px] text-[#5f7099]">
+            <div className="flex items-center justify-center gap-2 text-center text-[12px] text-[#5f7099] dark:text-slate-400">
               <WalletCards className="h-4 w-4 text-[#7183b0]" />
               <span>
                 We do not charge any platform fee. You pay the garage directly.
@@ -833,7 +833,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
           </div>
 
           <div className="space-y-4 xl:pt-[92px]">
-            <Card className="rounded-[16px] border-[#e3eafc] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex items-center gap-3">
                 <h3
                   className={cn(homeSectionHeadingClass, 'whitespace-nowrap')}
@@ -848,7 +848,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                   <div className="mt-2.5 ui-card-title">
                     {activeVehicle ? `${activeVehicle.make} ${activeVehicle.model} ${activeVehicle.vin ? `(${activeVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
                   </div>
-                  <div className="mt-2.5 flex flex-wrap items-center gap-2.5 text-[12px] text-[#5f7099]">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2.5 text-[12px] text-[#5f7099] dark:text-slate-400">
                     <span>{activeVehicle ? (activeVehicle.vin ? 'VIN Verified' : 'Petrol') : 'Petrol'}</span>
                     <span>{BULLET}</span>
                     <span>{activeVehicle ? activeVehicle.year : '2018'}</span>
@@ -863,7 +863,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
 
                 <div>
                   <div className={homeBodyClass}>Issues Requested ({requestedIssues.length})</div>
-                  <div className="mt-3 space-y-2.5 text-[12px] text-[#17307a]">
+                  <div className="mt-3 space-y-2.5 text-[12px] text-[#17307a] dark:text-white">
                     {requestedIssues.map((issue) => (
                       <div key={issue.id}>
                         {BULLET} &nbsp;{issue.title}
@@ -874,7 +874,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
 
                 <div className="border-t border-[#ebf0fb] pt-4">
                   <div className={homeBodyClass}>Request sent on</div>
-                  <div className="mt-2.5 text-[12px] text-[#17307a]">
+                  <div className="mt-2.5 text-[12px] text-[#17307a] dark:text-white">
                     {quotes[0]?.requestCreatedAt
                       ? new Date(quotes[0].requestCreatedAt).toLocaleString('en-US', {
                           day: 'numeric',
@@ -890,7 +890,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
               </div>
             </Card>
 
-            <Card className="rounded-[16px] border-[#e3eafc] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[16px] border-[#e3eafc] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex items-start gap-3">
                 <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[#1a56db]">
                   <Scale className="h-6 w-6" />
@@ -901,7 +901,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                   >
                     Why compare quotes?
                   </h3>
-                  <div className="mt-3 space-y-3 text-[12px] text-[#5f7099]">
+                  <div className="mt-3 space-y-3 text-[12px] text-[#5f7099] dark:text-slate-400">
                     <div className="flex items-start gap-2">
                       <BadgeCheck className="h-4 w-4 text-[#18a15e]" />
                       <span>Ensure you get the best price</span>
@@ -932,7 +932,7 @@ export function CompareQuotesPage({ ids }: { ids?: string }) {
                   <h3 className="ui-page-title ui-success-text">
                     Your data is safe with us
                   </h3>
-                  <p className="mt-2 text-[12px] leading-6 text-[#5f7099]">
+                  <p className="mt-2 text-[12px] leading-6 text-[#5f7099] dark:text-slate-400">
                     We only share your request
                     <br />
                     with verified and trusted garages.

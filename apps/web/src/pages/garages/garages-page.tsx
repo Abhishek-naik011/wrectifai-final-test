@@ -168,20 +168,20 @@ function FilterMenu({
         type="button"
         onClick={open ? onClose : onOpen}
         className={cn(
-          'flex h-[34px] w-full items-center justify-center sm:justify-start gap-1.5 sm:gap-2 rounded-[10px] border border-[#dbe6ff] bg-white px-2 sm:px-3 text-[10.5px] sm:text-[11.5px] font-semibold text-[#17307a] shadow-[0_6px_15px_rgba(30,58,138,0.03)] transition-colors',
-          open && 'border-[#bfd1ff] bg-[#f8fbff]'
+          'flex h-[34px] w-full items-center justify-center sm:justify-start gap-1.5 sm:gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-2 sm:px-3 text-[10.5px] sm:text-[11.5px] font-semibold text-[#17307a] dark:text-white shadow-[0_6px_15px_rgba(30,58,138,0.03)] transition-colors',
+          open && 'border-[#bfd1ff] bg-[#f8fbff] dark:bg-[#1A2233]'
         )}
       >
         <Icon className="h-4 w-4 shrink-0 text-[#1a56db]" />
         <span className="truncate">
           {selected.value === 'all' ? label : selected.label}
         </span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-[#6173a1]" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-[#6173a1] dark:text-slate-400" />
       </button>
       {open ? (
         <div
           className={cn(
-            'absolute top-[39px] z-20 min-w-[200px] sm:min-w-[220px] rounded-[12px] border border-[#dbe6ff] bg-white p-2 shadow-[0_16px_36px_rgba(30,58,138,0.11)]',
+            'absolute top-[39px] z-20 min-w-[200px] sm:min-w-[220px] rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-2 shadow-[0_16px_36px_rgba(30,58,138,0.11)]',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >
@@ -196,8 +196,8 @@ function FilterMenu({
               className={cn(
                 'flex w-full items-center justify-between rounded-[10px] px-3 py-2.5 text-left text-[12px] font-medium transition-colors',
                 option.value === value
-                  ? 'bg-[#eef4ff] text-[#1a56db]'
-                  : 'text-[#17307a] hover:bg-[#f8fbff]'
+                  ? 'bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db]'
+                  : 'text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800'
               )}
             >
               <span>{option.label}</span>
@@ -263,7 +263,7 @@ function GarageCard({
         ) : null}
         <div 
           onClick={onClick}
-          className="absolute right-4 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-md hover:scale-110 transition-transform cursor-pointer z-10">
+          className="absolute right-4 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-md hover:scale-110 transition-transform cursor-pointer z-10">
           <Heart className="h-5 w-5" fill={isWishlisted ? "currentColor" : "none"} />
         </div>
         <div className="absolute inset-x-4 bottom-4 flex items-end justify-between">
@@ -280,7 +280,7 @@ function GarageCard({
 
       <div className="p-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-[14.5px] font-bold tracking-[-0.03em] text-[#17307a]">
+          <h3 className="text-[14.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">
             {name}
           </h3>
           {verified ? (
@@ -288,7 +288,7 @@ function GarageCard({
           ) : null}
         </div>
 
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-[#6173a1]">
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-[#6173a1] dark:text-slate-400">
           <div className="flex shrink-0 items-center gap-1.5">
             <Star className="h-4 w-4 fill-[#ff9f1a] text-[#ff9f1a]" />
             <span className="font-semibold text-[#f28c28]">
@@ -300,7 +300,7 @@ function GarageCard({
           <span className="min-w-0 truncate">{location}</span>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-5 text-[11.5px] font-semibold text-[#17307a]">
+        <div className="mt-4 flex flex-wrap items-center gap-5 text-[11.5px] font-semibold text-[#17307a] dark:text-white">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-[#1a56db]" />
             {formatDistance(distanceKm)}
@@ -323,7 +323,7 @@ function GarageCard({
         </div>
 
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 border-t border-[#eef3ff] pt-2">
-          <div className="flex min-w-0 items-start gap-1 font-normal text-[#17307a]">
+          <div className="flex min-w-0 items-start gap-1 font-normal text-[#17307a] dark:text-white">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1a56db]" />
             <div className="min-w-0 text-[8.5px] tracking-tight font-normal leading-[1.25]">
               <div>No upfront payment &#8226;</div>
@@ -810,10 +810,10 @@ function GaragesContent() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div>
-            <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a]">
+            <h1 className="text-[17.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">
               View All Garages
             </h1>
-            <p className="mt-1.5 text-[12.5px] font-medium text-[#4f67a2]">
+            <p className="mt-1.5 text-[12.5px] font-medium text-[#4f67a2] dark:text-slate-400">
               Showing {filteredGarages.length} garages near{' '}
               <span className="font-bold text-[#1a56db]">{currentLocation}</span>
             </p>
@@ -821,7 +821,7 @@ function GaragesContent() {
         </div>
 
         <div className="flex flex-wrap items-center gap-4 lg:justify-end">
-          <div className="flex items-center rounded-[11px] border border-[#dbe6ff]/90 bg-white p-0.5 shadow-[0_6px_15px_rgba(30,58,138,0.03)]">
+          <div className="flex items-center rounded-[11px] border border-[#dbe6ff] dark:border-[#2A3446]/90 bg-white dark:bg-[#1A2233] p-0.5 shadow-[0_6px_15px_rgba(30,58,138,0.03)]">
             <button
               type="button"
               onClick={() => {
@@ -832,7 +832,7 @@ function GaragesContent() {
                 'flex h-[30px] items-center gap-1.5 rounded-[8px] px-3 text-[11px] font-semibold transition-colors',
                 viewMode === 'list'
                   ? 'bg-[#1a56db] text-white'
-                  : 'text-[#17307a]'
+                  : 'text-[#17307a] dark:text-white'
               )}
             >
               <List className="h-4 w-4" />
@@ -849,7 +849,7 @@ function GaragesContent() {
                 'flex h-[30px] items-center gap-1.5 rounded-[8px] px-3 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                 viewMode === 'map'
                   ? 'bg-[#1a56db] text-white'
-                  : 'text-[#17307a]'
+                  : 'text-[#17307a] dark:text-white'
               )}
             >
               <Map className="h-4 w-4" />
@@ -858,7 +858,7 @@ function GaragesContent() {
           </div>
 
           <div className="relative flex items-center gap-1">
-            <span className="text-[12px] font-semibold text-[#17307a]">
+            <span className="text-[12px] font-semibold text-[#17307a] dark:text-white">
               Sort By:
             </span>
             <button
@@ -867,13 +867,13 @@ function GaragesContent() {
                 setSortOpen((current) => !current);
                 setOpenFilter(null);
               }}
-              className="flex h-[34px] items-center gap-2 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[11.5px] font-semibold text-[#17307a] shadow-[0_6px_15px_rgba(30,58,138,0.03)]"
+              className="flex h-[34px] items-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[11.5px] font-semibold text-[#17307a] dark:text-white shadow-[0_6px_15px_rgba(30,58,138,0.03)]"
             >
               {sortOptions.find((option) => option.value === sortBy)?.label}
-              <ChevronDown className="h-4 w-4 text-[#6173a1]" />
+              <ChevronDown className="h-4 w-4 text-[#6173a1] dark:text-slate-400" />
             </button>
             {sortOpen ? (
-              <div className="absolute right-0 top-[39px] z-20 min-w-[190px] rounded-[12px] border border-[#dbe6ff] bg-white p-2 shadow-[0_16px_36px_rgba(30,58,138,0.11)]">
+              <div className="absolute right-0 top-[39px] z-20 min-w-[190px] rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-2 shadow-[0_16px_36px_rgba(30,58,138,0.11)]">
                 {sortOptions.map((option) => (
                   <button
                     key={option.value}
@@ -886,8 +886,8 @@ function GaragesContent() {
                     className={cn(
                       'flex w-full items-center justify-between rounded-[10px] px-3 py-2.5 text-left text-[12px] font-medium transition-colors',
                       option.value === sortBy
-                        ? 'bg-[#eef4ff] text-[#1a56db]'
-                        : 'text-[#17307a] hover:bg-[#f8fbff]'
+                        ? 'bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db]'
+                        : 'text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800'
                     )}
                   >
                     <span>{option.label}</span>
@@ -926,7 +926,7 @@ function GaragesContent() {
           <button
             type="button"
             onClick={clearFilters}
-            className="flex h-[34px] items-center gap-2 rounded-[10px] border border-[#ffd2d2] bg-white px-3 text-[11.5px] font-semibold text-[#d14343] shadow-[0_6px_15px_rgba(30,58,138,0.03)]"
+            className="flex h-[34px] items-center gap-2 rounded-[10px] border border-[#ffd2d2] bg-white dark:bg-[#1A2233] px-3 text-[11.5px] font-semibold text-[#d14343] shadow-[0_6px_15px_rgba(30,58,138,0.03)]"
           >
             <X className="h-4 w-4" />
             Clear Filters
@@ -935,14 +935,14 @@ function GaragesContent() {
       </div>
 
       {error ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-red-200 bg-white text-center shadow-sm p-6">
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-red-200 bg-white dark:bg-[#1A2233] text-center shadow-sm p-6">
           <h3 className="text-[16px] font-bold text-red-600">{error}</h3>
           <Button className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
         </div>
       ) : isLoading ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm p-6">
-          <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#dbe6ff] border-t-[#1a56db]"></div>
-          <h3 className="text-[16px] font-bold text-[#17307a]">Loading garages near {currentLocation}...</h3>
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-center shadow-sm p-6">
+          <div className="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-[#dbe6ff] dark:border-[#2A3446] border-t-[#1a56db]"></div>
+          <h3 className="text-[16px] font-bold text-[#17307a] dark:text-white">Loading garages near {currentLocation}...</h3>
         </div>
       ) : viewMode === 'map' ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -961,10 +961,10 @@ function GaragesContent() {
           </div>
           <Card className="sticky top-0 flex min-h-[720px] flex-col overflow-hidden rounded-[18px] border-[#e7eefc] bg-[linear-gradient(180deg,#edf5ff_0%,#dfefff_100%)] shadow-[0_14px_34px_rgba(21,48,122,0.08)]">
             <div className="border-b border-[#d9e6ff] px-5 py-4">
-              <h3 className="text-[14.5px] font-bold text-[#17307a]">
+              <h3 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                 Map View
               </h3>
-              <p className="mt-1 text-[11.5px] text-[#6173a1]">
+              <p className="mt-1 text-[11.5px] text-[#6173a1] dark:text-slate-400">
                 Garage markers update from current filters.
               </p>
             </div>
@@ -989,12 +989,12 @@ function GaragesContent() {
           </Card>
         </div>
       ) : filteredGarages.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] bg-white text-center shadow-sm p-6">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7ff] text-[#6173a1]">
+        <div className="flex min-h-[300px] flex-col items-center justify-center rounded-[16px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-center shadow-sm p-6">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#f4f7ff] text-[#6173a1] dark:text-slate-400">
             <Search className="h-6 w-6" />
           </div>
-          <h3 className="text-[16px] font-bold text-[#17307a]">No garages found near {currentLocation}.</h3>
-          <p className="mt-1 text-[13px] text-[#6173a1]">Try adjusting your search or filters, or select a different location.</p>
+          <h3 className="text-[16px] font-bold text-[#17307a] dark:text-white">No garages found near {currentLocation}.</h3>
+          <p className="mt-1 text-[13px] text-[#6173a1] dark:text-slate-400">Try adjusting your search or filters, or select a different location.</p>
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -1018,7 +1018,7 @@ function GaragesContent() {
             type="button"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={currentPage === 1}
-            className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -1026,7 +1026,7 @@ function GaragesContent() {
             entry === 'ellipsis' || entry === 'ellipsis-2' ? (
               <div
                 key={`${entry}-${index}`}
-                className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[12px] font-semibold text-[#6173a1]"
+                className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[12px] font-semibold text-[#6173a1] dark:text-slate-400"
               >
                 ...
               </div>
@@ -1039,7 +1039,7 @@ function GaragesContent() {
                   'flex h-10 w-10 items-center justify-center rounded-[12px] border text-[12px] font-semibold',
                   entry === currentPage
                     ? 'border-[#1a56db] bg-[#1a56db] text-white shadow-[0_10px_20px_rgba(26,86,219,0.18)]'
-                    : 'border-[#dbe6ff] bg-white text-[#6173a1]'
+                    : 'border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#6173a1] dark:text-slate-400'
                 )}
               >
                 {entry}
@@ -1052,13 +1052,13 @@ function GaragesContent() {
               setPage((current) => Math.min(totalPages, current + 1))
             }
             disabled={currentPage === totalPages}
-            className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] bg-white text-[#17307a] shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white shadow-[0_8px_20px_rgba(30,58,138,0.04)] disabled:cursor-not-allowed disabled:opacity-45"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="text-center text-[12.5px] font-medium text-[#4f67a2] lg:text-right">
+        <div className="text-center text-[12.5px] font-medium text-[#4f67a2] dark:text-slate-400 lg:text-right">
           Showing {startIndex} - {endIndex} of {filteredGarages.length} garages
         </div>
       </div>

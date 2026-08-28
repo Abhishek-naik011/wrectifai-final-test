@@ -15,6 +15,9 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+  const [startJobBooking, setStartJobBooking] = useState<any | null>(null);
+  const [completeJobBooking, setCompleteJobBooking] = useState<any | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchBookings()
@@ -120,12 +123,12 @@ export default function BookingsPage() {
                             </>
                           )}
                           {(b.status === 'confirmed' || b.status === 'accepted') && (
-                            <button onClick={() => handleUpdateStatus(b.id, 'in_progress')} className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded font-semibold hover:bg-indigo-200">
+                            <button onClick={() => setStartJobBooking(b)} className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded font-semibold hover:bg-indigo-200">
                               Start Job
                             </button>
                           )}
                           {b.status === 'in_progress' && (
-                            <button onClick={() => handleUpdateStatus(b.id, 'completed')} className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-200">
+                            <button onClick={() => setCompleteJobBooking(b)} className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded font-semibold hover:bg-green-200">
                               Complete Job
                             </button>
                           )}
@@ -241,6 +244,83 @@ export default function BookingsPage() {
               >
                 Close
               </button>
+            </div>
+          </Modal>
+        )}
+
+        {startJobBooking && (
+          <Modal isOpen={!!startJobBooking} onClose={() => !isUpdatingStatus && setStartJobBooking(null)} title="Start Job">
+            <div className="space-y-4 py-2">
+              <p className="text-[14px] text-slate-700 dark:text-slate-300">
+                Are you ready to start work on this vehicle?
+              </p>
+              <div className="bg-slate-50 dark:bg-[#1A2233] p-4 rounded-lg space-y-2 border border-slate-100 dark:border-slate-800 text-sm">
+                <p><span className="font-semibold text-slate-500">Booking ID:</span> {startJobBooking.id.substring(0, 8)}</p>
+                <p><span className="font-semibold text-slate-500">Customer:</span> {startJobBooking.customerName || 'N/A'}</p>
+                <p><span className="font-semibold text-slate-500">Vehicle:</span> {startJobBooking.vehicleMake} {startJobBooking.vehicleModel}</p>
+                <p><span className="font-semibold text-slate-500">Scheduled:</span> {startJobBooking.scheduledAt ? new Date(startJobBooking.scheduledAt).toLocaleDateString() : 'N/A'}</p>
+                <p><span className="font-semibold text-slate-500">Service:</span> {startJobBooking.serviceType}</p>
+                <p><span className="font-semibold text-slate-500">Current Status:</span> <span className="uppercase text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded ml-1">{startJobBooking.status === 'accepted' ? 'confirmed' : startJobBooking.status}</span></p>
+              </div>
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  onClick={() => setStartJobBooking(null)}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded hover:bg-slate-200 transition-colors"
+                  disabled={isUpdatingStatus}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    setIsUpdatingStatus(true);
+                    await handleUpdateStatus(startJobBooking.id, 'in_progress');
+                    setIsUpdatingStatus(false);
+                    setStartJobBooking(null);
+                  }}
+                  className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded hover:bg-indigo-700 transition-colors flex items-center justify-center min-w-[100px]"
+                  disabled={isUpdatingStatus}
+                >
+                  {isUpdatingStatus ? 'Starting...' : 'Start Job'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {completeJobBooking && (
+          <Modal isOpen={!!completeJobBooking} onClose={() => !isUpdatingStatus && setCompleteJobBooking(null)} title="Complete Job?">
+            <div className="space-y-4 py-2">
+              <p className="text-[14px] text-slate-700 dark:text-slate-300">
+                Are you sure you want to mark this job as completed?<br/>
+                The customer will be notified that the service has been completed.
+              </p>
+              <div className="bg-slate-50 dark:bg-[#1A2233] p-4 rounded-lg space-y-2 border border-slate-100 dark:border-slate-800 text-sm">
+                <p><span className="font-semibold text-slate-500">Booking ID:</span> {completeJobBooking.id.substring(0, 8)}</p>
+                <p><span className="font-semibold text-slate-500">Customer:</span> {completeJobBooking.customerName || 'N/A'}</p>
+                <p><span className="font-semibold text-slate-500">Vehicle:</span> {completeJobBooking.vehicleMake} {completeJobBooking.vehicleModel}</p>
+                <p><span className="font-semibold text-slate-500">Current Status:</span> <span className="uppercase text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded ml-1">in progress</span></p>
+              </div>
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  onClick={() => setCompleteJobBooking(null)}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded hover:bg-slate-200 transition-colors"
+                  disabled={isUpdatingStatus}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={async () => {
+                    setIsUpdatingStatus(true);
+                    await handleUpdateStatus(completeJobBooking.id, 'completed');
+                    setIsUpdatingStatus(false);
+                    setCompleteJobBooking(null);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition-colors flex items-center justify-center min-w-[120px]"
+                  disabled={isUpdatingStatus}
+                >
+                  {isUpdatingStatus ? 'Completing...' : 'Complete Job'}
+                </button>
+              </div>
             </div>
           </Modal>
         )}

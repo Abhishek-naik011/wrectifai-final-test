@@ -120,7 +120,7 @@ export function BookingsPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a8ab4]">
                 WrectifAI Workspace
               </p>
-              <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a]">
+              <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a] dark:text-white">
                 My Bookings
               </h1>
             </div>
@@ -137,7 +137,7 @@ export function BookingsPage() {
                 'rounded-[10px] px-3.5 py-1.5 text-[11.5px] font-bold transition-all',
                 activeTab === tab.key
                   ? 'bg-[#1a56db] text-white shadow-sm'
-                  : 'bg-white border border-[#e2eefc] text-[#17307a] hover:bg-[#f8fbff]'
+                  : 'bg-white dark:bg-[#1A2233] border border-[#e2eefc] text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800'
               )}
             >
               {tab.label}
@@ -167,8 +167,8 @@ export function BookingsPage() {
         ) : filteredBookings.length === 0 ? (
           <Card className="p-8 flex flex-col items-center justify-center text-center">
             <Calendar className="h-10 w-10 text-[#8a99ad] mb-2" />
-            <p className="text-[13.5px] font-bold text-[#17307a]">No bookings found</p>
-            <p className="text-slate-500 mt-2">You don't have any {activeTab !== 'all' ? activeTab : ''} bookings yet.</p>
+            <p className="text-[13.5px] font-bold text-[#17307a] dark:text-white">No bookings found</p>
+            <p className="text-slate-500 dark:text-slate-400 mt-2">You don't have any {activeTab !== 'all' ? activeTab : ''} bookings yet.</p>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -196,13 +196,13 @@ export function BookingsPage() {
                     </span>
                   </div>
 
-                  <h3 className="text-[14.5px] font-bold text-[#17307a]">{b.garageName || 'Garage'}</h3>
+                  <h3 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">{b.garageName || 'Garage'}</h3>
                   
                   {b.garageAddress && (
                     <p className="text-[11px] text-[#5c6e8e] font-normal leading-none">{b.garageAddress}</p>
                   )}
 
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] text-[#17307a] font-semibold">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-[11px] text-[#17307a] dark:text-white font-semibold">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5 text-[#1a56db]" />
                       {new Date(b.scheduledAt).toLocaleDateString(undefined, {
@@ -230,14 +230,14 @@ export function BookingsPage() {
                 <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 border-[#eef3ff] pt-3 sm:pt-0">
                   <div className="text-left sm:text-right">
                     <p className="text-[10px] font-bold text-[#8a96b8] uppercase">Total Cost</p>
-                    <p className="text-[15.5px] font-extrabold text-[#17307a]">{b.currency} {b.totalAmount}</p>
+                    <p className="text-[15.5px] font-extrabold text-[#17307a] dark:text-white">{b.currency} {b.totalAmount}</p>
                   </div>
 
                   <div className="flex gap-2">
                     <Button
                       onClick={() => setViewDetailsBooking(b)}
                       variant="outline"
-                      className="h-8 rounded-[9px] px-2.5 text-[10.5px] font-semibold border-slate-200 text-slate-700 hover:bg-slate-50"
+                      className="h-8 rounded-[9px] px-2.5 text-[10.5px] font-semibold border-slate-200 dark:border-slate-700 text-slate-700 hover:bg-slate-50 dark:bg-[#121826]"
                     >
                       View Details
                     </Button>
@@ -262,53 +262,53 @@ export function BookingsPage() {
         <Modal isOpen={true} onClose={() => setViewDetailsBooking(null)} title="Booking Details" className="max-w-2xl">
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Booking ID</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Booking ID</span>
               <p className="font-semibold">{viewDetailsBooking.id}</p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Quote ID</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Quote ID</span>
               <p className="font-semibold">{viewDetailsBooking.quoteId || 'N/A'}</p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Garage Name</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Garage Name</span>
               <p className="font-semibold">{viewDetailsBooking.garageName}</p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Vehicle</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Vehicle</span>
               <p className="font-semibold">
                 {viewDetailsBooking.vehicleMake ? `${viewDetailsBooking.vehicleMake} ${viewDetailsBooking.vehicleModel} ${viewDetailsBooking.vehicleYear}` : 'N/A'}
               </p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Vehicle Number / VIN</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Vehicle Number / VIN</span>
               <p className="font-semibold">{viewDetailsBooking.vehicleVin || 'N/A'}</p>
             </div>
             <div className="col-span-2">
-              <span className="block font-bold text-slate-500 mb-1">Issue Description</span>
-              <p className="bg-slate-50 p-3 rounded border border-slate-200">
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Issue Description</span>
+              <p className="bg-slate-50 dark:bg-[#121826] p-3 rounded border border-slate-200 dark:border-slate-700">
                 {viewDetailsBooking.issueDescription || 'N/A'}
               </p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Estimated Days</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Estimated Days</span>
               <p className="font-semibold">
                 {viewDetailsBooking.estimatedDays ? (/^\d+$/.test(String(viewDetailsBooking.estimatedDays).trim()) ? `${String(viewDetailsBooking.estimatedDays).trim()} Days` : viewDetailsBooking.estimatedDays) : 'N/A'}
               </p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Preferred Date</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Preferred Date</span>
               <p className="font-semibold">
                 {viewDetailsBooking.preferredDate ? new Date(viewDetailsBooking.preferredDate).toLocaleDateString() : 'N/A'}
               </p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Preferred Time</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Preferred Time</span>
               <p className="font-semibold">
                 {viewDetailsBooking.preferredDate ? new Date(viewDetailsBooking.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
               </p>
             </div>
             <div>
-              <span className="block font-bold text-slate-500 mb-1">Booking Status</span>
+              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Booking Status</span>
               <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 font-bold text-xs rounded uppercase">
                 {viewDetailsBooking.status}
               </span>
@@ -341,11 +341,11 @@ export function BookingsPage() {
             </div>
           )}
           
-          <h3 className="text-xl font-bold text-[#17307a] mb-2">
+          <h3 className="text-xl font-bold text-[#17307a] dark:text-white mb-2">
             {cancelError ? 'Unable to Cancel' : 'Cancel Booking'}
           </h3>
           
-          <p className="text-slate-600 mb-8 max-w-sm">
+          <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm">
             {cancelError ? (
               <>We couldn't cancel your booking right now.<br/><br/>Please try again in a few moments.</>
             ) : (

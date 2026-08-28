@@ -82,7 +82,7 @@ function FeatureHeader({ onAddClick }: { onAddClick: () => void }) {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#dbe6ff] bg-white text-[#1a56db] shadow-sm lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-sm lg:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
               <line x1="4" x2="20" y1="12" y2="12" />
@@ -94,7 +94,7 @@ function FeatureHeader({ onAddClick }: { onAddClick: () => void }) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a8ab4]">
               WrectifAI Workspace
             </p>
-            <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a]">
+            <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a] dark:text-white">
               My Vehicles
             </h1>
           </div>
@@ -128,10 +128,10 @@ function FeatureAside() {
     <aside className="space-y-4">
       {tips.map(({ title, text, icon: Icon }) => (
         <Card key={title} className="rounded-[20px] p-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#eef4ff] text-[#1a56db] shadow-[0_10px_24px_rgba(26,86,219,0.12)]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db] shadow-[0_10px_24px_rgba(26,86,219,0.12)]">
             <Icon className="h-5 w-5" />
           </div>
-          <h2 className="mt-4 text-[16.5px] font-bold tracking-[-0.03em] text-[#17307a]">
+          <h2 className="mt-4 text-[16.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">
             {title}
           </h2>
           <p className="mt-2 text-[13px] leading-6 text-[#5d6f9f]">{text}</p>
@@ -353,7 +353,7 @@ export function VehiclesPage() {
           // Loading Skeleton
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2].map((i) => (
-              <Card key={i} className="animate-pulse rounded-[24px] border border-[#dbe6ff] bg-white p-6 space-y-4">
+              <Card key={i} className="animate-pulse rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="space-y-2 w-2/3">
                     <div className="h-6 bg-slate-200 rounded w-3/4"></div>
@@ -361,7 +361,7 @@ export function VehiclesPage() {
                   </div>
                   <div className="h-10 w-10 bg-slate-200 rounded-full"></div>
                 </div>
-                <div className="space-y-2 pt-4 border-t border-slate-100">
+                <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="h-4 bg-slate-200 rounded w-full"></div>
                   <div className="h-4 bg-slate-200 rounded w-5/6"></div>
                 </div>
@@ -379,11 +379,11 @@ export function VehiclesPage() {
           </Card>
         ) : vehicles.length === 0 ? (
           // Empty State
-          <Card className="rounded-[24px] border border-[#dfe8ff] bg-white p-8 text-center shadow-[0_12px_36px_rgba(30,58,138,0.04)]">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-[#eef4ff] text-[#1a56db] mx-auto mb-6 shadow-[0_10px_24px_rgba(26,86,219,0.1)]">
+          <Card className="rounded-[24px] border border-[#dfe8ff] bg-white dark:bg-[#1A2233] p-8 text-center shadow-[0_12px_36px_rgba(30,58,138,0.04)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db] mx-auto mb-6 shadow-[0_10px_24px_rgba(26,86,219,0.1)]">
               <Car className="h-8 w-8" />
             </div>
-            <h2 className="text-2xl font-bold text-[#17307a]">No Vehicles Registered Yet</h2>
+            <h2 className="text-2xl font-bold text-[#17307a] dark:text-white">No Vehicles Registered Yet</h2>
             <p className="mt-2 text-sm text-[#5d6f9f] max-w-md mx-auto leading-6">
               Register your vehicle to quickly request maintenance quotes, diagnose issues with AI, and track service history.
             </p>
@@ -396,10 +396,10 @@ export function VehiclesPage() {
           // Vehicles Grid List
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {vehicles.map((vehicle) => (
-              <Card key={vehicle.id} className="relative overflow-hidden rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_10px_30px_rgba(30,58,138,0.03)] hover:shadow-[0_15px_40px_rgba(26,86,219,0.06)] hover:border-[#bfd1ff] transition-all group">
+              <Card key={vehicle.id} className="relative overflow-hidden rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 shadow-[0_10px_30px_rgba(30,58,138,0.03)] hover:shadow-[0_15px_40px_rgba(26,86,219,0.06)] hover:border-[#bfd1ff] transition-all group">
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-[#dbe6ff] bg-[#f4f7ff]">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f4f7ff]">
                       {vehicle.photos && vehicle.photos.length > 0 ? (
                         <img src={vehicle.photos[0]} alt={`${vehicle.make} ${vehicle.model}`} className="h-full w-full object-cover" />
                       ) : (
@@ -410,7 +410,7 @@ export function VehiclesPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-[#17307a] leading-tight">
+                        <h3 className="text-lg font-bold text-[#17307a] dark:text-white leading-tight">
                           {vehicle.year} {vehicle.make} {vehicle.model}
                         </h3>
                         {vehicle.isPrimary && (
@@ -426,41 +426,41 @@ export function VehiclesPage() {
                     </div>
                   </div>
                   {(!vehicle.photos || vehicle.photos.length === 0) && (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#eef4ff] text-[#1a56db]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db]">
                       <Car className="h-5 w-5" />
                     </div>
                   )}
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 border-t border-slate-100/80 text-[13px]">
+                <div className="mt-5 grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[13px]">
                   {vehicle.vin && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">VIN</span>
-                      <span className="font-mono text-[#17307a] tracking-tight">{vehicle.vin}</span>
+                      <span className="font-mono text-[#17307a] dark:text-white tracking-tight">{vehicle.vin}</span>
                     </div>
                   )}
                   {vehicle.mileage !== undefined && vehicle.mileage !== null && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Mileage</span>
-                      <span className="text-[#17307a] font-semibold">{vehicle.mileage.toLocaleString()} mi</span>
+                      <span className="text-[#17307a] dark:text-white font-semibold">{vehicle.mileage.toLocaleString()} mi</span>
                     </div>
                   )}
                   {vehicle.fuelType && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Fuel</span>
-                      <span className="text-[#17307a]">{vehicle.fuelType}</span>
+                      <span className="text-[#17307a] dark:text-white">{vehicle.fuelType}</span>
                     </div>
                   )}
                   {vehicle.transmission && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Transmission</span>
-                      <span className="text-[#17307a]">{vehicle.transmission}</span>
+                      <span className="text-[#17307a] dark:text-white">{vehicle.transmission}</span>
                     </div>
                   )}
                   {vehicle.color && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Color</span>
-                      <span className="text-[#17307a]">{vehicle.color}</span>
+                      <span className="text-[#17307a] dark:text-white">{vehicle.color}</span>
                     </div>
                   )}
                 </div>
@@ -493,14 +493,14 @@ export function VehiclesPage() {
         {/* Modal: Add Vehicle */}
         {isAddOpen && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
+            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setIsAddOpen(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full transition-colors z-10"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2 shrink-0">
+              <h2 className="text-xl font-bold text-[#17307a] dark:text-white mb-5 flex items-center gap-2 shrink-0">
                 <Car className="h-5 w-5 text-[#1a56db]" />
                 Add New Vehicle
               </h2>
@@ -515,25 +515,25 @@ export function VehiclesPage() {
 
                 <div className="mb-4">
                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
-                   <div className="border border-slate-200 border-dashed rounded-[14px] p-4 bg-slate-50 flex flex-col items-center justify-center text-center">
+                   <div className="border border-slate-200 dark:border-slate-700 border-dashed rounded-[14px] p-4 bg-slate-50 dark:bg-[#121826] flex flex-col items-center justify-center text-center">
                      <UploadCloud className="w-8 h-8 text-[#a3b8e8] mb-2" />
                      <p className="text-sm font-medium text-slate-700 mb-1">Click to upload photos</p>
-                     <p className="text-xs text-slate-500 mb-4">First photo will be your primary vehicle image.</p>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">First photo will be your primary vehicle image.</p>
                      <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" id="vehicle-photos-upload-add" />
-                     <label htmlFor="vehicle-photos-upload-add" className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 shadow-sm">Select Photos</label>
+                     <label htmlFor="vehicle-photos-upload-add" className="bg-white dark:bg-[#1A2233] border border-slate-200 dark:border-slate-700 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 dark:bg-[#121826] shadow-sm">Select Photos</label>
                    </div>
                    
                    {photos && photos.length > 0 && (
                      <div className="mt-4 flex flex-wrap gap-4">
                        {photos.map((photo: string, index: number) => (
-                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm group">
                            <img src={photo} alt={`Vehicle ${index}`} className="w-full h-full object-cover" />
                            {index === 0 && (
                              <div className="absolute bottom-0 inset-x-0 bg-blue-600/90 text-white text-[9px] font-bold py-0.5 text-center">
                                PRIMARY
                              </div>
                            )}
-                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white dark:bg-[#1A2233] rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                              <X className="w-3 h-3" />
                            </button>
                          </div>
@@ -595,7 +595,7 @@ export function VehiclesPage() {
                     <select 
                       value={fuelType} 
                       onChange={(e) => setFuelType(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
                       <option value="Petrol">Petrol</option>
@@ -611,7 +611,7 @@ export function VehiclesPage() {
                     <select 
                       value={transmission} 
                       onChange={(e) => setTransmission(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
                       <option value="Automatic">Automatic</option>
@@ -627,7 +627,7 @@ export function VehiclesPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] bg-[#f8faff]">
+                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f8faff]">
                   <input 
                     type="checkbox" 
                     id="isPrimary-add" 
@@ -635,7 +635,7 @@ export function VehiclesPage() {
                     onChange={(e) => setIsPrimary(e.target.checked)}
                     className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
                   />
-                  <label htmlFor="isPrimary-add" className="text-sm font-medium text-[#17307a] cursor-pointer select-none flex-1">
+                  <label htmlFor="isPrimary-add" className="text-sm font-medium text-[#17307a] dark:text-white cursor-pointer select-none flex-1">
                     Set as Primary Vehicle
                   </label>
                   {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
@@ -643,7 +643,7 @@ export function VehiclesPage() {
 
                 </div>
                 
-                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 shrink-0">
+                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
                   <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
                     Cancel
                   </Button>
@@ -659,14 +659,14 @@ export function VehiclesPage() {
         {/* Modal: Edit Vehicle */}
         {isEditOpen && selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] bg-white p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
+            <Card className="flex flex-col w-full max-w-lg max-h-[90vh] rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 shadow-[0_20px_50px_rgba(10,18,45,0.15)] relative animate-in fade-in zoom-in-95 duration-200">
               <button
                 onClick={() => setIsEditOpen(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors z-10"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-full transition-colors z-10"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h2 className="text-xl font-bold text-[#17307a] mb-5 flex items-center gap-2 shrink-0">
+              <h2 className="text-xl font-bold text-[#17307a] dark:text-white mb-5 flex items-center gap-2 shrink-0">
                 <Settings className="h-5 w-5 text-[#1a56db]" />
                 Edit Vehicle Details
               </h2>
@@ -681,25 +681,25 @@ export function VehiclesPage() {
 
                 <div className="mb-4">
                    <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
-                   <div className="border border-slate-200 border-dashed rounded-[14px] p-4 bg-slate-50 flex flex-col items-center justify-center text-center">
+                   <div className="border border-slate-200 dark:border-slate-700 border-dashed rounded-[14px] p-4 bg-slate-50 dark:bg-[#121826] flex flex-col items-center justify-center text-center">
                      <UploadCloud className="w-8 h-8 text-[#a3b8e8] mb-2" />
                      <p className="text-sm font-medium text-slate-700 mb-1">Click to upload photos</p>
-                     <p className="text-xs text-slate-500 mb-4">First photo will be your primary vehicle image.</p>
+                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">First photo will be your primary vehicle image.</p>
                      <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" id="vehicle-photos-upload-edit" />
-                     <label htmlFor="vehicle-photos-upload-edit" className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 shadow-sm">Select Photos</label>
+                     <label htmlFor="vehicle-photos-upload-edit" className="bg-white dark:bg-[#1A2233] border border-slate-200 dark:border-slate-700 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-50 dark:bg-[#121826] shadow-sm">Select Photos</label>
                    </div>
                    
                    {photos && photos.length > 0 && (
                      <div className="mt-4 flex flex-wrap gap-4">
                        {photos.map((photo: string, index: number) => (
-                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                         <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm group">
                            <img src={photo} alt={`Vehicle ${index}`} className="w-full h-full object-cover" />
                            {index === 0 && (
                              <div className="absolute bottom-0 inset-x-0 bg-blue-600/90 text-white text-[9px] font-bold py-0.5 text-center">
                                PRIMARY
                              </div>
                            )}
-                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white dark:bg-[#1A2233] rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                              <X className="w-3 h-3" />
                            </button>
                          </div>
@@ -761,7 +761,7 @@ export function VehiclesPage() {
                     <select 
                       value={fuelType} 
                       onChange={(e) => setFuelType(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
                       <option value="Petrol">Petrol</option>
@@ -777,7 +777,7 @@ export function VehiclesPage() {
                     <select 
                       value={transmission} 
                       onChange={(e) => setTransmission(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] bg-white px-3 text-[14px] text-[#17307a] outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
                       <option value="Automatic">Automatic</option>
@@ -793,7 +793,7 @@ export function VehiclesPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] bg-[#f8faff]">
+                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f8faff]">
                   <input 
                     type="checkbox" 
                     id="isPrimary-edit" 
@@ -801,7 +801,7 @@ export function VehiclesPage() {
                     onChange={(e) => setIsPrimary(e.target.checked)}
                     className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
                   />
-                  <label htmlFor="isPrimary-edit" className="text-sm font-medium text-[#17307a] cursor-pointer select-none flex-1">
+                  <label htmlFor="isPrimary-edit" className="text-sm font-medium text-[#17307a] dark:text-white cursor-pointer select-none flex-1">
                     Set as Primary Vehicle
                   </label>
                   {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
@@ -809,7 +809,7 @@ export function VehiclesPage() {
 
                 </div>
                 
-                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 shrink-0">
+                <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
                   <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
                     Cancel
                   </Button>
@@ -825,11 +825,11 @@ export function VehiclesPage() {
         {/* Modal: Confirm Delete */}
         {isDeleteOpen && selectedVehicle && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.4)] px-4 py-5 backdrop-blur-[2px]">
-            <Card className="w-full max-w-md rounded-[24px] border border-[#dbe6ff] bg-white p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            <Card className="w-full max-w-md rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500 mx-auto mb-4">
                 <AlertTriangle className="h-6 w-6" />
               </div>
-              <h2 className="text-xl font-bold text-[#17307a]">Delete Vehicle?</h2>
+              <h2 className="text-xl font-bold text-[#17307a] dark:text-white">Delete Vehicle?</h2>
               
               {deleteError ? (
                 <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">

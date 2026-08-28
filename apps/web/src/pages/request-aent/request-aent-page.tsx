@@ -265,7 +265,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
               <h1 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#238453]">
                 Thank you.
               </h1>
-              <p className="mt-1 text-[12px] text-[#5f7099]">
+              <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
                 Your request has been sent to all available garages. You will start receiving quotations shortly.
               </p>
             </div>
@@ -274,7 +274,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.32fr)_minmax(0,0.68fr)] items-stretch">
           <div className="flex flex-col gap-5">
-            <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex items-center gap-3">
                 <h3 className={homeSectionHeadingClass}>Your Vehicle</h3>
               </div>
@@ -289,32 +289,32 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                     <div className={homeCardHeadingClass}>
                       {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.vin ? `(${selectedVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
                     </div>
-                    <div className="mt-1 text-[12px] text-[#5f7099]">
+                    <div className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
                       Active vehicle linked to this garage request
                     </div>
 
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                      <div className="rounded-[12px] border border-[#e3ebff] bg-white px-3 py-2">
+                      <div className="rounded-[12px] border border-[#e3ebff] bg-white dark:bg-[#1A2233] px-3 py-2">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8ea0c7]">
                           Fuel
                         </div>
-                        <div className="mt-1 text-[13px] font-semibold text-[#17307a]">
+                        <div className="mt-1 text-[13px] font-semibold text-[#17307a] dark:text-white">
                           {selectedVehicle ? (selectedVehicle.vin ? 'VIN Verified' : 'Petrol') : 'Petrol'}
                         </div>
                       </div>
-                      <div className="rounded-[12px] border border-[#e3ebff] bg-white px-3 py-2">
+                      <div className="rounded-[12px] border border-[#e3ebff] bg-white dark:bg-[#1A2233] px-3 py-2">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8ea0c7]">
                           Year
                         </div>
-                        <div className="mt-1 text-[13px] font-semibold text-[#17307a]">
+                        <div className="mt-1 text-[13px] font-semibold text-[#17307a] dark:text-white">
                           {selectedVehicle ? selectedVehicle.year : '2018'}
                         </div>
                       </div>
-                      <div className="rounded-[12px] border border-[#e3ebff] bg-white px-3 py-2">
+                      <div className="rounded-[12px] border border-[#e3ebff] bg-white dark:bg-[#1A2233] px-3 py-2">
                         <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8ea0c7]">
                           KM Driven
                         </div>
-                        <div className="mt-1 text-[13px] font-semibold text-[#17307a]">
+                        <div className="mt-1 text-[13px] font-semibold text-[#17307a] dark:text-white">
                           {selectedVehicle && selectedVehicle.mileage !== undefined && selectedVehicle.mileage !== null
                             ? `${selectedVehicle.mileage.toLocaleString()} mi`
                             : '58,320 km'}
@@ -326,13 +326,13 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
               </div>
             </Card>
 
-            <Card className="flex-1 rounded-[18px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="flex-1 rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <h3 className={homeSectionHeadingClass}>
                     Your Selected Issues
                   </h3>
-                  <span className="text-[12px] font-medium text-[#5f7099]">
+                  <span className="text-[12px] font-medium text-[#5f7099] dark:text-slate-400">
                     ({selectedIssues.length} Selected)
                   </span>
                 </div>
@@ -366,16 +366,16 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                           {issue.badge}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] leading-5 text-[#5f7099]">
+                      <p className="mt-1 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                         {issue.description}
                       </p>
                     </div>
 
                     <div className="md:text-center">
-                      <div className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-[#17307a]">
+                      <div className="text-[20px] font-semibold leading-none tracking-[-0.03em] text-[#17307a] dark:text-white">
                         {issue.match}%
                       </div>
-                      <div className="mt-1 text-[11px] font-medium text-[#5f7099]">
+                      <div className="mt-1 text-[11px] font-medium text-[#5f7099] dark:text-slate-400">
                         Match
                       </div>
                     </div>
@@ -385,20 +385,20 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
             </Card>
           </div>
 
-          <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
             <div className="flex flex-col gap-2">
               <div>
                 <h3 className={homeSectionHeadingClass}>
                   Top Garages Near You
                 </h3>
-                <p className="mt-1 text-[12px] text-[#5f7099]">
+                <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
                   These garages are receiving your request based on your
                   selected issues and location.
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-[14px] border border-[#e8eefc] bg-white">
+            <div className="mt-4 overflow-hidden rounded-[14px] border border-[#e8eefc] bg-white dark:bg-[#1A2233]">
               {featuredGarages.map((garage, index) => (
                 <div
                   key={`${garage.name}-${index}`}
@@ -421,8 +421,8 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
 
                   <div className="min-w-0">
                     <div className="ui-card-title truncate">{garage.name}</div>
-                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[12px] font-medium text-[#5f7099]">
-                      <span className="inline-flex items-center gap-1 text-[#17307a]">
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[12px] font-medium text-[#5f7099] dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 text-[#17307a] dark:text-white">
                         <span>{garage.rating}</span>
                         <Star className="h-3.5 w-3.5 fill-[#ffb800] text-[#ffb800]" />
                         <span>({garage.reviews})</span>
@@ -430,7 +430,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                       <span>{BULLET}</span>
                       <span className="truncate">{garage.distance} away</span>
                     </div>
-                    <div className="mt-1 truncate text-[11px] leading-5 text-[#5f7099]">
+                    <div className="mt-1 truncate text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                       {garage.badge || 'Trusted partner'} {BULLET} Verified
                       technicians
                     </div>

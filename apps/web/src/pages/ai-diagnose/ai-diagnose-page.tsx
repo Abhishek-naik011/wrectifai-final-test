@@ -432,7 +432,7 @@ function getIssueVisualMeta(issue: DiagnosticIssueResult) {
     return {
       icon: Snowflake,
       accentClass: 'text-[#1a56db]',
-      fillClass: 'bg-[#f4f8ff]',
+      fillClass: 'bg-[#f4f8ff] dark:bg-[#1A2233]',
     };
   }
 
@@ -526,14 +526,14 @@ function IssueDetailsModal({
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,18,45,0.24)] px-4 py-5 backdrop-blur-[1px]">
-      <div className="w-full max-w-[520px] rounded-[20px] border border-white/70 bg-white shadow-[0_24px_70px_rgba(16,35,86,0.18)]">
+      <div className="w-full max-w-[520px] rounded-[20px] border border-white/70 bg-white dark:bg-[#1A2233] shadow-[0_24px_70px_rgba(16,35,86,0.18)]">
         <div className="px-5 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <IssueVisual issue={issue} size={72} vehicleImageSrc={vehicleImageSrc} />
               <div>
                 <h3 className={homeSectionHeadingClass}>{issue.title}</h3>
-                <p className="mt-1 text-[11px] leading-5 text-[#5f7099]">
+                <p className="mt-1 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                   {issue.description}
                 </p>
                 <span
@@ -550,22 +550,22 @@ function IssueDetailsModal({
               type="button"
               onClick={onClose}
               aria-label="Close issue details"
-              className="mt-0.5 text-[#17307a] transition-all duration-150 hover:scale-110 hover:text-black active:scale-90"
+              className="mt-0.5 text-[#17307a] dark:text-white transition-all duration-150 hover:scale-110 hover:text-black active:scale-90"
             >
               <X className="h-5 w-5 stroke-[2.5]" />
             </button>
           </div>
 
-          <div className="mt-5 grid gap-4 rounded-[16px] border border-[#e8eefc] bg-[#fbfcff] px-4 py-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 rounded-[16px] border border-[#e8eefc] bg-[#fbfcff] dark:bg-[#1A2233] px-4 py-4 sm:grid-cols-2">
             <div>
               <div className={homeSubheadingClass}>Estimated Cost</div>
-              <p className="mt-2 text-[12px] text-[#17307a]">
+              <p className="mt-2 text-[12px] text-[#17307a] dark:text-white">
                 {issue.estimatedCost}
               </p>
             </div>
             <div>
               <div className={homeSubheadingClass}>Confidence Match</div>
-              <p className="mt-2 text-[12px] text-[#17307a]">
+              <p className="mt-2 text-[12px] text-[#17307a] dark:text-white">
                 {issue.match}% likely
               </p>
             </div>
@@ -575,7 +575,7 @@ function IssueDetailsModal({
                 {issue.risks.map((risk) => (
                   <span
                     key={risk}
-                    className="rounded-full border border-[#dbe6ff] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#17307a]"
+                    className="rounded-full border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 py-1.5 text-[11px] font-semibold text-[#17307a] dark:text-white"
                   >
                     {risk}
                   </span>
@@ -742,7 +742,7 @@ function ProgressRing({ progress }: { progress: number }) {
 
 function AssistantPill() {
   return (
-    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#dce7ff] bg-white shadow-[0_6px_16px_rgba(31,94,255,0.08)] overflow-hidden">
+    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#dce7ff] bg-white dark:bg-[#1A2233] shadow-[0_6px_16px_rgba(31,94,255,0.08)] overflow-hidden">
       <Image
         src="/assets/Robo_icon.png"
         alt="WrectifAI"
@@ -828,7 +828,7 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
           <h2 className={cn('mt-2', homeHeroHeadingClass)}>
             Analyzing your issue...
           </h2>
-          <p className="mt-2 max-w-[520px] text-[12px] leading-6 text-[#5f7099]">
+          <p className="mt-2 max-w-[520px] text-[12px] leading-6 text-[#5f7099] dark:text-slate-400">
             WrectifAI is checking possible causes and preparing the best
             solutions for you.
           </p>
@@ -864,7 +864,7 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
                         ? 'border-[#1ea84a] bg-[#1ea84a] text-white shadow-[0_8px_20px_rgba(30,168,74,0.15)]'
                         : isActive
                           ? 'border-[#2350f6] bg-[#2350f6] text-white shadow-[0_8px_20px_rgba(35,80,246,0.25)] scale-110'
-                          : 'border-[#dce7ff] bg-white text-[#7d8bb0]'
+                          : 'border-[#dce7ff] bg-white dark:bg-[#1A2233] text-[#7d8bb0]'
                     )}
                   >
                     {isComplete ? (
@@ -885,7 +885,7 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
                         ? 'text-[#1a56db]'
                         : isComplete
                           ? 'text-[#1ea84a]'
-                          : 'text-[#17307a]'
+                          : 'text-[#17307a] dark:text-white'
                     )}
                   >
                     {title}
@@ -893,7 +893,7 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
                   <div
                     className={cn(
                       'mt-1 text-[11px] transition-colors duration-300',
-                      isActive ? 'text-[#1a56db]' : 'text-[#5f7099]'
+                      isActive ? 'text-[#1a56db]' : 'text-[#5f7099] dark:text-slate-400'
                     )}
                   >
                     {description}
@@ -913,7 +913,7 @@ function DiagnoseAnalyzingScreen({ onComplete }: { onComplete?: () => void }) {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#5f7099]">
+          <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#5f7099] dark:text-slate-400">
             <Lock className="h-3.5 w-3.5" />
             <span>100% Secure</span>
             <span>•</span>
@@ -1402,20 +1402,20 @@ function DiagnoseResultsScreen({
       <div>
         <div>
           <h1 className={homeHeroHeadingClass}>WrectifAI Diagnosis Results</h1>
-          <p className="mt-1 text-[12px] text-[#5f7099]">
+          <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
             Smart diagnosis, clear insights, and the next best steps for your
             car
           </p>
         </div>
       </div>
 
-      <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)] overflow-y-auto [scrollbar-width:thin]">
+      <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)] overflow-y-auto [scrollbar-width:thin]">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
             <div className={homeSectionHeadingClass}>Your Issue</div>
 
             <div className="mt-3">
-              <div className="text-[14.5px] font-bold text-[#17307a]">{diagnosisState.primaryIssue}</div>
+              <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">{diagnosisState.primaryIssue}</div>
               {diagnosisState.isRefined && (
                 <div className="mt-1 text-[11px] font-semibold text-[#25a24a] flex items-center gap-1">
                   ✓ Refined using your additional information
@@ -1426,14 +1426,14 @@ function DiagnoseResultsScreen({
                 <span className="rounded-full bg-[#e8f8eb] px-2.5 py-0.5 text-[11px] font-bold text-[#25a24a]">Confidence: {diagnosisState.confidence}</span>
               </div>
               <div className="mt-4">
-                <div className="text-[14.5px] font-bold text-[#17307a]">Why this diagnosis?</div>
+                <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">Why this diagnosis?</div>
                 <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
                   {diagnosisState.summary}
                 </p>
               </div>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {diagnosisState.symptoms.map(sym => (
-                  <span key={sym} className="rounded-md bg-[#f4f7ff] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{sym}</span>
+                  <span key={sym} className="rounded-md bg-[#f4f7ff] dark:bg-[#1A2233] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{sym}</span>
                 ))}
               </div>
 
@@ -1442,11 +1442,11 @@ function DiagnoseResultsScreen({
 
 
 
-            <div className="mt-4 border-t border-[#e6ecfb] pt-3">
-              <label className="text-[14.5px] font-bold text-[#17307a]">Additional Information</label>
+            <div className="mt-4 border-t border-[#e6ecfb] dark:border-[#2A3446] pt-3">
+              <label className="text-[14.5px] font-bold text-[#17307a] dark:text-white">Additional Information</label>
               <p className="mt-0.5 text-[12.5px] text-[#6b7ba5]">Add any new observations not covered in the original questionnaire.</p>
               <textarea
-                className="mt-2.5 w-full rounded-xl border border-[#dbe6ff] p-3 text-[13.5px] text-[#17307a] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db] focus:outline-none placeholder:text-[#8ea0c7] transition-all resize-y"
+                className="mt-2.5 w-full rounded-xl border border-[#dbe6ff] dark:border-[#2A3446] p-3 text-[13.5px] text-[#17307a] dark:text-white focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db] focus:outline-none placeholder:text-[#8ea0c7] transition-all resize-y"
                 rows={2}
                 value={additionalNotes}
                 onChange={(e) => setAdditionalNotes(e.target.value)}
@@ -1463,7 +1463,7 @@ function DiagnoseResultsScreen({
           <button
             type="button"
             onClick={onEditIssue}
-            className="shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
+            className="shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff] dark:hover:bg-slate-800"
           >
             <PenLine className="h-4 w-4" />
             <span>Edit Issue</span>
@@ -1473,7 +1473,7 @@ function DiagnoseResultsScreen({
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
-          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className={homeSectionHeadingClass}>
                 WrectifAI Diagnosis Summary
@@ -1496,7 +1496,7 @@ function DiagnoseResultsScreen({
                 <div className={cn('mt-3', homeCardHeadingClass)}>
                   {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City (TS07 AB 1234)'}
                 </div>
-                <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-left text-[11px] text-[#5f7099]">
+                <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-left text-[11px] text-[#5f7099] dark:text-slate-400">
                   <span>{selectedVehicle?.vin ? 'VIN' : 'Petrol'}</span>
                   <span className="font-mono truncate max-w-[80px]">{selectedVehicle?.vin ? selectedVehicle.vin.slice(-6) : '2018'}</span>
                   <span className="col-span-2">
@@ -1508,7 +1508,7 @@ function DiagnoseResultsScreen({
               </div>
 
               <div>
-                <p className="text-center text-[11px] text-[#5f7099] lg:text-left">
+                <p className="text-center text-[11px] text-[#5f7099] dark:text-slate-400 lg:text-left">
                   WrectifAI analysis indicates potential issues that need
                   immediate attention.
                 </p>
@@ -1533,7 +1533,7 @@ function DiagnoseResultsScreen({
                           <Icon className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[11px] text-[#5f7099]">
+                          <div className="text-[11px] text-[#5f7099] dark:text-slate-400">
                             {title}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -1549,7 +1549,7 @@ function DiagnoseResultsScreen({
                               {pill}
                             </span>
                           </div>
-                          <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099]">
+                          <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                             {body}
                           </p>
                         </div>
@@ -1561,11 +1561,11 @@ function DiagnoseResultsScreen({
             </div>
           </Card>
 
-          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className={homeSectionHeadingClass}>Top Possible Issues</h2>
-                <span className="text-[11px] text-[#5f7099]">
+                <span className="text-[11px] text-[#5f7099] dark:text-slate-400">
                   (Select one or more to request quotes)
                 </span>
               </div>
@@ -1611,19 +1611,19 @@ function DiagnoseResultsScreen({
                           {issue.badge}
                         </span>
                       </div>
-                      <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099]">
+                      <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                         {issue.description}
                       </p>
-                      <div className="mt-2.5 text-[11px] font-semibold text-[#17307a]">
+                      <div className="mt-2.5 text-[11px] font-semibold text-[#17307a] dark:text-white">
                         Risk if ignored:
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#5f7099]">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#5f7099] dark:text-slate-400">
                         {issue.risks.map((risk) => (
                           <span key={risk}>• {risk}</span>
                         ))}
                       </div>
-                      <div className="mt-2.5 text-[11px] text-[#5f7099]">
-                        <span className="font-semibold text-[#17307a]">
+                      <div className="mt-2.5 text-[11px] text-[#5f7099] dark:text-slate-400">
+                        <span className="font-semibold text-[#17307a] dark:text-white">
                           Estimated Cost:
                         </span>{' '}
                         <span>{issue.estimatedCost}</span>
@@ -1633,13 +1633,13 @@ function DiagnoseResultsScreen({
                       <div className="text-[20px] font-semibold tracking-[-0.03em] text-[#1a56db]">
                         {issue.match}%
                       </div>
-                      <div className="text-[11px] text-[#5f7099]">Match</div>
+                      <div className="text-[11px] text-[#5f7099] dark:text-slate-400">Match</div>
                     </div>
                     <div className="flex items-center md:justify-end">
                       <button
                         type="button"
                         onClick={() => setActiveIssueDetails(issue)}
-                        className="inline-flex h-9 items-center justify-center rounded-[12px] border border-[#dde6ff] px-3.5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
+                        className="inline-flex h-9 items-center justify-center rounded-[12px] border border-[#dde6ff] px-3.5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff] dark:hover:bg-slate-800"
                       >
                         View Details
                       </button>
@@ -1650,15 +1650,15 @@ function DiagnoseResultsScreen({
             </div>
           </Card>
 
-          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <div>
               <h2 className={homeSectionHeadingClass}>
                 Provide more details for selected issue(s){' '}
-                <span className="text-[11px] font-medium text-[#5f7099]">
+                <span className="text-[11px] font-medium text-[#5f7099] dark:text-slate-400">
                   (Optional)
                 </span>
               </h2>
-              <p className="mt-1.5 text-[11px] text-[#5f7099]">
+              <p className="mt-1.5 text-[11px] text-[#5f7099] dark:text-slate-400">
                 The more details you provide, the more accurate quotes
                 you&apos;ll receive.
               </p>
@@ -1673,7 +1673,7 @@ function DiagnoseResultsScreen({
                     'border-b-2 pb-2 text-[12px] font-semibold transition-colors',
                     index === 0
                       ? 'border-[#1a56db] text-[#1a56db]'
-                      : 'border-transparent text-[#5f7099]'
+                      : 'border-transparent text-[#5f7099] dark:text-slate-400'
                   )}
                 >
                   {tab}
@@ -1681,12 +1681,12 @@ function DiagnoseResultsScreen({
               ))}
             </div>
 
-            <div className="mt-3 rounded-[16px] border border-[#e8eefc] bg-[#fcfdff] px-3 py-3">
+            <div className="mt-3 rounded-[16px] border border-[#e8eefc] bg-[#fcfdff] dark:bg-[#1A2233] px-3 py-3">
               <textarea
                 value={detailsText}
                 onChange={(event) => onDetailsTextChange(event.target.value)}
                 placeholder="Add more details about the issue..."
-                className="min-h-[64px] w-full resize-none bg-transparent text-[12px] leading-5 text-[#17307a] outline-none placeholder:text-[#a5b1cb]"
+                className="min-h-[64px] w-full resize-none bg-transparent text-[12px] leading-5 text-[#17307a] dark:text-white outline-none placeholder:text-[#a5b1cb]"
               />
               <div className="text-right text-[11px] text-[#9babca]">
                 {detailsText.length}/1000
@@ -1696,12 +1696,12 @@ function DiagnoseResultsScreen({
         </div>
 
         <div className="space-y-5">
-          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-4 text-center shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 py-4 text-center shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <h3 className={homeCardHeadingClass}>Diagnosis Confidence</h3>
             <div className="mt-3">
               <ConfidenceGauge value={confidenceScore ?? 92} />
             </div>
-            <p className="mx-auto mt-2 max-w-[180px] text-[11px] leading-5 text-[#5f7099]">
+            <p className="mx-auto mt-2 max-w-[180px] text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
               Based on WrectifAI analysis of your issue description and
               thousands of similar cases.
             </p>
@@ -1709,20 +1709,20 @@ function DiagnoseResultsScreen({
 
           <Card className="rounded-[22px] border-[#ffe4e2] bg-[linear-gradient(180deg,#fff8f7_0%,#fffdfd_100%)] px-4 py-6 shadow-[0_12px_30px_rgba(255,102,102,0.06)]">
             <h3 className={homeCardHeadingClass}>Need Immediate Help?</h3>
-            <p className="mt-3 text-[11px] leading-6 text-[#5f7099]">
+            <p className="mt-3 text-[11px] leading-6 text-[#5f7099] dark:text-slate-400">
               Talk to our experts or get roadside assistance
             </p>
             <div className="mt-5 space-y-3">
               <button
                 type="button"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] bg-white text-[12px] font-semibold text-[#1a56db]"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] bg-white dark:bg-[#1A2233] text-[12px] font-semibold text-[#1a56db]"
               >
                 <PhoneCall className="h-4 w-4" />
                 <span>Call Support</span>
               </button>
               <button
                 type="button"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] bg-white text-[12px] font-semibold text-[#1a56db]"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] bg-white dark:bg-[#1A2233] text-[12px] font-semibold text-[#1a56db]"
               >
                 <Headset className="h-4 w-4" />
                 <span>Roadside Assistance</span>
@@ -1735,17 +1735,17 @@ function DiagnoseResultsScreen({
         </div>
       </div>
 
-      <Card className="rounded-[22px] border-[#e6ecfb] bg-[linear-gradient(180deg,#fbfcff_0%,#ffffff_100%)] px-6 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+      <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-[linear-gradient(180deg,#fbfcff_0%,#ffffff_100%)] px-6 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f2f5ff] text-[#365ff1]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f2f5ff] dark:bg-[#1A2233] text-[#365ff1]">
               <ShieldCheck className="h-5.5 w-5.5" />
             </span>
             <div>
               <div className={homeCardHeadingClass}>
                 Ready to get the best quotes from trusted garages?
               </div>
-              <p className="mt-1 text-[11px] text-[#5f7099]">
+              <p className="mt-1 text-[11px] text-[#5f7099] dark:text-slate-400">
                 Send your selected issues and compare the best offers.
               </p>
             </div>
@@ -1756,7 +1756,7 @@ function DiagnoseResultsScreen({
               <button
                 type="button"
                 onClick={() => setIsDiyDrawerOpen(true)}
-                className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-white border border-[#dbe6ff] px-6 text-[12.5px] font-bold text-[#17307a] shadow-[0_4px_12px_rgba(37,73,153,0.04)] transition-all hover:bg-[#f4f7ff] hover:border-[#1a56db] hover:text-[#1a56db]"
+                className="flex h-[46px] items-center justify-center gap-2 rounded-[12px] bg-white dark:bg-[#1A2233] border border-[#dbe6ff] dark:border-[#2A3446] px-6 text-[12.5px] font-bold text-[#17307a] dark:text-white shadow-[0_4px_12px_rgba(37,73,153,0.04)] transition-all hover:bg-[#f4f7ff] dark:hover:bg-slate-800 hover:border-[#1a56db] hover:text-[#1a56db]"
               >
                 <Wrench className="h-4.5 w-4.5" />
                 <span>Get DIY Guide</span>
@@ -1770,7 +1770,7 @@ function DiagnoseResultsScreen({
                 <span>Request Quotes ({selectedCount})</span>
               </button>
             </div>
-            <div className="text-[11px] text-[#5f7099]">
+            <div className="text-[11px] text-[#5f7099] dark:text-slate-400">
               You will receive quotes within 30 mins
             </div>
           </div>
@@ -1779,19 +1779,19 @@ function DiagnoseResultsScreen({
 
       {/* NEARBY GARAGES RECOMMENDATION SECTION */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6ecfb] pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6ecfb] dark:border-[#2A3446] pb-3">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-[18px] font-bold text-[#17307a]">
+              <h2 className="text-[18px] font-bold text-[#17307a] dark:text-white">
                 Recommended Nearby Garages
               </h2>
-              <span className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[11px] font-bold text-[#1a56db]">
+              <span className="rounded-full bg-[#eef4ff] dark:bg-blue-900/30 px-2.5 py-0.5 text-[11px] font-bold text-[#1a56db]">
                 {garages.length} Available
               </span>
             </div>
-            <p className="mt-1 text-[12px] text-[#5f7099]">
+            <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
               Verified workshops equipped to resolve your diagnosed issue near{' '}
-              <span className="font-semibold text-[#17307a]">Hyderabad</span>
+              <span className="font-semibold text-[#17307a] dark:text-white">Hyderabad</span>
             </p>
           </div>
 
@@ -1837,18 +1837,18 @@ function DiagnoseResultsScreen({
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-[310px] rounded-[18px] border border-[#eef3fc] bg-white p-4 animate-pulse"
+                className="h-[310px] rounded-[18px] border border-[#eef3fc] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-4 animate-pulse"
               >
-                <div className="h-[120px] rounded-[12px] bg-[#f0f4fc]" />
-                <div className="mt-4 h-4 w-3/4 rounded bg-[#f0f4fc]" />
-                <div className="mt-2 h-3 w-1/2 rounded bg-[#f0f4fc]" />
-                <div className="mt-6 h-8 rounded bg-[#f0f4fc]" />
+                <div className="h-[120px] rounded-[12px] bg-[#f0f4fc] dark:bg-[#1A2233]" />
+                <div className="mt-4 h-4 w-3/4 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
+                <div className="mt-2 h-3 w-1/2 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
+                <div className="mt-6 h-8 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
               </div>
             ))}
           </div>
         ) : garages.length === 0 ? (
-          <Card className="rounded-[18px] border-[#e6ecfb] bg-white p-8 text-center shadow-sm">
-            <p className="text-[13px] text-[#5f7099]">
+          <Card className="rounded-[18px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-8 text-center shadow-sm">
+            <p className="text-[13px] text-[#5f7099] dark:text-slate-400">
               No garages currently found in this location.
             </p>
           </Card>
@@ -1863,7 +1863,7 @@ function DiagnoseResultsScreen({
                 <Card
                   key={garage.id || garage.name}
                   className={cn(
-                    'overflow-hidden rounded-[18px] border bg-white shadow-[0_10px_28px_rgba(21,48,122,0.06)] transition-all duration-200 hover:border-[#1a56db]/30 hover:shadow-md flex flex-col justify-between',
+                    'overflow-hidden rounded-[18px] border bg-white dark:bg-[#1A2233] shadow-[0_10px_28px_rgba(21,48,122,0.06)] transition-all duration-200 hover:border-[#1a56db]/30 hover:shadow-md flex flex-col justify-between',
                     isSelectedForCompare
                       ? 'border-[#1a56db] ring-2 ring-[#1a56db]/20'
                       : 'border-[#e7eefc]'
@@ -1908,7 +1908,7 @@ function DiagnoseResultsScreen({
                         'absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-md transition-all z-10',
                         isSelectedForCompare
                           ? 'bg-[#1a56db] text-white ring-2 ring-white'
-                          : 'bg-white/90 text-[#17307a] hover:bg-white'
+                          : 'bg-white/90 text-[#17307a] dark:text-white hover:bg-white dark:bg-[#1A2233]'
                       )}
                     >
                       <Scale className="h-3 w-3" />
@@ -1928,7 +1928,7 @@ function DiagnoseResultsScreen({
                         onClick={() => setSelectedGarageForDetail(garage)}
                       >
                         <div className="flex items-center gap-1.5">
-                          <h3 className="text-[14.5px] font-bold tracking-tight text-[#17307a] hover:text-[#1a56db] transition-colors truncate">
+                          <h3 className="text-[14.5px] font-bold tracking-tight text-[#17307a] dark:text-white hover:text-[#1a56db] transition-colors truncate">
                             {garage.name}
                           </h3>
                           {garage.verified && (
@@ -1936,7 +1936,7 @@ function DiagnoseResultsScreen({
                           )}
                         </div>
 
-                        <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-[#5f7099]">
+                        <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-[#5f7099] dark:text-slate-400">
                           <div className="flex items-center gap-1">
                             <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
                             <span className="font-bold text-[#f28c28]">
@@ -1949,7 +1949,7 @@ function DiagnoseResultsScreen({
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#17307a]">
+                      <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#17307a] dark:text-white">
                         <div className="flex items-center gap-1 text-[#4c5f8f]">
                           <MapPin className="h-3.5 w-3.5 text-[#1a56db]" />
                           <span>{garage.distanceKm.toFixed(1)} km away</span>
@@ -1978,7 +1978,7 @@ function DiagnoseResultsScreen({
                         type="button"
                         variant="outline"
                         onClick={() => garage.id && setQuoteGarageId(garage.id)}
-                        className="h-[34px] rounded-[10px] text-[11.5px] font-bold border-[#dbe6ff] text-[#1a56db] hover:bg-[#f4f8ff] hover:text-[#17307a]"
+                        className="h-[34px] rounded-[10px] text-[11.5px] font-bold border-[#dbe6ff] dark:border-[#2A3446] text-[#1a56db] hover:bg-[#f4f8ff] dark:bg-[#1A2233] hover:text-[#17307a] dark:text-white"
                       >
                         Request Quote
                       </Button>
@@ -1998,10 +1998,10 @@ function DiagnoseResultsScreen({
         )}
       </div>
 
-      <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
         {resultTrustItems.map(({ title, description, icon: Icon }) => (
           <div key={title} className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[#3158e1]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] dark:bg-[#1A2233] text-[#3158e1]">
               <Icon className="h-5 w-5" />
             </span>
             <div>
@@ -2019,17 +2019,17 @@ function DiagnoseResultsScreen({
       {/* FULL GARAGE DETAIL MODAL / DRAWER */}
       {selectedGarageForDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-5xl bg-[#f8faff] rounded-[24px] shadow-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#e6ecfb] bg-white px-6 py-4 sticky top-0 z-20">
+          <div className="relative w-full max-w-5xl bg-[#f8faff] dark:bg-[#1A2233] rounded-[24px] shadow-2xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-4 sticky top-0 z-20">
               <div className="flex items-center gap-2">
-                <h2 className="text-[17px] font-bold text-[#17307a]">
+                <h2 className="text-[17px] font-bold text-[#17307a] dark:text-white">
                   Garage Details: {selectedGarageForDetail.name}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedGarageForDetail(null)}
-                className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors"
+                className="rounded-full p-2 text-[#5f7099] dark:text-slate-400 hover:bg-[#f4f7ff] dark:hover:bg-slate-800 hover:text-[#1a56db] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -2049,21 +2049,21 @@ function DiagnoseResultsScreen({
       {/* GARAGE COMPARISON MODAL */}
       {isCompareOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-5xl bg-white rounded-[24px] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#e6ecfb] px-6 py-4 bg-white sticky top-0 z-10">
+          <div className="relative w-full max-w-5xl bg-white dark:bg-[#1A2233] rounded-[24px] shadow-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#e6ecfb] dark:border-[#2A3446] px-6 py-4 bg-white dark:bg-[#1A2233] sticky top-0 z-10">
               <div>
-                <h2 className="text-[18px] font-bold text-[#17307a] flex items-center gap-2">
+                <h2 className="text-[18px] font-bold text-[#17307a] dark:text-white flex items-center gap-2">
                   <Scale className="h-5 w-5 text-[#1a56db]" />
                   <span>Compare Garages ({comparedGarages.length})</span>
                 </h2>
-                <p className="text-[12px] text-[#5f7099] mt-0.5">
+                <p className="text-[12px] text-[#5f7099] dark:text-slate-400 mt-0.5">
                   Review ratings, response times, distance, and features side-by-side
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCompareOpen(false)}
-                className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors"
+                className="rounded-full p-2 text-[#5f7099] dark:text-slate-400 hover:bg-[#f4f7ff] dark:hover:bg-slate-800 hover:text-[#1a56db] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -2072,12 +2072,12 @@ function DiagnoseResultsScreen({
             <div className="flex-1 overflow-x-auto p-6">
               <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${comparedGarages.length}, minmax(260px, 1fr))` }}>
                 {comparedGarages.map((g) => (
-                  <Card key={g.id} className="rounded-[18px] border border-[#e6ecfb] p-5 flex flex-col justify-between shadow-sm">
+                  <Card key={g.id} className="rounded-[18px] border border-[#e6ecfb] dark:border-[#2A3446] p-5 flex flex-col justify-between shadow-sm">
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="text-[16px] font-bold text-[#17307a]">{g.name}</h3>
-                          <p className="text-[12px] text-[#5f7099] mt-0.5">{g.location}</p>
+                          <h3 className="text-[16px] font-bold text-[#17307a] dark:text-white">{g.name}</h3>
+                          <p className="text-[12px] text-[#5f7099] dark:text-slate-400 mt-0.5">{g.location}</p>
                         </div>
                         {g.badge && (
                           <span className={cn('rounded px-2 py-0.5 text-[10px] font-bold text-white', g.badgeTone)}>
@@ -2088,7 +2088,7 @@ function DiagnoseResultsScreen({
 
                       <div className="mt-4 space-y-3 border-t border-b border-[#edf2fb] py-3 text-[12.5px]">
                         <div className="flex justify-between items-center">
-                          <span className="text-[#5f7099]">Rating</span>
+                          <span className="text-[#5f7099] dark:text-slate-400">Rating</span>
                           <span className="font-bold text-[#f28c28] flex items-center gap-1">
                             <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
                             {g.rating.toFixed(1)} ({g.reviews})
@@ -2096,17 +2096,17 @@ function DiagnoseResultsScreen({
                         </div>
 
                         <div className="flex justify-between items-center">
-                          <span className="text-[#5f7099]">Distance</span>
-                          <span className="font-semibold text-[#17307a]">{g.distanceKm.toFixed(1)} km</span>
+                          <span className="text-[#5f7099] dark:text-slate-400">Distance</span>
+                          <span className="font-semibold text-[#17307a] dark:text-white">{g.distanceKm.toFixed(1)} km</span>
                         </div>
 
                         <div className="flex justify-between items-center">
-                          <span className="text-[#5f7099]">Avg Response</span>
-                          <span className="font-semibold text-[#17307a]">{g.responseMins} mins</span>
+                          <span className="text-[#5f7099] dark:text-slate-400">Avg Response</span>
+                          <span className="font-semibold text-[#17307a] dark:text-white">{g.responseMins} mins</span>
                         </div>
 
                         <div className="flex justify-between items-center">
-                          <span className="text-[#5f7099]">Status</span>
+                          <span className="text-[#5f7099] dark:text-slate-400">Status</span>
                           <span className="font-semibold text-[#25a24a]">
                             {g.verified ? 'Verified Partner' : 'Registered'}
                           </span>
@@ -2114,10 +2114,10 @@ function DiagnoseResultsScreen({
                       </div>
 
                       <div className="mt-3">
-                        <div className="text-[11.5px] font-semibold text-[#5f7099] mb-1.5">Specializations:</div>
+                        <div className="text-[11.5px] font-semibold text-[#5f7099] dark:text-slate-400 mb-1.5">Specializations:</div>
                         <div className="flex flex-wrap gap-1.5">
                           {g.chips.map((chip) => (
-                            <span key={chip} className="rounded bg-[#f0f4fc] px-2 py-0.5 text-[10.5px] font-medium text-[#1a56db]">
+                            <span key={chip} className="rounded bg-[#f0f4fc] dark:bg-[#1A2233] px-2 py-0.5 text-[10.5px] font-medium text-[#1a56db]">
                               {chip}
                             </span>
                           ))}
@@ -2143,7 +2143,7 @@ function DiagnoseResultsScreen({
                           setIsCompareOpen(false);
                           if (g.id) setBookingGarageId(g.id);
                         }}
-                        className="w-full h-9 rounded-[10px] text-[12px] font-bold border-[#dbe6ff] text-[#1a56db]"
+                        className="w-full h-9 rounded-[10px] text-[12px] font-bold border-[#dbe6ff] dark:border-[#2A3446] text-[#1a56db]"
                       >
                         Book Appointment
                       </Button>
@@ -2183,22 +2183,22 @@ function DiagnoseResultsScreen({
       {/* DIY Centered Modal */}
       {isDiyDrawerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-sm transition-opacity" onClick={() => setIsDiyDrawerOpen(false)} />
+          <div className="absolute inset-0 bg-[#0f172a]/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsDiyDrawerOpen(false)} />
           
           {(diyType === 'repair' || diyType === 'troubleshooting') && nextSteps && nextSteps.length > 0 ? (
-            <div className="relative w-full max-w-2xl bg-white shadow-2xl rounded-[24px] flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between border-b border-[#e6ecfb] px-6 py-5 bg-white z-10 rounded-t-[24px]">
-                <h2 className="text-[20px] font-bold text-[#17307a]">
+            <div className="relative w-full max-w-2xl bg-white dark:bg-[#1A2233] shadow-2xl rounded-[24px] flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-[#e6ecfb] dark:border-[#2A3446] px-6 py-5 bg-white dark:bg-[#1A2233] z-10 rounded-t-[24px]">
+                <h2 className="text-[20px] font-bold text-[#17307a] dark:text-white">
                   {diyType === 'troubleshooting' ? 'Troubleshooting Guide' : 'DIY Guide'}
                 </h2>
-                <button onClick={() => setIsDiyDrawerOpen(false)} className="rounded-full p-2 text-[#5f7099] hover:bg-[#f4f7ff] hover:text-[#1a56db] transition-colors">
+                <button onClick={() => setIsDiyDrawerOpen(false)} className="rounded-full p-2 text-[#5f7099] dark:text-slate-400 hover:bg-[#f4f7ff] dark:hover:bg-slate-800 hover:text-[#1a56db] transition-colors">
                   <X className="h-5 w-5" />
                 </button>
               </div>
               
               <div className="flex-1 overflow-y-auto px-6 py-6">
-                <div className="mb-6 rounded-[16px] border border-[#dbe6ff] bg-[#fbfcff] p-5">
-                  <div className="flex items-center gap-2 font-bold text-[#17307a] mb-2">
+                <div className="mb-6 rounded-[16px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#fbfcff] dark:bg-[#1A2233] p-5">
+                  <div className="flex items-center gap-2 font-bold text-[#17307a] dark:text-white mb-2">
                     <Wrench className="h-4.5 w-4.5 text-[#1a56db]" /> Before you start
                   </div>
                   <p className="text-[13px] leading-relaxed text-[#4c5f8f]">
@@ -2206,20 +2206,20 @@ function DiagnoseResultsScreen({
                   </p>
                 </div>
 
-                <h3 className="text-[16px] font-bold text-[#17307a] mb-5">Step-by-step Instructions</h3>
+                <h3 className="text-[16px] font-bold text-[#17307a] dark:text-white mb-5">Step-by-step Instructions</h3>
                 <div className="space-y-6">
                   {nextSteps.map((step) => (
                     <div key={step.step} className="flex gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[13px] font-bold text-[#1a56db]">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] dark:bg-[#1A2233] text-[13px] font-bold text-[#1a56db]">
                         {step.step}
                       </div>
                       <div>
-                        <div className="text-[14.5px] font-bold text-[#17307a]">{step.title}</div>
+                        <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">{step.title}</div>
                         <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
                           {step.body}
                         </p>
                         {step.meta && (
-                          <div className="mt-2.5 text-[11.5px] font-bold text-[#1a56db] bg-[#f4f7ff] inline-block px-2.5 py-1 rounded-md">
+                          <div className="mt-2.5 text-[11.5px] font-bold text-[#1a56db] bg-[#f4f7ff] dark:bg-[#1A2233] inline-block px-2.5 py-1 rounded-md">
                             {step.meta}
                           </div>
                         )}
@@ -2230,11 +2230,11 @@ function DiagnoseResultsScreen({
               </div>
             </div>
           ) : (
-            <div className="relative w-full max-w-md bg-white shadow-2xl rounded-[24px] flex flex-col animate-in zoom-in-95 duration-200 p-6 text-center">
+            <div className="relative w-full max-w-md bg-white dark:bg-[#1A2233] shadow-2xl rounded-[24px] flex flex-col animate-in zoom-in-95 duration-200 p-6 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fff4e5] text-[#b54708] mb-4">
                 <Wrench className="h-6 w-6" />
               </div>
-              <h2 className="text-[20px] font-bold text-[#17307a] mb-2">DIY Repair Not Recommended</h2>
+              <h2 className="text-[20px] font-bold text-[#17307a] dark:text-white mb-2">DIY Repair Not Recommended</h2>
               <p className="text-[14px] leading-relaxed text-[#4c5f8f] mb-6">
                 This issue requires professional diagnosis, specialised tools or safety procedures and is not recommended for self-repair.
                 <br /><br />
@@ -2243,7 +2243,7 @@ function DiagnoseResultsScreen({
               <button
                 type="button"
                 onClick={() => setIsDiyDrawerOpen(false)}
-                className="flex h-[46px] w-full items-center justify-center rounded-[12px] bg-[#f4f7ff] px-6 text-[13.5px] font-bold text-[#1a56db] hover:bg-[#e6ecfb] transition-colors"
+                className="flex h-[46px] w-full items-center justify-center rounded-[12px] bg-[#f4f7ff] dark:bg-[#1A2233] px-6 text-[13.5px] font-bold text-[#1a56db] hover:bg-[#e6ecfb] transition-colors"
               >
                 Close
               </button>
@@ -2303,7 +2303,7 @@ function FindingQuotesScreen({
           <h1 className={homeHeroHeadingClass}>
             Finding the best garages for you...
           </h1>
-          <p className="mt-2 text-[12px] text-[#5f7099]">
+          <p className="mt-2 text-[12px] text-[#5f7099] dark:text-slate-400">
             This will only take a few seconds
           </p>
 
@@ -2349,7 +2349,7 @@ function FindingQuotesScreen({
         </div>
       </div>
 
-      <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-0 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+      <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-0 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
         <div className="grid md:grid-cols-4">
           {[
             { label: 'Analyzing your issue' },
@@ -2375,8 +2375,8 @@ function FindingQuotesScreen({
                     isComplete
                       ? 'border-[#17884f] bg-[#17884f] text-white'
                       : isActive
-                        ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                        : 'border-[#7d85ba] bg-white text-transparent'
+                        ? 'border-[#2351f6] bg-white dark:bg-[#1A2233] text-[#2351f6]'
+                        : 'border-[#7d85ba] bg-white dark:bg-[#1A2233] text-transparent'
                   )}
                 >
                   {isComplete ? (
@@ -2388,7 +2388,7 @@ function FindingQuotesScreen({
                 <div
                   className={cn(
                     'text-[12px] font-semibold transition-colors duration-300',
-                    isActive ? 'text-[#1a56db]' : 'text-[#17307a]'
+                    isActive ? 'text-[#1a56db]' : 'text-[#17307a] dark:text-white'
                   )}
                 >
                   {step.label}
@@ -2409,7 +2409,7 @@ function FindingQuotesScreen({
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-[254px_minmax(0,1fr)_390px]">
-        <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+        <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <h3 className={homeSectionHeadingClass}>Your Vehicle</h3>
           <div className="mt-10 flex flex-col items-center text-center">
             <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
@@ -2418,12 +2418,12 @@ function FindingQuotesScreen({
             <div className={cn('mt-8', homeCardHeadingClass)}>
               {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City (TS07 AB 1234)'}
             </div>
-            <div className="mt-5 flex items-center gap-4 text-[11px] text-[#5f7099]">
+            <div className="mt-5 flex items-center gap-4 text-[11px] text-[#5f7099] dark:text-slate-400">
               <span>{selectedVehicle?.vin ? 'VIN' : 'Petrol'}</span>
               <span className="h-1 w-1 rounded-full bg-[#8997bc]" />
               <span className="font-mono">{selectedVehicle?.vin ? selectedVehicle.vin.slice(-6) : '2018'}</span>
             </div>
-            <div className="mt-4 text-[11px] text-[#5f7099]">
+            <div className="mt-4 text-[11px] text-[#5f7099] dark:text-slate-400">
               {selectedVehicle?.mileage !== undefined && selectedVehicle?.mileage !== null
                 ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} mi`
                 : 'KM Driven: 58,320 km'}
@@ -2431,10 +2431,10 @@ function FindingQuotesScreen({
           </div>
         </Card>
 
-        <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+        <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <div className="flex items-center gap-3">
             <h3 className={homeSectionHeadingClass}>Your Selected Issues</h3>
-            <span className="text-[11px] text-[#5f7099]">
+            <span className="text-[11px] text-[#5f7099] dark:text-slate-400">
               ({chosenIssues.length} Selected)
             </span>
           </div>
@@ -2469,7 +2469,7 @@ function FindingQuotesScreen({
                       {issue.badge}
                     </span>
                   </div>
-                  <p className="mt-2 text-[11px] leading-6 text-[#5f7099]">
+                  <p className="mt-2 text-[11px] leading-6 text-[#5f7099] dark:text-slate-400">
                     {issue.description}
                   </p>
                 </div>
@@ -2477,14 +2477,14 @@ function FindingQuotesScreen({
                   <div className="text-[32px] font-semibold tracking-[-0.05em] text-[#1a56db]">
                     {issue.match}%
                   </div>
-                  <div className="text-[11px] text-[#5f7099]">Match</div>
+                  <div className="text-[11px] text-[#5f7099] dark:text-slate-400">Match</div>
                 </div>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card className="rounded-[22px] border-[#e7edfd] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+        <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <h3 className={homeSectionHeadingClass}>What&apos;s Happening?</h3>
           <div className="mt-8 space-y-7">
             {[
@@ -2511,8 +2511,8 @@ function FindingQuotesScreen({
                       isComplete
                         ? 'border-[#17884f] bg-[#17884f] text-white'
                         : isActive
-                          ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                          : 'border-[#707ab3] bg-white text-transparent'
+                          ? 'border-[#2351f6] bg-white dark:bg-[#1A2233] text-[#2351f6]'
+                          : 'border-[#707ab3] bg-white dark:bg-[#1A2233] text-transparent'
                     )}
                   >
                     {isComplete ? (
@@ -2527,7 +2527,7 @@ function FindingQuotesScreen({
                       className={cn(
                         'mt-2 text-[11px] font-medium transition-colors duration-300',
                         isComplete
-                          ? 'text-[#5f7099]'
+                          ? 'text-[#5f7099] dark:text-slate-400'
                           : isActive
                             ? 'text-[#1a56db]'
                             : 'text-[#7f8db3]'
@@ -2543,15 +2543,15 @@ function FindingQuotesScreen({
         </Card>
       </div>
 
-      <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
         {resultTrustItems.map(({ title, description, icon: Icon }) => (
           <div key={title} className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[#3158e1]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] dark:bg-[#1A2233] text-[#3158e1]">
               <Icon className="h-5 w-5" />
             </span>
             <div>
               <div className={homeCardHeadingClass}>{title}</div>
-              <div className="mt-1 text-[11px] text-[#5f7099]">
+              <div className="mt-1 text-[11px] text-[#5f7099] dark:text-slate-400">
                 {description}
               </div>
             </div>
@@ -3340,9 +3340,9 @@ export function AIDiagnosePage() {
       <DashboardShell header={<TopNavbar />}>
         <div ref={pageRootRef} className="pt-1">
           {apiError ? (
-            <div className="mx-auto max-w-md rounded-[20px] border border-[#ffe4e2] bg-white p-6 text-center shadow-lg mt-12">
+            <div className="mx-auto max-w-md rounded-[20px] border border-[#ffe4e2] bg-white dark:bg-[#1A2233] p-6 text-center shadow-lg mt-12">
               <h2 className="text-[16px] font-bold text-[#ea3838]">Diagnosis Failed</h2>
-              <p className="mt-3 text-[12px] leading-5 text-[#5f7099]">{apiError}</p>
+              <p className="mt-3 text-[12px] leading-5 text-[#5f7099] dark:text-slate-400">{apiError}</p>
               <button
                 type="button"
                 onClick={() => {
@@ -3372,10 +3372,10 @@ export function AIDiagnosePage() {
         <div className="grid gap-5 xl:grid-cols-[minmax(0,860px)_286px] xl:items-start">
           {/* LEFT CHAT CONTAINER */}
           <div className="min-w-0 flex min-h-[560px] flex-col md:h-[calc(100dvh-172px)] md:min-h-0 xl:h-[calc(100dvh-124px)]">
-            <div className="flex-1 flex flex-col rounded-[18px] border border-[#edf1fa] bg-white p-3 shadow-[0_12px_28px_rgba(35,64,143,0.03)] h-full overflow-hidden">
-              <div className="flex-1 flex flex-col rounded-[18px] bg-[radial-gradient(circle_at_top,#f5f7ff_0%,#ffffff_62%)] p-0 overflow-hidden">
+            <div className="flex-1 flex flex-col rounded-[18px] border border-[#edf1fa] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-3 shadow-[0_12px_28px_rgba(35,64,143,0.03)] h-full overflow-hidden">
+              <div className="flex-1 flex flex-col rounded-[18px] bg-[radial-gradient(circle_at_top,#f5f7ff_0%,#ffffff_62%)] dark:bg-none dark:bg-[#111623] p-0 overflow-hidden">
                 {/* Bot Header Card */}
-                <div className="shrink-0 w-full rounded-[18px] bg-[linear-gradient(90deg,#dce3ff_0%,#e7e9ff_48%,#e7e4ff_100%)] px-3 py-2 pr-7 shadow-[0_14px_34px_rgba(39,73,154,0.08)]">
+                <div className="shrink-0 w-full rounded-[18px] bg-[linear-gradient(90deg,#dce3ff_0%,#e7e9ff_48%,#e7e4ff_100%)] dark:bg-none dark:bg-[#1A2233] px-3 py-2 pr-7 shadow-[0_14px_34px_rgba(39,73,154,0.08)]">
                   <div className="flex items-center gap-3">
                     <Image
                       src="/assets/New_chatbot.png"
@@ -3394,7 +3394,7 @@ export function AIDiagnosePage() {
                             ? 'WrectifAI is analyzing your issue.'
                             : 'I need a bit more information to diagnose accurately.'}
                       </h2>
-                      <p className="mt-0.5 text-[11px] text-[#5f7099]">
+                      <p className="mt-0.5 text-[11px] text-[#5f7099] dark:text-slate-400">
                         {isDiagnosed
                           ? 'Review your results and connect with garages below.'
                           : isAnalyzingResults
@@ -3415,8 +3415,8 @@ export function AIDiagnosePage() {
                   ) : (
                     <>
                       {!selectedVehicleId && (
-                        <div className="mb-4 rounded-[12px] bg-amber-50 border border-amber-200 p-4 text-[12px] text-amber-800 flex items-center gap-3">
-                          <CircleAlert className="h-5 w-5 text-amber-600 shrink-0" />
+                        <div className="mb-4 rounded-[12px] bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 p-4 text-[12px] text-amber-800 dark:text-amber-200 flex items-center gap-3">
+                          <CircleAlert className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
                           <span>Please select your vehicle from the <strong>Diagnosing Vehicle</strong> panel on the right to start your AI diagnostic session.</span>
                         </div>
                       )}
@@ -3424,14 +3424,14 @@ export function AIDiagnosePage() {
                       {/* Initial User message */}
                       {hasInitialIssue && (
                         <div className="mb-7 flex justify-end">
-                          <div className="w-full max-w-[250px] rounded-[14px] border border-[#dfe9fb] bg-[#f8fbff] px-4 py-3 shadow-[0_10px_22px_rgba(39,73,154,0.04)]">
+                          <div className="w-full max-w-[250px] rounded-[14px] border border-[#dfe9fb] bg-[#f8fbff] dark:bg-[#1A2233] px-4 py-3 shadow-[0_10px_22px_rgba(39,73,154,0.04)]">
                             <div className="mb-1 flex items-center justify-between text-[10px]">
                               <span className="font-semibold text-[#3155a8]">
                                 You
                               </span>
                               <span className="text-[#a4b1cb]">{pageLoadTime}</span>
                             </div>
-                            <p className="text-[12px] leading-6 text-[#17307a]">
+                            <p className="text-[12px] leading-6 text-[#17307a] dark:text-white">
                               {issueText}
                             </p>
                           </div>
@@ -3454,7 +3454,7 @@ export function AIDiagnosePage() {
                                   <div className="absolute left-0 flex h-7 w-7 items-center justify-center z-20">
                                     <div className="h-2.5 w-2.5 rounded-full bg-[#2b61f0] border-2 border-white shadow-[0_2px_6px_rgba(43,97,240,0.2)]" />
                                   </div>
-                                  <div className="w-full max-w-[250px] rounded-[14px] border border-[#dfe9fb] bg-[#f8fbff] px-4 py-3 shadow-[0_10px_22px_rgba(39,73,154,0.04)]">
+                                  <div className="w-full max-w-[250px] rounded-[14px] border border-[#dfe9fb] bg-[#f8fbff] dark:bg-[#1A2233] px-4 py-3 shadow-[0_10px_22px_rgba(39,73,154,0.04)]">
                                     <div className="mb-1 flex items-center justify-between text-[10px]">
                                       <span className="font-semibold text-[#3155a8]">
                                         You
@@ -3463,7 +3463,7 @@ export function AIDiagnosePage() {
                                         {entry.time}
                                       </span>
                                     </div>
-                                    <p className="text-[12px] leading-6 text-[#17307a]">
+                                    <p className="text-[12px] leading-6 text-[#17307a] dark:text-white">
                                       {entry.text}
                                     </p>
                                   </div>
@@ -3500,11 +3500,11 @@ export function AIDiagnosePage() {
                                       className={cn(
                                         'inline-flex rounded-[12px] border px-4 py-3 shadow-[0_8px_20px_rgba(39,73,154,0.04)]',
                                         entry.highlighted
-                                          ? 'border-[#ebf0fb] bg-white'
-                                          : 'border-[#e7ecf8] bg-[#fafdff]'
+                                          ? 'border-[#ebf0fb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233]'
+                                          : 'border-[#e7ecf8] bg-[#fafdff] dark:bg-[#1A2233]'
                                       )}
                                     >
-                                      <p className="whitespace-pre-line text-[12px] leading-6 text-[#17307a]">
+                                      <p className="whitespace-pre-line text-[12px] leading-6 text-[#17307a] dark:text-white">
                                         {entry.text}
                                       </p>
                                     </div>
@@ -3529,7 +3529,7 @@ export function AIDiagnosePage() {
                                 )}
                                 <div className="relative z-10 mt-[2px]">
                                   {isQuestion1 ? (
-                                    <div className="flex h-7 w-7 items-center justify-center bg-white rounded-full z-20">
+                                    <div className="flex h-7 w-7 items-center justify-center bg-white dark:bg-[#1A2233] rounded-full z-20">
                                       <div className="h-2.5 w-2.5 rounded-full bg-[#2b61f0] border-2 border-white shadow-[0_2px_6px_rgba(43,97,240,0.2)]" />
                                     </div>
                                   ) : (
@@ -3546,7 +3546,7 @@ export function AIDiagnosePage() {
                                     </span>
                                   </div>
 
-                                  <div className="w-full max-w-[290px] rounded-[14px] border border-[#ebf0fb] bg-white p-4 shadow-[0_12px_24px_rgba(35,64,143,0.05)]">
+                                  <div className="w-full max-w-[290px] rounded-[14px] border border-[#ebf0fb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-4 shadow-[0_12px_24px_rgba(35,64,143,0.05)]">
                                     <h3
                                       className={cn(
                                         'leading-5',
@@ -3573,10 +3573,10 @@ export function AIDiagnosePage() {
                                             className={cn(
                                               'flex w-full h-[42px] items-center justify-between rounded-[9px] border px-3.5 text-[13px] font-medium transition-all text-left',
                                               isSelected
-                                                ? 'border-[#4d81ff] bg-[#fbfdff] text-[#2a5eea] shadow-[inset_0_0_0_1px_rgba(77,129,255,0.14)] font-bold'
+                                                ? 'border-[#4d81ff] bg-[#fbfdff] dark:bg-[#1A2233] text-[#2a5eea] shadow-[inset_0_0_0_1px_rgba(77,129,255,0.14)] font-bold'
                                                 : (hasSelected || !selectedVehicleId)
-                                                  ? 'border-[#f2f4f8] bg-[#fafbfc] text-[#b0c0df] cursor-not-allowed'
-                                                  : 'border-[#e8edf8] bg-white text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
+                                                  ? 'border-[#f2f4f8] bg-[#fafbfc] dark:bg-[#1A2233] text-[#b0c0df] cursor-not-allowed'
+                                                  : 'border-[#e8edf8] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
                                             )}
                                           >
                                             <span>{option}</span>
@@ -3607,9 +3607,9 @@ export function AIDiagnosePage() {
                                     WrectifAI
                                   </span>
                                 </div>
-                                <div className="inline-flex rounded-[12px] border border-[#e7ecf8] bg-[#fafdff] px-4 py-3 shadow-[0_8px_20px_rgba(39,73,154,0.04)]">
+                                <div className="inline-flex rounded-[12px] border border-[#e7ecf8] bg-[#fafdff] dark:bg-[#1A2233] px-4 py-3 shadow-[0_8px_20px_rgba(39,73,154,0.04)]">
                                   <div className="flex items-center gap-2.5">
-                                    <span className="text-[12px] text-[#17307a] font-medium whitespace-pre-line leading-relaxed">
+                                    <span className="text-[12px] text-[#17307a] dark:text-white font-medium whitespace-pre-line leading-relaxed">
                                       {typingText}
                                     </span>
                                     <span className="flex items-center gap-1 shrink-0">
@@ -3635,7 +3635,7 @@ export function AIDiagnosePage() {
                               </button>
                               <button
                                 type="button"
-                                className="flex h-[42px] items-center gap-2 rounded-[11px] border border-[#dbe6ff] bg-white px-5 text-[12px] font-semibold text-[#1a56db] hover:bg-[#f8fbff] transition-all shadow-[0_4px_12px_rgba(26,86,219,0.02)] active:scale-[0.98]"
+                                className="flex h-[42px] items-center gap-2 rounded-[11px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-5 text-[12px] font-semibold text-[#1a56db] hover:bg-[#f8fbff] dark:hover:bg-slate-800 transition-all shadow-[0_4px_12px_rgba(26,86,219,0.02)] active:scale-[0.98]"
                               >
                                 <span>Get Free Quotes</span>
                               </button>
@@ -3649,7 +3649,7 @@ export function AIDiagnosePage() {
               </div>
 
               {/* Chat Input section */}
-              <div className="sticky bottom-0 z-10 mt-2 shrink-0 rounded-[16px] border border-[#edf1fa] bg-white px-3 py-2.5 shadow-[0_8px_20px_rgba(35,64,143,0.08)]">
+              <div className="sticky bottom-0 z-10 mt-2 shrink-0 rounded-[16px] border border-[#edf1fa] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 py-2.5 shadow-[0_8px_20px_rgba(35,64,143,0.08)]">
                 <div className="text-[10px] font-medium text-[#8f9cbc]">
                   Add more details (optional)
                 </div>
@@ -3702,7 +3702,7 @@ export function AIDiagnosePage() {
                     {attachedMedia.map((m, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-1.5 rounded-full border border-[#d6e4ff] bg-[#eef4ff] px-2.5 py-1 text-[10px] font-medium text-[#1a56db]"
+                        className="flex items-center gap-1.5 rounded-full border border-[#d6e4ff] bg-[#eef4ff] dark:bg-blue-900/30 px-2.5 py-1 text-[10px] font-medium text-[#1a56db]"
                       >
                         {m.mediaType === 'image' && <ImageIcon className="h-3 w-3 shrink-0" />}
                         {m.mediaType === 'video' && <Video className="h-3 w-3 shrink-0" />}
@@ -3721,7 +3721,7 @@ export function AIDiagnosePage() {
                   </div>
                 )}
 
-                <div className="mt-2 flex items-center gap-3 rounded-[12px] border border-[#e4eafb] bg-[#fbfcff] px-4 py-1">
+                <div className="mt-2 flex items-center gap-3 rounded-[12px] border border-[#e4eafb] bg-[#fbfcff] dark:bg-[#1A2233] px-4 py-1">
                   <input
                     type="text"
                     value={typedMessage}
@@ -3729,7 +3729,7 @@ export function AIDiagnosePage() {
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder={selectedVehicleId ? "Type additional details or ask a question..." : "Please select a vehicle to start diagnosing..."}
                     disabled={isAnalyzingResults || !selectedVehicleId}
-                    className="w-full bg-transparent py-2 text-[12px] text-[#17307a] placeholder-[#a7b2ca] outline-none border-none focus:ring-0 shadow-none disabled:cursor-not-allowed"
+                    className="w-full bg-transparent py-2 text-[12px] text-[#17307a] dark:text-white placeholder-[#a7b2ca] outline-none border-none focus:ring-0 shadow-none disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
@@ -3748,7 +3748,7 @@ export function AIDiagnosePage() {
           {/* RIGHT SIDEBAR PANEL */}
           <div className="space-y-6">
             {/* Vehicle Selector Panel */}
-            <Card className="rounded-[18px] border-[#e8edf8] bg-white p-5 shadow-[0_12px-28px_rgba(35,64,143,0.04)]">
+            <Card className="rounded-[18px] border-[#e8edf8] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-5 shadow-[0_12px-28px_rgba(35,64,143,0.04)]">
               <h2 className={homeSubheadingClass}>Diagnosing Vehicle</h2>
               <div className="mt-4">
                 <VehicleSelector
@@ -3759,7 +3759,7 @@ export function AIDiagnosePage() {
             </Card>
 
             {/* Progress Panel */}
-            <Card className="rounded-[18px] border-[#e8edf8] bg-white p-5 shadow-[0_12px_28px_rgba(35,64,143,0.04)]">
+            <Card className="rounded-[18px] border-[#e8edf8] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-5 shadow-[0_12px_28px_rgba(35,64,143,0.04)]">
               <h2 className={homeSubheadingClass}>Diagnosis in Progress</h2>
               <div className="mt-5 flex items-center gap-4">
                 <ProgressRing progress={progress} />
@@ -3767,7 +3767,7 @@ export function AIDiagnosePage() {
                   <h3 className={homeCardHeadingClass}>
                     {stepTitle}
                   </h3>
-                  <p className="mt-1 text-[11px] leading-5 text-[#5f7099]">
+                  <p className="mt-1 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
                     {stepDesc}
                   </p>
                 </div>
@@ -3775,7 +3775,7 @@ export function AIDiagnosePage() {
             </Card>
 
             {/* Summary Panel */}
-            <Card className="rounded-[18px] border-[#e8edf8] bg-white p-5 shadow-[0_12px_28px_rgba(35,64,143,0.04)]">
+            <Card className="rounded-[18px] border-[#e8edf8] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-5 shadow-[0_12px_28px_rgba(35,64,143,0.04)]">
               <div className="flex items-center justify-between">
                 <h2 className={homeSubheadingClass}>Your Issue Summary</h2>
                 <button
@@ -3823,10 +3823,10 @@ export function AIDiagnosePage() {
                 </button>
               </div>
 
-              <div className="mt-4 rounded-[14px] border border-[#edf1fa] bg-white px-4 py-4">
+              <div className="mt-4 rounded-[14px] border border-[#edf1fa] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 py-4">
                 <div>
                   <div className={homeBodyStrongClass}>Original Issue</div>
-                  <p className="mt-3 max-w-[235px] text-[12px] leading-6 text-[#17307a]">
+                  <p className="mt-3 max-w-[235px] text-[12px] leading-6 text-[#17307a] dark:text-white">
                     {issueText}
                   </p>
                 </div>
@@ -3853,7 +3853,7 @@ export function AIDiagnosePage() {
 
               <div className="mt-4 rounded-[14px] border border-[#ddf3e3] bg-[#f3fff6] px-4 py-3.5">
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#1e9b57] shadow-[0_4px_10px_rgba(30,155,87,0.1)]">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1e9b57] shadow-[0_4px_10px_rgba(30,155,87,0.1)]">
                     <ShieldCheck className="h-4 w-4" />
                   </span>
                   <p className="text-[12px] leading-5 text-[#4b8a61]">
@@ -3867,10 +3867,10 @@ export function AIDiagnosePage() {
         </div>
 
         {/* Footer Features banner */}
-        <div className="grid gap-4 rounded-[18px] border border-[#edf1fa] bg-white p-4 shadow-[0_12px_28px_rgba(35,64,143,0.03)] md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 rounded-[18px] border border-[#edf1fa] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-4 shadow-[0_12px_28px_rgba(35,64,143,0.03)] md:grid-cols-2 xl:grid-cols-4">
           {footerFeatures.map(({ title, description, icon: Icon }) => (
             <div key={title} className="flex items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[#5d7df4]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] dark:bg-[#1A2233] text-[#5d7df4]">
                 <Icon className="h-4.5 w-4.5" />
               </span>
               <div>

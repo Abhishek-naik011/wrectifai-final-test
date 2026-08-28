@@ -33,7 +33,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'relative flex h-full flex-col border-r border-[#e4ecff] bg-white p-2 pb-1.5 transition-[width,padding] duration-300',
+        'relative flex h-full flex-col border-r border-[#e4ecff] bg-white dark:bg-[#1A2233] p-2 pb-1.5 transition-[width,padding] duration-300',
         collapsed ? 'px-2' : 'px-2.5'
       )}
     >
@@ -41,7 +41,7 @@ export function Sidebar({
         type="button"
         onClick={onToggle}
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className="absolute -right-3 top-24 hidden h-8 w-8 items-center justify-center rounded-full border border-[#dbe6ff] bg-white text-[#1a56db] shadow-[0_10px_22px_rgba(19,42,93,0.14)] transition-colors hover:bg-[#f5f8ff] lg:flex"
+        className="absolute -right-3 top-24 hidden h-8 w-8 items-center justify-center rounded-full border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_10px_22px_rgba(19,42,93,0.14)] transition-colors hover:bg-[#f5f8ff] lg:flex"
       >
         {collapsed ? (
           <ChevronsRight className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function Sidebar({
           )}
         </Link>
         <button
-          className="absolute right-2 top-2 lg:hidden p-2 text-[#17307a] hover:bg-[#f5f8ff] rounded-full"
+          className="absolute right-2 top-2 lg:hidden p-2 text-[#17307a] dark:text-white hover:bg-[#f5f8ff] rounded-full"
           onClick={onMobileClose}
         >
           <X className="h-5 w-5" />
@@ -130,7 +130,7 @@ export function Sidebar({
                     'mx-auto h-[32px] w-[32px] min-w-[28px] justify-center px-0',
                   active
                     ? 'bg-[#1a56db] text-white shadow-[0_6px_12px_rgba(26,86,219,0.2)]'
-                    : 'text-[#17307a] hover:bg-[#f5f8ff]'
+                    : 'text-[#17307a] dark:text-white hover:bg-[#f5f8ff]'
                 )}
               >
                 <Icon
@@ -189,10 +189,10 @@ export function Sidebar({
             <div className="relative mt-0.5 overflow-hidden rounded-[14px] bg-[#f3f7ff] p-3 shadow-none">
               <div className="flex items-center justify-between gap-1">
                 <div className="flex-1 flex flex-col">
-                  <h2 className="text-[12.5px] font-bold text-[#17307a] tracking-tight mb-0.5">
+                  <h2 className="text-[12.5px] font-bold text-[#17307a] dark:text-white tracking-tight mb-0.5">
                     Refer &amp; Earn
                   </h2>
-                  <p className="max-w-[130px] text-[10.5px] font-normal leading-snug text-[#17307a] mb-2.5">
+                  <p className="max-w-[130px] text-[10.5px] font-normal leading-snug text-[#17307a] dark:text-white mb-2.5">
                     Invite your friends and earn up to {'\u20B9500'}
                   </p>
                   <Button

@@ -29,6 +29,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={plusJakartaSans.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const path = window.location.pathname;
+                const roleKey = path.startsWith('/admin') ? 'admin' : (path === '/garage' || path.startsWith('/garage/')) ? 'garage' : 'customer';
+                const theme = localStorage.getItem('theme-' + roleKey) || 'light';
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
         <GoogleOAuthProvider clientId={googleClientId}>
           <AuthProvider>

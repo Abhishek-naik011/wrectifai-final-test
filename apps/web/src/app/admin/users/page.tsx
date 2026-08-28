@@ -41,7 +41,18 @@ function SearchableSelect({ value, onChange, options, placeholder }: { value: st
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
-            {filtered.length === 0 && <div className="p-2 text-sm text-gray-500">No options found</div>}
+            {search.trim().length > 0 && !options.some(o => o.toLowerCase() === search.trim().toLowerCase()) && (
+              <div 
+                className="p-2 text-sm hover:bg-blue-50 cursor-pointer text-blue-600 font-medium"
+                onClick={() => {
+                  onChange(search.trim());
+                  setOpen(false);
+                }}
+              >
+                Use "{search.trim()}"
+              </div>
+            )}
+            {filtered.length === 0 && search.trim().length === 0 && <div className="p-2 text-sm text-gray-500">No options found</div>}
             {filtered.map(opt => (
               <div 
                 key={opt}

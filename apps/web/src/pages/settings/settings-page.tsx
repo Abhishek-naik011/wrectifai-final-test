@@ -11,7 +11,7 @@ function FeatureHeader() {
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event('toggle-mobile-sidebar'))}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#dbe6ff] bg-white text-[#1a56db] shadow-sm lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-sm lg:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
               <line x1="4" x2="20" y1="12" y2="12" />
@@ -23,7 +23,7 @@ function FeatureHeader() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a8ab4]">
               WrectifAI Workspace
             </p>
-            <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a]">
+            <h1 className="mt-1 text-[25px] font-bold tracking-[-0.04em] text-[#17307a] dark:text-white">
               Settings
             </h1>
           </div>

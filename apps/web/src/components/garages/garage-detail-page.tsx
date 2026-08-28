@@ -254,7 +254,7 @@ export function GarageDetailPage({
           <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 size={32} />
           </div>
-          <p className="text-slate-600 mb-6">
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
             {requestStatus === 'quote_success' 
               ? `Your quote request has been sent successfully to ${garage.name}. The garage will review your request and send you a quotation shortly.`
               : `Your booking request has been sent successfully to ${garage.name}. The garage will review your request and confirm your appointment shortly.`}
@@ -307,7 +307,7 @@ export function GarageDetailPage({
               )}
               <button
                 onClick={() => toggleFavorite(garage.name)}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#1a56db] shadow-[0_8px_20px_rgba(30,58,138,0.15)] transition-transform hover:scale-105 active:scale-95"
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_8px_20px_rgba(30,58,138,0.15)] transition-transform hover:scale-105 active:scale-95"
               >
                 <Heart
                   className={cn(
@@ -325,11 +325,11 @@ export function GarageDetailPage({
             </div>
             
             {/* Garage Details Header Row */}
-            <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white">
+            <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white dark:bg-[#1A2233]">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-3.5 md:max-w-[65%]">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-[18px] font-extrabold tracking-[-0.03em] text-[#17307a] sm:text-[20px]">
+                    <h1 className="text-[18px] font-extrabold tracking-[-0.03em] text-[#17307a] dark:text-white sm:text-[20px]">
                       {garage.name}
                     </h1>
                     {garage.verified && (
@@ -400,8 +400,8 @@ export function GarageDetailPage({
                 </div>
 
                 {/* Highlights Subcard */}
-                <div className="flex-1 rounded-[18px] border border-[#e2eefc] bg-[#f8fbff] p-5 md:max-w-[32%]">
-                  <h3 className="text-[12.5px] font-bold text-[#17307a] mb-4">
+                <div className="flex-1 rounded-[18px] border border-[#e2eefc] bg-[#f8fbff] dark:bg-[#1A2233] p-5 md:max-w-[32%]">
+                  <h3 className="text-[12.5px] font-bold text-[#17307a] dark:text-white mb-4">
                     Garage Highlights
                   </h3>
                   <ul className="space-y-3">
@@ -428,10 +428,10 @@ export function GarageDetailPage({
             {isQuoteContext && quoteContext ? (
               <>
                 <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-                  <Card className="rounded-[20px] border-[#e6ecfb] bg-white p-5 shadow-[0_10px_28px_rgba(21,48,122,0.04)]">
+                  <Card className="rounded-[20px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] p-5 shadow-[0_10px_28px_rgba(21,48,122,0.04)]">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h2 className="text-[15px] font-bold text-[#17307a]">
+                        <h2 className="text-[15px] font-bold text-[#17307a] dark:text-white">
                           Quote Summary
                         </h2>
                         <p className="mt-1 text-[11px] text-[#62749f]">
@@ -451,7 +451,7 @@ export function GarageDetailPage({
                         <div className="text-[11px] font-medium text-[#62749f]">
                           Current Quote
                         </div>
-                        <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a]">
+                        <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a] dark:text-white">
                           {quoteContext.quote.price}
                         </div>
                       </div>
@@ -467,15 +467,15 @@ export function GarageDetailPage({
                         <div className="text-[11px] font-medium text-[#62749f]">
                           Estimated Savings
                         </div>
-                        <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a]">
+                        <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a] dark:text-white">
                           {quoteContext.quote.savings}
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#f8fbff] p-4">
-                        <div className="text-[12px] font-bold text-[#17307a]">
+                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#f8fbff] dark:bg-[#1A2233] p-4">
+                        <div className="text-[12px] font-bold text-[#17307a] dark:text-white">
                           Included In This Quote
                         </div>
                         <div className="mt-3 space-y-2 text-[11px] text-[#536891]">
@@ -496,8 +496,8 @@ export function GarageDetailPage({
                         </div>
                       </div>
 
-                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#f8fbff] p-4">
-                        <div className="text-[12px] font-bold text-[#17307a]">
+                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#f8fbff] dark:bg-[#1A2233] p-4">
+                        <div className="text-[12px] font-bold text-[#17307a] dark:text-white">
                           Price Notes
                         </div>
                         <div className="mt-3 space-y-2 text-[11px] text-[#536891]">
@@ -526,8 +526,8 @@ export function GarageDetailPage({
                     </div>
                   </Card>
 
-                  <Card className="rounded-[20px] border-[#e6ecfb] bg-white p-5 shadow-[0_10px_28px_rgba(21,48,122,0.04)]">
-                    <h2 className="text-[15px] font-bold text-[#17307a]">
+                  <Card className="rounded-[20px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] p-5 shadow-[0_10px_28px_rgba(21,48,122,0.04)]">
+                    <h2 className="text-[15px] font-bold text-[#17307a] dark:text-white">
                       Selected Issue Details
                     </h2>
                     <p className="mt-1 text-[11px] text-[#62749f]">
@@ -542,7 +542,7 @@ export function GarageDetailPage({
                           className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4"
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <div className="text-[12.5px] font-bold text-[#17307a]">
+                            <div className="text-[12.5px] font-bold text-[#17307a] dark:text-white">
                               {issue.title}
                             </div>
                             <span
@@ -557,7 +557,7 @@ export function GarageDetailPage({
                           <p className="mt-2 text-[11px] leading-5 text-[#536891]">
                             {issue.description}
                           </p>
-                          <div className="mt-3 text-[11px] font-medium text-[#17307a]">
+                          <div className="mt-3 text-[11px] font-medium text-[#17307a] dark:text-white">
                             Estimated match: {issue.match}%
                           </div>
                         </div>
@@ -570,19 +570,19 @@ export function GarageDetailPage({
               <>
                 {/* Services Offered */}
                 <section className="space-y-3.5">
-                  <h2 className="text-[14.5px] font-bold text-[#17307a]">
+                  <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                     Services Offered
                   </h2>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                     {servicesOffered.map((svc, index) => (
                       <div
                         key={index}
-                        className="flex flex-col items-center justify-center rounded-[16px] border border-[#e2eefc] bg-white p-2 py-2.5 text-center shadow-[0_8px_20px_rgba(22,48,112,0.03)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_12px_28px_rgba(26,86,219,0.06)]"
+                        className="flex flex-col items-center justify-center rounded-[16px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-2 py-2.5 text-center shadow-[0_8px_20px_rgba(22,48,112,0.03)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_12px_28px_rgba(26,86,219,0.06)]"
                       >
                         <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0f4ff] text-[#1a56db]">
                           <svc.icon className="h-4 w-4" />
                         </div>
-                        <span className="text-[11px] font-bold text-[#17307a] leading-tight">
+                        <span className="text-[11px] font-bold text-[#17307a] dark:text-white leading-tight">
                           {svc.name}
                         </span>
                       </div>
@@ -593,15 +593,15 @@ export function GarageDetailPage({
                 {/* Service Catalog */}
                 {services && services.length > 0 && (
                   <section className="space-y-3.5">
-                    <h2 className="text-[14.5px] font-bold text-[#17307a]">
+                    <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                       Service Catalog
                     </h2>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {services.map((svc) => (
-                        <div key={svc.id} className="rounded-[16px] border border-[#e2eefc] bg-white p-4 shadow-[0_4px_12px_rgba(22,48,112,0.02)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_8px_20px_rgba(26,86,219,0.05)]">
+                        <div key={svc.id} className="rounded-[16px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-4 shadow-[0_4px_12px_rgba(22,48,112,0.02)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_8px_20px_rgba(26,86,219,0.05)]">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <div className="text-[13px] font-bold text-[#17307a]">
+                              <div className="text-[13px] font-bold text-[#17307a] dark:text-white">
                                 {svc.name}
                               </div>
                               <div className="mt-1 flex items-center gap-2 text-[11px] font-medium text-[#62749f]">
@@ -633,7 +633,7 @@ export function GarageDetailPage({
 
                 {/* Why Choose Us */}
                 <section className="space-y-3.5">
-                  <h2 className="text-[14.5px] font-bold text-[#17307a]">
+                  <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                     Why Choose {garage.name}?
                   </h2>
                   <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
@@ -672,10 +672,10 @@ export function GarageDetailPage({
                           <item.icon className="h-4.5 w-4.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-[11px] font-bold text-[#17307a] whitespace-nowrap">
+                          <h4 className="text-[11px] font-bold text-[#17307a] dark:text-white whitespace-nowrap">
                             {item.title}
                           </h4>
-                          <p className="mt-0.5 text-[9.5px] font-normal text-[#17307a] whitespace-nowrap">
+                          <p className="mt-0.5 text-[9.5px] font-normal text-[#17307a] dark:text-white whitespace-nowrap">
                             {item.desc}
                           </p>
                         </div>
@@ -686,12 +686,12 @@ export function GarageDetailPage({
 
                 {/* Customer Reviews */}
                 <section className="space-y-4">
-                  <h2 className="text-[14.5px] font-bold text-[#17307a]">
+                  <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                     Customer Reviews ({garage.reviews})
                   </h2>
                   <div className="grid gap-4 md:grid-cols-[200px_1fr_1fr]">
-                    <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#e2eefc] bg-white p-6 text-center">
-                      <span className="text-[38px] font-extrabold tracking-tight text-[#17307a]">
+                    <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-6 text-center">
+                      <span className="text-[38px] font-extrabold tracking-tight text-[#17307a] dark:text-white">
                         {garage.rating.toFixed(1)}
                       </span>
                       <div className="my-1.5 flex items-center gap-0.5">
@@ -715,7 +715,7 @@ export function GarageDetailPage({
                       </span>
                     </div>
 
-                    <div className="rounded-[20px] border border-[#e2eefc] bg-white p-5 space-y-2.5 flex flex-col justify-center">
+                    <div className="rounded-[20px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-5 space-y-2.5 flex flex-col justify-center">
                       {[
                         { stars: 5, pct: '62%', count: '60' },
                         { stars: 4, pct: '25%', count: '24' },
@@ -743,15 +743,15 @@ export function GarageDetailPage({
                       ))}
                     </div>
 
-                    <div className="relative flex min-h-[160px] flex-col justify-between rounded-[20px] border border-[#e2eefc] bg-white p-5 shadow-[0_4px_16px_rgba(22,48,112,0.02)]">
+                    <div className="relative flex min-h-[160px] flex-col justify-between rounded-[20px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_4px_16px_rgba(22,48,112,0.02)]">
                       <div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] text-[11px] font-bold text-[#1a56db]">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] dark:bg-blue-900/30 text-[11px] font-bold text-[#1a56db]">
                               {reviews[reviewPage].avatar}
                             </div>
                             <div>
-                              <div className="text-[11px] font-bold text-[#17307a]">
+                              <div className="text-[11px] font-bold text-[#17307a] dark:text-white">
                                 {reviews[reviewPage].name}
                               </div>
                               <div className="flex items-center gap-1 text-[9.5px] font-medium text-[#228453]">
@@ -806,9 +806,9 @@ export function GarageDetailPage({
           {/* Right Column (Widgets) */}
           <div className="space-y-6">
             {/* Appointment Booking Widget */}
-            <Card className="rounded-[24px] border-[#e7eefc] bg-white p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-5">
+            <Card className="rounded-[24px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-5">
               <div>
-                <h3 className="text-[14.5px] font-bold text-[#17307a]">
+                <h3 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
                   Book Appointment
                 </h3>
                 <p className="text-[11px] font-semibold text-[#8a99ad] mt-1">
@@ -826,7 +826,7 @@ export function GarageDetailPage({
                       'flex flex-col items-center justify-center rounded-[14px] border p-1.5 flex-1 h-[64px] transition-all',
                       selectedDate === d.date
                         ? 'border-[#1a56db] bg-[#1a56db] text-white shadow-[0_8px_18px_rgba(26,86,219,0.18)]'
-                        : 'border-[#e2eefc] bg-white text-[#17307a] hover:bg-[#f8fbff]'
+                        : 'border-[#e2eefc] bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800'
                     )}
                   >
                     <span
@@ -858,7 +858,7 @@ export function GarageDetailPage({
 
               {/* Available Slots */}
               <div className="space-y-3">
-                <span className="text-[11px] font-bold text-[#17307a]">
+                <span className="text-[11px] font-bold text-[#17307a] dark:text-white">
                   Available Slots
                 </span>
                 <div className="grid grid-cols-3 gap-2">
@@ -870,7 +870,7 @@ export function GarageDetailPage({
                         'flex items-center justify-center h-10 rounded-[10px] border text-[10px] font-bold tracking-tight transition-all',
                         selectedSlot === slot
                           ? 'border-[#1a56db] bg-[#1a56db] text-white shadow-md'
-                          : 'border-[#e2eefc] bg-white text-[#17307a] hover:bg-[#f8fbff]'
+                          : 'border-[#e2eefc] bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white hover:bg-[#f8fbff] dark:hover:bg-slate-800'
                       )}
                     >
                       {slot}
@@ -901,8 +901,8 @@ export function GarageDetailPage({
             </Card>
 
             {/* Trust & Safety */}
-            <Card className="rounded-[24px] border-[#e7eefc] bg-white p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
-              <h3 className="text-[12.5px] font-bold text-[#17307a]">
+            <Card className="rounded-[24px] border-[#e7eefc] bg-white dark:bg-[#1A2233] p-5 shadow-[0_16px_40px_rgba(21,48,122,0.06)] space-y-4">
+              <h3 className="text-[12.5px] font-bold text-[#17307a] dark:text-white">
                 Trust & Safety
               </h3>
               <ul className="space-y-3.5">
@@ -913,7 +913,7 @@ export function GarageDetailPage({
                 ].map((item, index) => (
                   <li
                     key={index}
-                    className="flex items-center gap-3 text-[11px] font-semibold text-[#17307a]"
+                    className="flex items-center gap-3 text-[11px] font-semibold text-[#17307a] dark:text-white"
                   >
                     <ShieldCheck
                       className="h-4.5 w-4.5 shrink-0 text-[#228453]"
@@ -934,7 +934,7 @@ export function GarageDetailPage({
               <Check className="h-5 w-5" strokeWidth={3} />
             </div>
             <div>
-              <div className="text-[12px] font-bold text-[#17307a]">
+              <div className="text-[12px] font-bold text-[#17307a] dark:text-white">
                 Appointment Confirmed!
               </div>
               <div className="text-[10px] font-semibold text-[#536891]">
@@ -966,13 +966,13 @@ export function GarageDetailPage({
               </div>
             )}
             
-            <h3 className="text-xl font-bold text-[#17307a] mb-2">
+            <h3 className="text-xl font-bold text-[#17307a] dark:text-white mb-2">
               {requestStatus === 'quote_success' ? 'Quote Request Sent' : 
                requestStatus === 'booking_success' ? 'Booking Request Sent' :
                requestStatus === 'booking_error' ? 'Booking Failed' : 'Unable to Send Request'}
             </h3>
             
-            <p className="text-slate-600 mb-8 max-w-sm">
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm">
               {requestStatus === 'quote_success' ? (
                 <>Your quote request has been sent successfully to {garage.name}.<br/><br/>The garage will review your request and send you a quotation shortly.</>
               ) : requestStatus === 'booking_success' ? (

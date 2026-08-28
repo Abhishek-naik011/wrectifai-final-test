@@ -245,7 +245,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
           </div>
         </div>
 
-        <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-0 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+        <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-0 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <div className="grid md:grid-cols-4">
             {[
               { label: 'Analyzing your issue' },
@@ -269,8 +269,8 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
                       isComplete
                         ? 'border-[#17884f] bg-[#17884f] text-white'
                         : isActive
-                          ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                          : 'border-[#cbd5e1] bg-white text-transparent'
+                          ? 'border-[#2351f6] bg-white dark:bg-[#1A2233] text-[#2351f6]'
+                          : 'border-[#cbd5e1] bg-white dark:bg-[#1A2233] text-transparent'
                     )}
                   >
                     {isComplete ? <Check className="h-4 w-4 stroke-[3]" /> : null}
@@ -292,7 +292,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
         </Card>
 
         <div className="grid gap-5 xl:grid-cols-[254px_minmax(0,1fr)_390px]">
-          <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <h3 className="text-[15.5px] font-semibold text-[#183db1]">Your Vehicle</h3>
             <div className="mt-10 flex flex-col items-center text-center">
               <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
@@ -314,7 +314,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
             </div>
           </Card>
 
-          <Card className="rounded-[22px] border-[#e7edfd] bg-white px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <div className="flex items-center gap-3">
               <h3 className="text-[15.5px] font-semibold text-[#183db1]">Your Selected Issues</h3>
               <span className="text-[12px] text-[#6c80b0]">({chosenIssues.length} Selected)</span>
@@ -353,7 +353,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
             </div>
           </Card>
 
-          <Card className="rounded-[22px] border-[#e7edfd] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+          <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <h3 className="text-[15.5px] font-semibold text-[#183db1]">What&apos;s Happening?</h3>
             <div className="mt-8 space-y-7">
               {[
@@ -376,8 +376,8 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
                         isComplete
                           ? 'border-[#17884f] bg-[#17884f] text-white'
                           : isActive
-                            ? 'border-[#2351f6] bg-white text-[#2351f6]'
-                            : 'border-[#cbd5e1] bg-white text-transparent'
+                            ? 'border-[#2351f6] bg-white dark:bg-[#1A2233] text-[#2351f6]'
+                            : 'border-[#cbd5e1] bg-white dark:bg-[#1A2233] text-transparent'
                       )}
                     >
                       {isComplete ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : null}

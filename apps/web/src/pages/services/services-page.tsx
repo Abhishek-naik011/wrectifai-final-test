@@ -90,8 +90,8 @@ export function ServicesPage() {
         {/* Main Content */}
         <div className="flex-1 space-y-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Our Services</h1>
-            <p className="text-slate-500 text-sm">Professional car services for every need</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Our Services</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Professional car services for every need</p>
           </div>
 
           {/* Filters */}
@@ -104,7 +104,7 @@ export function ServicesPage() {
                   "px-5 py-2 rounded-full text-sm font-semibold transition-colors",
                   selectedCategory === cat 
                     ? "bg-blue-600 text-white shadow-sm" 
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                    : "bg-white dark:bg-[#1A2233] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:bg-[#121826]"
                 )}
               >
                 {cat}
@@ -113,17 +113,17 @@ export function ServicesPage() {
           </div>
 
           {searchQuery && (
-            <div className="text-sm font-medium text-slate-600">
+            <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
               Showing results for: <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded">"{searchQuery}"</span>
             </div>
           )}
 
           {/* Services Grid */}
           {filteredServices.length === 0 ? (
-            <div className="py-20 text-center bg-white rounded-[24px] border border-slate-100 flex flex-col items-center">
+            <div className="py-20 text-center bg-white dark:bg-[#1A2233] rounded-[24px] border border-slate-100 dark:border-slate-800 flex flex-col items-center">
               <Wrench className="w-12 h-12 text-slate-300 mb-4" />
-              <h3 className="text-lg font-bold text-slate-900 mb-2">No services found</h3>
-              <p className="text-slate-500">Try selecting a different category or change your search.</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No services found</h3>
+              <p className="text-slate-500 dark:text-slate-400">Try selecting a different category or change your search.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -131,18 +131,18 @@ export function ServicesPage() {
                 <Card 
                   key={service.id} 
                   onClick={() => handleServiceClick(service)}
-                  className="overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group bg-white"
+                  className="overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group bg-white dark:bg-[#1A2233]"
                 >
-                  <div className="relative h-40 bg-slate-50 flex items-center justify-center p-4">
+                  <div className="relative h-40 bg-slate-50 dark:bg-[#121826] flex items-center justify-center p-4">
                     <Image src={service.img} alt={service.name} width={120} height={120} className="object-contain group-hover:scale-105 transition-transform" />
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <div className="text-xs font-semibold text-blue-600 mb-1">{service.category}</div>
-                    <h3 className="font-bold text-slate-900 mb-1">{service.name}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 mb-4 flex-1">{service.desc}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-1">{service.name}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 flex-1">{service.desc}</p>
                     <div className="flex items-center justify-between mt-auto">
-                      <span className="font-bold text-slate-900 text-sm">{service.price}</span>
-                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{service.price}</span>
+                      <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#121826] flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                         <ChevronRight className="w-4 h-4" />
                       </div>
                     </div>
@@ -159,16 +159,16 @@ export function ServicesPage() {
             <div className="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
               <Wrench className="w-10 h-10 text-blue-600" />
             </div>
-            <h3 className="font-bold text-slate-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-slate-500 mb-6">Find the right service for your vehicle and get it done by trusted garages.</p>
+            <h3 className="font-bold text-slate-900 dark:text-white mb-2">Need Help?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Find the right service for your vehicle and get it done by trusted garages.</p>
             <div className="space-y-3">
               <Button className="w-full bg-blue-600 text-white hover:bg-blue-700" onClick={() => router.push('/garages')}>Request a Service</Button>
               <Button variant="outline" className="w-full border-blue-200 text-blue-600 hover:bg-blue-50" onClick={() => router.push('/bookings')}>View Bookings</Button>
             </div>
           </Card>
 
-          <Card className="p-6 shadow-sm border-slate-100 rounded-[24px]">
-            <h3 className="font-bold text-slate-900 mb-4">Why Choose WrectifAI?</h3>
+          <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4">Why Choose WrectifAI?</h3>
             <ul className="space-y-3">
               {[
                 'Trusted Garages',
@@ -188,20 +188,20 @@ export function ServicesPage() {
 
       <Modal isOpen={isGarageModalOpen} onClose={() => setIsGarageModalOpen(false)} title="Select a Garage">
         <div className="space-y-4 py-2">
-          <p className="text-sm text-slate-500 mb-4">
-            Select a trusted garage to book <span className="font-bold text-slate-900">{selectedService?.name}</span>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            Select a trusted garage to book <span className="font-bold text-slate-900 dark:text-white">{selectedService?.name}</span>
           </p>
           <div className="space-y-3">
             {mockGarages.map(garage => (
               <div 
                 key={garage.id} 
                 onClick={() => handleGarageSelect(garage)}
-                className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors group"
+                className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors group"
               >
                 <div>
-                  <h4 className="font-bold text-slate-900 group-hover:text-blue-700">{garage.name}</h4>
+                  <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-blue-700">{garage.name}</h4>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center text-xs text-slate-500"><MapPin className="w-3 h-3 mr-1"/> {garage.location}</span>
+                    <span className="flex items-center text-xs text-slate-500 dark:text-slate-400"><MapPin className="w-3 h-3 mr-1"/> {garage.location}</span>
                     <span className="flex items-center text-xs font-medium text-amber-500"><Star className="w-3 h-3 mr-1 fill-current"/> {garage.rating} ({garage.reviews})</span>
                   </div>
                 </div>

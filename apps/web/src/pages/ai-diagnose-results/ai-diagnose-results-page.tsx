@@ -108,23 +108,23 @@ export function AIDiagnoseResultsPage() {
         <div className="space-y-2">
           <Link
             href="/home"
-            className="inline-flex items-center gap-1 text-[13px] font-bold text-[#17307a] transition-colors hover:text-[#1a56db]"
+            className="inline-flex items-center gap-1 text-[13px] font-bold text-[#17307a] dark:text-white transition-colors hover:text-[#1a56db]"
           >
             <ChevronLeft className="h-4 w-4 shrink-0 -ml-1" />
             <span>Back to Home</span>
           </Link>
           <div>
-            <h1 className="text-[28px] lg:text-[32px] font-bold tracking-tight text-[#17307a]">
+            <h1 className="text-[28px] lg:text-[32px] font-bold tracking-tight text-[#17307a] dark:text-white">
               WrectifAI Diagnosis Results
             </h1>
-            <p className="mt-1 text-[14.5px] text-[#5f7099]">Here&apos;s what WrectifAI found based on your input</p>
+            <p className="mt-1 text-[14.5px] text-[#5f7099] dark:text-slate-400">Here&apos;s what WrectifAI found based on your input</p>
           </div>
         </div>
 
-        <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+        <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-5 py-4 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-[15.5px] font-bold text-[#17307a]">Your Issue</div>
+              <div className="text-[15.5px] font-bold text-[#17307a] dark:text-white">Your Issue</div>
               <p className="mt-1.5 text-[13.5px] font-medium leading-relaxed text-[#4c5f8f]">
                 Car is shaking at 70-80 kmph and I can feel vibration in the steering wheel.
               </p>
@@ -132,7 +132,7 @@ export function AIDiagnoseResultsPage() {
             <button
               type="button"
               onClick={() => router.push('/ai-diagnose')}
-              className="inline-flex h-[36px] items-center justify-center gap-2 rounded-[10px] border border-[#dbe6ff] bg-white px-4 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f5f8ff] transition-all shadow-sm"
+              className="inline-flex h-[36px] items-center justify-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f5f8ff] transition-all shadow-sm"
             >
               <PenLine className="h-4 w-4" />
               <span>Edit Issue</span>
@@ -142,9 +142,9 @@ export function AIDiagnoseResultsPage() {
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_242px]">
           <div className="space-y-5">
-            <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-[17px] font-bold text-[#17307a]">WrectifAI Diagnosis Summary</h2>
+                <h2 className="text-[17px] font-bold text-[#17307a] dark:text-white">WrectifAI Diagnosis Summary</h2>
                 <span className="rounded-full bg-[#e8f8eb] px-2.5 py-0.5 text-[11px] font-bold text-[#25a24a]">
                   Analysis completed in 8.4s
                 </span>
@@ -160,15 +160,15 @@ export function AIDiagnoseResultsPage() {
                     className="h-auto w-[180px] object-contain"
                     unoptimized={true}
                   />
-                  <div className="mt-3 text-[14px] font-bold text-[#17307a]">
+                  <div className="mt-3 text-[14px] font-bold text-[#17307a] dark:text-white">
                     {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.vin ? `(${selectedVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
                   </div>
-                  <div className="mt-1.5 flex items-center justify-center gap-2 text-[12.5px] text-[#5f7099]">
+                  <div className="mt-1.5 flex items-center justify-center gap-2 text-[12.5px] text-[#5f7099] dark:text-slate-400">
                     <span>{selectedVehicle ? (selectedVehicle.vin ? 'VIN Verified' : 'Petrol') : 'Petrol'}</span>
                     <span className="text-[#8ea0c7]">•</span>
                     <span>{selectedVehicle ? selectedVehicle.year : '2018'}</span>
                   </div>
-                  <div className="mt-1 text-[12.5px] text-[#5f7099]">
+                  <div className="mt-1 text-[12.5px] text-[#5f7099] dark:text-slate-400">
                     {selectedVehicle && selectedVehicle.mileage !== undefined && selectedVehicle.mileage !== null
                       ? `Mileage: ${selectedVehicle.mileage.toLocaleString()} miles`
                       : 'KM Driven: 58,320 km'}
@@ -188,12 +188,12 @@ export function AIDiagnoseResultsPage() {
                         <div className="min-w-0 flex-1">
                           <div className="text-[11.5px] font-semibold text-[#8ea0c7]">{title}</div>
                           <div className="mt-1 flex flex-wrap items-center gap-2.5">
-                            <div className="text-[14.5px] font-bold text-[#17307a] leading-tight">{heading}</div>
+                            <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white leading-tight">{heading}</div>
                             <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold', pillClass)}>
                               {pill}
                             </span>
                           </div>
-                          {body ? <p className="mt-1.5 text-[13px] leading-relaxed text-[#5f7099]">{body}</p> : null}
+                          {body ? <p className="mt-1.5 text-[13px] leading-relaxed text-[#5f7099] dark:text-slate-400">{body}</p> : null}
                         </div>
                       </div>
                     ))}
@@ -202,11 +202,11 @@ export function AIDiagnoseResultsPage() {
               </div>
             </Card>
 
-            <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-[17px] font-bold text-[#17307a]">Top Possible Issues</h2>
-                  <span className="text-[12.5px] font-medium text-[#5f7099]">(Select one or more to request quotes)</span>
+                  <h2 className="text-[17px] font-bold text-[#17307a] dark:text-white">Top Possible Issues</h2>
+                  <span className="text-[12.5px] font-medium text-[#5f7099] dark:text-slate-400">(Select one or more to request quotes)</span>
                 </div>
                 <button type="button" className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#2451f6]">
                   <Info className="h-3.5 w-3.5" />
@@ -233,7 +233,7 @@ export function AIDiagnoseResultsPage() {
                             'flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-[6px] border transition-all',
                             checked
                               ? 'border-[#2451f6] bg-[#2451f6] text-white'
-                              : 'border-[#cdd9fb] bg-white hover:border-[#2451f6]'
+                              : 'border-[#cdd9fb] bg-white dark:bg-[#1A2233] hover:border-[#2451f6]'
                           )}
                         >
                           {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -251,16 +251,16 @@ export function AIDiagnoseResultsPage() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2.5">
-                          <div className="text-[15.5px] font-bold text-[#17307a]">
+                          <div className="text-[15.5px] font-bold text-[#17307a] dark:text-white">
                             {index + 1}. {issue.title}
                           </div>
                           <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-bold', issue.badgeClass)}>
                             {issue.badge}
                           </span>
                         </div>
-                        <p className="mt-1.5 text-[13px] leading-relaxed text-[#5f7099]">{issue.description}</p>
+                        <p className="mt-1.5 text-[13px] leading-relaxed text-[#5f7099] dark:text-slate-400">{issue.description}</p>
                         <div className="mt-2.5 text-[12px] font-bold text-[#3d568f]">Risk if ignored:</div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#5f7099]">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#5f7099] dark:text-slate-400">
                           {issue.risks.map((risk) => (
                             <span key={risk} className="flex items-center gap-1">
                               <span className="text-[#8ea0c7]">•</span>
@@ -268,19 +268,19 @@ export function AIDiagnoseResultsPage() {
                             </span>
                           ))}
                         </div>
-                        <div className="mt-2.5 text-[12.5px] text-[#5f7099]">
+                        <div className="mt-2.5 text-[12.5px] text-[#5f7099] dark:text-slate-400">
                           <span className="font-bold text-[#3d568f]">Estimated Cost:</span>{' '}
-                          <span className="font-bold text-[#17307a]">{issue.estimatedCost}</span>
+                          <span className="font-bold text-[#17307a] dark:text-white">{issue.estimatedCost}</span>
                         </div>
                       </div>
                       <div className="text-left md:text-center">
-                        <div className="text-[36px] font-bold tracking-tight text-[#17307a] leading-none">{issue.match}%</div>
+                        <div className="text-[36px] font-bold tracking-tight text-[#17307a] dark:text-white leading-none">{issue.match}%</div>
                         <div className="text-[11.5px] font-semibold text-[#8ea0c7] mt-1">Match</div>
                       </div>
                       <div className="flex items-center md:justify-end">
                         <button
                           type="button"
-                          className="inline-flex h-[36px] items-center justify-center rounded-[10px] border border-[#dbe6ff] bg-white px-4 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f5f8ff] transition-all shadow-sm"
+                          className="inline-flex h-[36px] items-center justify-center rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 text-[13px] font-semibold text-[#1a56db] hover:bg-[#f5f8ff] transition-all shadow-sm"
                         >
                           View Details
                         </button>
@@ -291,12 +291,12 @@ export function AIDiagnoseResultsPage() {
               </div>
             </Card>
 
-            <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
               <div>
-                <h2 className="text-[16px] font-bold text-[#17307a]">
+                <h2 className="text-[16px] font-bold text-[#17307a] dark:text-white">
                   Provide more details for selected issue(s) <span className="text-[13px] font-semibold text-[#8ea0c7]">(Optional)</span>
                 </h2>
-                <p className="mt-1 text-[12.5px] text-[#5f7099]">
+                <p className="mt-1 text-[12.5px] text-[#5f7099] dark:text-slate-400">
                   The more details you provide, the more accurate quotes you&apos;ll receive.
                 </p>
               </div>
@@ -309,7 +309,7 @@ export function AIDiagnoseResultsPage() {
                     onClick={() => setActiveTab(tab)}
                     className={cn(
                       'border-b-2 pb-2.5 text-[12.5px] font-bold transition-all',
-                      activeTab === tab ? 'border-[#2451f6] text-[#2451f6]' : 'border-transparent text-[#8ea0c7] hover:text-[#5f7099]'
+                      activeTab === tab ? 'border-[#2451f6] text-[#2451f6]' : 'border-transparent text-[#8ea0c7] hover:text-[#5f7099] dark:text-slate-400'
                     )}
                   >
                     {tab}
@@ -323,7 +323,7 @@ export function AIDiagnoseResultsPage() {
                     value={detailsText}
                     onChange={(event) => setDetailsText(event.target.value)}
                     placeholder="Add more details about the issue..."
-                    className="min-h-[84px] w-full resize-none bg-transparent text-[13px] leading-relaxed text-[#17307a] outline-none placeholder:text-[#a5b1cb]"
+                    className="min-h-[84px] w-full resize-none bg-transparent text-[13px] leading-relaxed text-[#17307a] dark:text-white outline-none placeholder:text-[#a5b1cb]"
                   />
                   <div className="text-right text-[11px] text-[#8ea0c7]">{detailsText.length}/1000</div>
                 </div>
@@ -339,15 +339,15 @@ export function AIDiagnoseResultsPage() {
                       onChange={handlePhotoUpload}
                       className="hidden"
                     />
-                    <ImageIcon className="h-8 w-8 text-[#5f7099]" />
-                    <span className="mt-2 text-[13px] font-semibold text-[#17307a]">Drag & drop or click to upload photos</span>
+                    <ImageIcon className="h-8 w-8 text-[#5f7099] dark:text-slate-400" />
+                    <span className="mt-2 text-[13px] font-semibold text-[#17307a] dark:text-white">Drag & drop or click to upload photos</span>
                     <span className="mt-1 text-[11px] text-[#8ea0c7]">Supports PNG, JPG up to 10MB</span>
                   </label>
                   
                   {uploadedPhotos.length > 0 && (
                     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 pt-1">
                       {uploadedPhotos.map((photo) => (
-                        <div key={photo.id} className="group relative h-20 rounded-[8px] border border-[#e8eefc] overflow-hidden bg-white shadow-sm">
+                        <div key={photo.id} className="group relative h-20 rounded-[8px] border border-[#e8eefc] overflow-hidden bg-white dark:bg-[#1A2233] shadow-sm">
                           <Image src={photo.url} alt={photo.name} fill unoptimized className="object-cover" />
                           <button
                             type="button"
@@ -373,8 +373,8 @@ export function AIDiagnoseResultsPage() {
                         onChange={handleVideoUpload}
                         className="hidden"
                       />
-                      <Video className="h-8 w-8 text-[#5f7099]" />
-                      <span className="mt-2 text-[13px] font-semibold text-[#17307a]">Drag & drop or click to upload video</span>
+                      <Video className="h-8 w-8 text-[#5f7099] dark:text-slate-400" />
+                      <span className="mt-2 text-[13px] font-semibold text-[#17307a] dark:text-white">Drag & drop or click to upload video</span>
                       <span className="mt-1 text-[11px] text-[#8ea0c7]">Supports MP4, MOV up to 50MB</span>
                     </label>
                   ) : (
@@ -384,14 +384,14 @@ export function AIDiagnoseResultsPage() {
                           <Video className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                          <div className="truncate text-[13px] font-semibold text-[#17307a]">{uploadedVideo.name}</div>
+                          <div className="truncate text-[13px] font-semibold text-[#17307a] dark:text-white">{uploadedVideo.name}</div>
                           <div className="text-[11px] text-[#8ea0c7]">{uploadedVideo.size}</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setUploadedVideo(null)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#5f7099] hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#5f7099] dark:text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -410,8 +410,8 @@ export function AIDiagnoseResultsPage() {
                         onChange={handleAudioUpload}
                         className="hidden"
                       />
-                      <Mic className="h-8 w-8 text-[#5f7099]" />
-                      <span className="mt-2 text-[13px] font-semibold text-[#17307a]">Drag & drop or click to upload audio</span>
+                      <Mic className="h-8 w-8 text-[#5f7099] dark:text-slate-400" />
+                      <span className="mt-2 text-[13px] font-semibold text-[#17307a] dark:text-white">Drag & drop or click to upload audio</span>
                       <span className="mt-1 text-[11px] text-[#8ea0c7]">Supports MP3, WAV up to 20MB</span>
                     </label>
                   ) : (
@@ -421,14 +421,14 @@ export function AIDiagnoseResultsPage() {
                           <Mic className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                          <div className="truncate text-[13px] font-semibold text-[#17307a]">{uploadedAudio.name}</div>
+                          <div className="truncate text-[13px] font-semibold text-[#17307a] dark:text-white">{uploadedAudio.name}</div>
                           <div className="text-[11px] text-[#8ea0c7]">{uploadedAudio.size}</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setUploadedAudio(null)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#5f7099] hover:bg-red-50 hover:text-red-600 transition-colors"
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-[#5f7099] dark:text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -440,12 +440,12 @@ export function AIDiagnoseResultsPage() {
           </div>
 
           <div className="space-y-5">
-            <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-4 py-5 text-center shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
-              <h3 className="text-[15.5px] font-bold text-[#17307a]">Diagnosis Confidence</h3>
+            <Card className="rounded-[18px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-5 text-center shadow-[0_8px_24px_rgba(37,73,153,0.04)]">
+              <h3 className="text-[15.5px] font-bold text-[#17307a] dark:text-white">Diagnosis Confidence</h3>
               <div className="mt-5">
                 <ConfidenceGauge value={92} />
               </div>
-              <p className="mx-auto mt-5 max-w-[190px] text-[12.5px] leading-relaxed text-[#5f7099]">
+              <p className="mx-auto mt-5 max-w-[190px] text-[12.5px] leading-relaxed text-[#5f7099] dark:text-slate-400">
                 Based on WrectifAI analysis of your issue description and thousands of similar cases.
               </p>
             </Card>
@@ -458,14 +458,14 @@ export function AIDiagnoseResultsPage() {
               <div className="mt-5 space-y-2.5">
                 <button
                   type="button"
-                  className="flex h-[38px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c7d6ff] bg-white text-[13px] font-bold text-[#2451f6] hover:bg-[#f5f8ff] transition-all shadow-sm"
+                  className="flex h-[38px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c7d6ff] bg-white dark:bg-[#1A2233] text-[13px] font-bold text-[#2451f6] hover:bg-[#f5f8ff] transition-all shadow-sm"
                 >
                   <PhoneCall className="h-4 w-4 text-[#2451f6]" />
                   <span>Call Support</span>
                 </button>
                 <button
                   type="button"
-                  className="flex h-[38px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c7d6ff] bg-white text-[13px] font-bold text-[#2451f6] hover:bg-[#f5f8ff] transition-all shadow-sm"
+                  className="flex h-[38px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c7d6ff] bg-white dark:bg-[#1A2233] text-[13px] font-bold text-[#2451f6] hover:bg-[#f5f8ff] transition-all shadow-sm"
                 >
                   <Headset className="h-4 w-4 text-[#2451f6]" />
                   <span>Roadside Assistance</span>
@@ -476,7 +476,7 @@ export function AIDiagnoseResultsPage() {
               </div>
             </Card>
 
-            <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-6 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+            <Card className="rounded-[22px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-6 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
               <h3 className="text-[16px] font-semibold text-[#183db1]">Next Steps</h3>
               <div className="relative mt-6 space-y-6">
                 <div className="absolute left-[15px] top-4 bottom-4 w-[1.5px] bg-[#e4ecff] z-0" />
@@ -511,10 +511,10 @@ export function AIDiagnoseResultsPage() {
                 <ShieldCheck className="h-5.5 w-5.5" />
               </span>
               <div>
-                <div className="text-[17px] font-bold text-[#17307a]">
+                <div className="text-[17px] font-bold text-[#17307a] dark:text-white">
                   Ready to get the best quotes from trusted garages?
                 </div>
-                <p className="mt-1 text-[13px] text-[#5f7099]">
+                <p className="mt-1 text-[13px] text-[#5f7099] dark:text-slate-400">
                   Send your selected issues and compare the best offers.
                 </p>
               </div>

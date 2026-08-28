@@ -131,7 +131,7 @@ export function ConfidenceGauge({ value }: { value: number }) {
           </defs>
         </svg>
         <div className="absolute inset-x-0 bottom-1 text-center">
-          <div className="text-[38px] font-bold tracking-tight text-[#17307a] leading-none">{value}%</div>
+          <div className="text-[38px] font-bold tracking-tight text-[#17307a] dark:text-white leading-none">{value}%</div>
         </div>
       </div>
       <div className="mt-4 text-[13px] font-bold text-[#1ea15f]">High Confidence</div>
@@ -141,7 +141,7 @@ export function ConfidenceGauge({ value }: { value: number }) {
 
 export function ResultTrustFooter() {
   return (
-    <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] bg-white px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
       {resultTrustItems.map(({ title, description, icon: Icon }) => (
         <div key={title} className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f4f7ff] text-[#3158e1]">
@@ -169,7 +169,7 @@ export function StepRibbon({
   }>;
 }) {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#e6ecfb] bg-white p-0 shadow-[0_14px_32px_rgba(37,73,153,0.04)]">
+    <div className="overflow-hidden rounded-[22px] border border-[#e6ecfb] bg-white dark:bg-[#1A2233] p-0 shadow-[0_14px_32px_rgba(37,73,153,0.04)]">
       <div className={cn('grid', steps.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4')}>
         {steps.map((step, index) => (
           <div

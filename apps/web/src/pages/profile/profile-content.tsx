@@ -44,7 +44,7 @@ export function ProfileContent() {
   };
 
   if (!user) {
-    return <div className="p-8 text-center text-slate-500">Loading Profile...</div>;
+    return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading Profile...</div>;
   }
 
   const initials = user.name ? user.name.substring(0, 2).toUpperCase() : (user.email ? user.email.substring(0, 2).toUpperCase() : 'US');
@@ -59,8 +59,8 @@ export function ProfileContent() {
       )}
       <div className="flex justify-between items-center mb-2">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Account Details</h2>
-          <p className="text-sm text-slate-500">Manage your personal information</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Account Details</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Manage your personal information</p>
         </div>
         {!isEditing && (
           <Button variant="outline" className="gap-2 font-bold" onClick={startEditing}>
@@ -69,63 +69,63 @@ export function ProfileContent() {
         )}
       </div>
 
-      <Card className="p-6 flex items-center gap-6 shadow-sm border-slate-100 rounded-[24px]">
+      <Card className="p-6 flex items-center gap-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold">
             {initials}
           </div>
           {isEditing && (
-            <button className="absolute bottom-0 right-0 p-1.5 bg-white border rounded-full text-slate-600 hover:text-blue-600 shadow-sm">
+            <button className="absolute bottom-0 right-0 p-1.5 bg-white dark:bg-[#1A2233] border rounded-full text-slate-600 dark:text-slate-400 hover:text-blue-600 shadow-sm">
               <CameraIcon className="w-4 h-4" />
             </button>
           )}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900">{user.name || 'N/A'}</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user.name || 'N/A'}</h2>
           <div className="flex items-center gap-2 mt-2">
              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">Active</span>
           </div>
-          <p className="text-sm text-slate-500 mt-2">{user.email || 'N/A'}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{user.email || 'N/A'}</p>
         </div>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6 shadow-sm border-slate-100 rounded-[24px]">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Personal Information</h3>
+        <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Personal Information</h3>
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
-              <span className="text-sm font-medium text-slate-500 w-1/3">Full Name</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Full Name</span>
               {isEditing ? (
                 <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
               ) : (
-                <span className="text-sm font-bold text-slate-900 text-right w-full sm:w-2/3">{user.name || 'N/A'}</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.name || 'N/A'}</span>
               )}
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
-              <span className="text-sm font-medium text-slate-500 w-1/3">Email</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Email</span>
               {isEditing ? (
                 <input type="email" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
               ) : (
-                <span className="text-sm font-bold text-slate-900 text-right w-full sm:w-2/3">{user.email || 'N/A'}</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.email || 'N/A'}</span>
               )}
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2">
-              <span className="text-sm font-medium text-slate-500 w-1/3">Phone Number</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Phone Number</span>
               {isEditing ? (
                 <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.mobileNumber} onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} />
               ) : (
-                <span className="text-sm font-bold text-slate-900 text-right w-full sm:w-2/3">{user.mobileNumber ?? 'N/A'}</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.mobileNumber ?? 'N/A'}</span>
               )}
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 shadow-sm border-slate-100 rounded-[24px]">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Account Information</h3>
+        <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Account Information</h3>
           <div className="space-y-6">
             <div className="flex justify-between pb-2">
-              <span className="text-sm font-medium text-slate-500">User ID</span>
-              <span className="text-sm font-bold text-slate-900">{user.id ? user.id.substring(0,8).toUpperCase() : 'N/A'}</span>
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">User ID</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">{user.id ? user.id.substring(0,8).toUpperCase() : 'N/A'}</span>
             </div>
           </div>
         </Card>
