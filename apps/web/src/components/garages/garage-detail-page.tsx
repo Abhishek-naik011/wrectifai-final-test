@@ -222,6 +222,7 @@ export function GarageDetailPage({
         isOpen={isQuoteModalOpen} 
         onClose={() => setIsQuoteModalOpen(false)} 
         garageId={garage.id || ''} 
+        garageServices={garage.chips || []}
         onSubmitSuccess={() => {
           setRequestStatus('quote_success');
           const notifs = JSON.parse(localStorage.getItem('wrectifai_notifications') || '[]');
@@ -593,26 +594,39 @@ export function GarageDetailPage({
             ) : (
               <>
                 {/* Services Offered */}
-                <section className="space-y-3.5">
-                  <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
-                    Services Offered
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-                    {servicesOffered.map((svc, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col items-center justify-center rounded-[16px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-2 py-2.5 text-center shadow-[0_8px_20px_rgba(22,48,112,0.03)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_12px_28px_rgba(26,86,219,0.06)]"
-                      >
-                        <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0f4ff] text-[#1a56db]">
-                          <svc.icon className="h-4 w-4" />
-                        </div>
-                        <span className="text-[11px] font-bold text-[#17307a] dark:text-white leading-tight">
-                          {svc.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                {(!garage.chips || garage.chips.length === 0) ? (
+                  <section className="space-y-3.5">
+                    <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
+                      Services Offered
+                    </h2>
+                    <p className="text-sm text-slate-500">No specific services listed for this garage.</p>
+                  </section>
+                ) : (
+                  <section className="space-y-3.5">
+                    <h2 className="text-[14.5px] font-bold text-[#17307a] dark:text-white">
+                      Services Offered
+                    </h2>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+                      {garage.chips.map((chipStr, index) => {
+                        const matchedSvc = servicesOffered.find(s => s.name.toLowerCase() === chipStr.toLowerCase());
+                        const IconComponent = matchedSvc ? matchedSvc.icon : Wrench;
+                        return (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center justify-center rounded-[16px] border border-[#e2eefc] bg-white dark:bg-[#1A2233] p-2 py-2.5 text-center shadow-[0_8px_20px_rgba(22,48,112,0.03)] transition-all hover:border-[#1a56db]/30 hover:shadow-[0_12px_28px_rgba(26,86,219,0.06)]"
+                          >
+                            <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0f4ff] text-[#1a56db]">
+                              <IconComponent className="h-4 w-4" />
+                            </div>
+                            <span className="text-[11px] font-bold text-[#17307a] dark:text-white leading-tight">
+                              {chipStr}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
 
                 {/* Service Catalog */}
                 {services && services.length > 0 && (

@@ -4,13 +4,13 @@ import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/common/modal';
 import { apiClient } from '@/lib/api-client';
 
-export function RequestQuoteModal({ isOpen, onClose, garageId, onSubmitSuccess }: { isOpen: boolean, onClose: () => void, garageId: string, onSubmitSuccess: () => void }) {
+export function RequestQuoteModal({ isOpen, onClose, garageId, garageServices, onSubmitSuccess }: { isOpen: boolean, onClose: () => void, garageId: string, garageServices?: string[], onSubmitSuccess: () => void }) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
   const [vehicleMake, setVehicleMake] = useState('');
-  const [serviceType, setServiceType] = useState('General Service');
+  const [serviceType, setServiceType] = useState(garageServices && garageServices.length > 0 ? garageServices[0] : 'Not specified');
   const [issueDescription, setIssueDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -99,10 +99,13 @@ export function RequestQuoteModal({ isOpen, onClose, garageId, onSubmitSuccess }
         <div>
           <label className="block text-sm font-semibold mb-1">Service Type</label>
           <select value={serviceType} onChange={e => setServiceType(e.target.value)} className="w-full p-2 border rounded">
-            <option value="General Service">General Service</option>
-            <option value="Repair">Repair</option>
-            <option value="Diagnosis">Diagnosis</option>
-            <option value="Maintenance">Maintenance</option>
+            {garageServices && garageServices.length > 0 ? (
+              garageServices.map(svc => (
+                <option key={svc} value={svc}>{svc}</option>
+              ))
+            ) : (
+              <option value="Not specified">Not specified</option>
+            )}
           </select>
         </div>
 
