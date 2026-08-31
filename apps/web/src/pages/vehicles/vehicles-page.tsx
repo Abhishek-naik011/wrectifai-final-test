@@ -13,13 +13,16 @@ import {
   Settings,
   UploadCloud,
   CheckCircle2,
-  Star
+  Star,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/common/button';
 import { Input } from '@/components/common/input';
 import { apiClient } from '@/lib/api-client';
+import { cn } from '@/utils/cn';
 
 interface Vehicle {
   id: string;
@@ -138,6 +141,81 @@ function FeatureAside() {
         </Card>
       ))}
     </aside>
+  );
+}
+
+function VehicleGallery({ photos, make, model }: { photos: string[], make: string, model: string }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="h-[200px] w-full shrink-0 overflow-hidden bg-[#f4f7ff] dark:bg-slate-800 flex items-center justify-center text-[#1a56db]">
+        <Car className="h-12 w-12 opacity-40" />
+      </div>
+    );
+  }
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    // If image fails to load, replace with a transparent fallback to avoid broken icons
+    e.currentTarget.style.display = 'none';
+    if (e.currentTarget.parentElement) {
+      e.currentTarget.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-[#f4f7ff]', 'dark:bg-slate-800');
+      const fallback = document.createElement('div');
+      fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#1a56db] opacity-40"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>`;
+      e.currentTarget.parentElement.appendChild(fallback);
+    }
+  };
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (activeIndex > 0) setActiveIndex(activeIndex - 1);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (activeIndex < photos.length - 1) setActiveIndex(activeIndex + 1);
+  };
+
+  return (
+    <div className="flex flex-col border-b border-[#dbe6ff] dark:border-[#2A3446]">
+      {/* Main image */}
+      <div className="relative h-[200px] w-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+        <img 
+          src={photos[activeIndex]} 
+          alt={`${make} ${model}`} 
+          className="h-full w-full object-cover" 
+          onError={handleImageError}
+        />
+        
+        {/* Left Arrow */}
+        {photos.length > 1 && activeIndex > 0 && (
+          <button
+            onClick={handlePrev}
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 dark:bg-black/60 text-slate-800 dark:text-white shadow-sm hover:bg-white dark:hover:bg-black transition-colors z-10"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Right Arrow */}
+        {photos.length > 1 && activeIndex < photos.length - 1 && (
+          <button
+            onClick={handleNext}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 dark:bg-black/60 text-slate-800 dark:text-white shadow-sm hover:bg-white dark:hover:bg-black transition-colors z-10"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+
+        {photos.length > 0 && (
+          <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white flex items-center gap-1.5 backdrop-blur-md shadow-sm z-10">
+            {activeIndex + 1} / {photos.length}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -396,18 +474,10 @@ export function VehiclesPage() {
           // Vehicles Grid List
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {vehicles.map((vehicle) => (
-              <Card key={vehicle.id} className="relative overflow-hidden rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-6 shadow-[0_10px_30px_rgba(30,58,138,0.03)] hover:shadow-[0_15px_40px_rgba(26,86,219,0.06)] hover:border-[#bfd1ff] transition-all group">
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-4">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f4f7ff]">
-                      {vehicle.photos && vehicle.photos.length > 0 ? (
-                        <img src={vehicle.photos[0]} alt={`${vehicle.make} ${vehicle.model}`} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[#1a56db]">
-                          <Car className="h-8 w-8 opacity-50" />
-                        </div>
-                      )}
-                    </div>
+              <Card key={vehicle.id} className="relative overflow-hidden rounded-[24px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] shadow-[0_10px_30px_rgba(30,58,138,0.03)] hover:shadow-[0_15px_40px_rgba(26,86,219,0.06)] hover:border-[#bfd1ff] transition-all flex flex-col">
+                <VehicleGallery photos={vehicle.photos || []} make={vehicle.make} model={vehicle.model} />
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-[#17307a] dark:text-white leading-tight">
@@ -425,14 +495,8 @@ export function VehiclesPage() {
                       </p>
                     </div>
                   </div>
-                  {(!vehicle.photos || vehicle.photos.length === 0) && (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#eef4ff] dark:bg-blue-900/30 text-[#1a56db]">
-                      <Car className="h-5 w-5" />
-                    </div>
-                  )}
-                </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[13px]">
+                <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[13px]">
                   {vehicle.vin && (
                     <div className="flex flex-col">
                       <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">VIN</span>
@@ -465,7 +529,7 @@ export function VehiclesPage() {
                   )}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-2 pt-2">
+                <div className="mt-4 flex justify-end gap-2 pt-1 border-t border-transparent">
                   <Button
                     variant="outline"
                     size="sm"
@@ -484,6 +548,7 @@ export function VehiclesPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                     Delete
                   </Button>
+                </div>
                 </div>
               </Card>
             ))}
