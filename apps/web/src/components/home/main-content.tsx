@@ -31,6 +31,7 @@ import { Badge } from '@/components/common/badge';
 import { Button } from '@/components/common/button';
 import { Card } from '@/components/common/card';
 import { Input } from '@/components/common/input';
+import { Modal } from '@/components/common/modal';
 import {
   careTips,
   categoryItems,
@@ -83,23 +84,27 @@ function HoverComingSoon({
 }
 
 const moreCategoryItems = [
-  { label: 'Loans', icon: BadgeIndianRupee, image: '/assets/loans.png', href: '/shop' },
-  { label: 'Used Cars', icon: Sticker, image: '/assets/Used_cars.png', href: '/shop' },
+  { label: 'Loans', icon: BadgeIndianRupee, image: '/assets/loans.png', href: '#', isComingSoon: true },
+  { label: 'Used Cars', icon: Sticker, image: '/assets/Used_cars.png', href: '#', isComingSoon: true },
   { label: 'Electrical & Battery Systems', icon: BatteryCharging, image: '/assets/Electrical.png', href: '/shop' },
-  { label: 'AC & Cooling Systems', icon: Snowflake, image: '/assets/new_ac.png', href: '/shop' },
-  { label: 'Vehicle Protection & Safety', icon: ShieldCheck, image: '/assets/isurance.svg', href: '/shop' },
-  { label: 'Documentation & Compliance', icon: FileText, image: '/assets/Documentation.png', href: '/shop' },
-  { label: 'EV Services', icon: Zap, image: '/assets/ev.png', href: '/shop' },
-  { label: 'Subscription & Bundles', icon: Gift, image: '/assets/subscription.png', href: '/shop' },
+  { label: 'AC & Cooling Systems', icon: Snowflake, image: '/assets/new_ac.png', href: '/services' },
+  { label: 'Vehicle Protection & Safety', icon: ShieldCheck, image: '/assets/isurance.svg', href: '#', isComingSoon: true },
+  { label: 'Documentation & Compliance', icon: FileText, image: '/assets/Documentation.png', href: '#', isComingSoon: true },
+  { label: 'EV Services', icon: Zap, image: '/assets/ev.png', href: '#', isComingSoon: true },
+  { label: 'Subscription & Bundles', icon: Gift, image: '/assets/subscription.png', href: '#', isComingSoon: true },
 ];
 
 function CategoriesModal({
   open,
   onClose,
+  onComingSoonClick,
 }: {
   open: boolean;
   onClose: () => void;
+  onComingSoonClick: () => void;
 }) {
+  const router = useRouter();
+  
   useEffect(() => {
     if (!open) {
       return;
@@ -120,8 +125,9 @@ function CategoriesModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto md:overflow-y-hidden bg-[rgba(10,18,45,0.24)] px-4 py-5 backdrop-blur-[1px]">
-      <div className="max-h-[calc(100vh-40px)] md:max-h-none w-full max-w-[740px] overflow-y-auto md:overflow-hidden rounded-[20px] border border-white/70 bg-white dark:bg-[#1A2233] shadow-[0_24px_70px_rgba(16,35,86,0.18)]">
+    <div className="fixed inset-0 z-[40] flex items-center justify-center overflow-y-auto md:overflow-y-hidden px-4 py-5">
+      <div className="fixed inset-0 bg-[rgba(10,18,45,0.24)] backdrop-blur-[1px]" onClick={onClose} />
+      <div className="relative max-h-[calc(100vh-40px)] md:max-h-none w-full max-w-[740px] overflow-y-auto md:overflow-hidden rounded-[20px] border border-white/70 bg-white dark:bg-[#1A2233] shadow-[0_24px_70px_rgba(16,35,86,0.18)] z-10">
         <div className="px-5 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -147,8 +153,9 @@ function CategoriesModal({
               Top Categories
             </h3>
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-7">
-              {categoryItems.map(({ label, icon: Icon, image, href }) => (
-                <Link key={label} href={href}>
+              {categoryItems.map((item) => {
+                const { label, icon: Icon, image, href, isComingSoon } = item as any;
+                const content = (
                   <Card
                     className="flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-[12px] border-[#e8eefc] px-2 py-2.5 text-center shadow-none transition-all duration-200 hover:shadow-[0_4px_12px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
                   >
@@ -170,8 +177,24 @@ function CategoriesModal({
                       {label}
                     </div>
                   </Card>
-                </Link>
-              ))}
+                );
+
+                if (isComingSoon) {
+                  return (
+                    <HoverComingSoon key={label}>
+                      <button type="button" onClick={onComingSoonClick} className="w-full text-left">
+                        {content}
+                      </button>
+                    </HoverComingSoon>
+                  );
+                }
+
+                return (
+                  <Link key={label} href={href}>
+                    {content}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -180,8 +203,9 @@ function CategoriesModal({
               More Categories
             </h3>
             <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-              {moreCategoryItems.map(({ label, icon: Icon, image, href }) => (
-                <Link key={label} href={href}>
+              {moreCategoryItems.map((item) => {
+                const { label, icon: Icon, image, href, isComingSoon } = item as any;
+                const content = (
                   <Card
                     className="flex min-h-[54px] items-center gap-3 rounded-[12px] border-[#e8eefc] px-4 py-2 shadow-none transition-all duration-200 hover:shadow-[0_4px_12px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
                   >
@@ -210,8 +234,24 @@ function CategoriesModal({
                       )}
                     </div>
                   </Card>
-                </Link>
-              ))}
+                );
+
+                if (isComingSoon) {
+                  return (
+                    <HoverComingSoon key={label}>
+                      <button type="button" onClick={onComingSoonClick} className="w-full text-left">
+                        {content}
+                      </button>
+                    </HoverComingSoon>
+                  );
+                }
+
+                return (
+                  <Link key={label} href={href}>
+                    {content}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -233,6 +273,10 @@ function CategoriesModal({
               type="button"
               variant="outline"
               className="h-9 rounded-[12px] px-4 text-[11.5px] font-semibold"
+              onClick={() => {
+                onClose();
+                router.push('/ai-diagnose');
+              }}
             >
               <Sparkles className="h-3.5 w-3.5" />
               Get Help
@@ -411,9 +455,11 @@ function HeroBanner() {
 function CategoryGrid({
   items,
   onViewAll,
+  onComingSoonClick,
 }: {
   items: typeof categoryItems;
   onViewAll: () => void;
+  onComingSoonClick: () => void;
 }) {
   return (
     <section id="categories">
@@ -431,10 +477,10 @@ function CategoryGrid({
       </div>
       <div className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="grid grid-cols-7 gap-3 min-w-[840px]">
-          {items.map(({ label, icon: Icon, image, href }) => (
-            <HoverComingSoon key={label}>
-              <Link href={href}>
-                <Card className="flex h-[110px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] px-2 py-3 text-center shadow-[0_6px_16px_rgba(20,44,112,0.04)] border-[#edf2fd] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0]">
+          {items.map((item) => {
+            const { label, icon: Icon, image, href, isComingSoon } = item as any;
+            const content = (
+                <Card className="flex h-[110px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[12px] px-2 py-3 text-center shadow-[0_6px_16px_rgba(20,44,112,0.04)] border-[#edf2fd] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0]">
                   {image ? (
                     <Image 
                       src={image} 
@@ -453,9 +499,24 @@ function CategoryGrid({
                     {label}
                   </div>
                 </Card>
+            );
+
+            if (isComingSoon) {
+              return (
+                <HoverComingSoon key={label}>
+                  <button type="button" onClick={onComingSoonClick} className="w-full text-left">
+                    {content}
+                  </button>
+                </HoverComingSoon>
+              );
+            }
+
+            return (
+              <Link key={label} href={href}>
+                {content}
               </Link>
-            </HoverComingSoon>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
@@ -479,7 +540,7 @@ function MaintenanceStrip({
         <div className="grid grid-cols-5 gap-2 min-w-[750px]">
           {items.map(({ label, due, icon: Icon, image }) => (
             <HoverComingSoon key={label}>
-              <Card className="flex h-[60px] w-full cursor-default items-center gap-2 px-2 py-1.5 shadow-[0_8px_20px_rgba(20,44,112,0.05)]">
+              <Card className="flex h-[60px] w-full cursor-pointer items-center gap-2 px-2 py-1.5 shadow-[0_8px_20px_rgba(20,44,112,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.1)]">
                 {image ? (
                   <Image 
                     src={image} 
@@ -550,7 +611,7 @@ function GarageCard({
   const favorite = isFavorite(name);
 
   return (
-    <Card className="overflow-hidden rounded-[16px] shadow-[0_12px_26px_rgba(20,44,112,0.08)]">
+    <Card className="overflow-hidden rounded-[16px] shadow-[0_12px_26px_rgba(20,44,112,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(20,44,112,0.12)]">
       <div className={cn('relative h-[86px] bg-gradient-to-r', artwork)}>
         {image && <Image src={image} alt={name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(5,8,17,0.3))]" />
@@ -684,7 +745,7 @@ function FeaturedGarages({
           className="flex gap-4 overflow-x-auto pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {garagesList.map(({ href: _href, ...garage }) => (
-            <Link key={garage.id} href={`/garages?garage=${encodeURIComponent(garage.name)}`} className="w-[270px] shrink-0 block hover:opacity-95 transition-opacity">
+            <Link key={garage.id} href={`/garages?garage=${encodeURIComponent(garage.name)}`} className="w-[270px] shrink-0 block">
               <GarageCard {...garage} />
             </Link>
           ))}
@@ -974,8 +1035,9 @@ function CareTips({
 }
 
 export function MainContent() {
-  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+  const [isComingSoonModalOpen, setIsComingSoonModalOpen] = useState(false);
   const [garagesList, setGaragesList] = useState<Garage[]>([]);
   const [dealsList, setDealsList] = useState<Deal[]>([]);
 
@@ -1148,7 +1210,7 @@ export function MainContent() {
           </div>
         ) : null}
         {filteredCategories.length > 0 ? (
-          <CategoryGrid items={filteredCategories} onViewAll={() => setIsCategoriesModalOpen(true)} />
+          <CategoryGrid items={filteredCategories} onViewAll={() => setIsCategoriesModalOpen(true)} onComingSoonClick={() => setIsComingSoonModalOpen(true)} />
         ) : null}
         {filteredMaintenance.length > 0 ? <MaintenanceStrip items={filteredMaintenance} /> : null}
         {filteredGarages.length > 0 ? <FeaturedGarages garagesList={filteredGarages} /> : null}
@@ -1166,7 +1228,20 @@ export function MainContent() {
       <CategoriesModal
         open={isCategoriesModalOpen}
         onClose={() => setIsCategoriesModalOpen(false)}
+        onComingSoonClick={() => setIsComingSoonModalOpen(true)}
       />
+      <Modal isOpen={isComingSoonModalOpen} onClose={() => setIsComingSoonModalOpen(false)} title="Coming Soon">
+        <div className="p-2 space-y-4 pt-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            We&apos;re working on this feature and it will be available in a future update.
+          </p>
+          <div className="flex justify-end pt-2">
+            <Button className="bg-blue-600 text-white w-full sm:w-auto" onClick={() => setIsComingSoonModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

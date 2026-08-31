@@ -242,7 +242,10 @@ authRouter.post('/login', async (req, res, next) => {
       }
 
       const userResult = await query(
-        'SELECT * FROM users WHERE mobile_number = $1',
+        `SELECT u.*, p.avatar_url as profile_image 
+         FROM users u 
+         LEFT JOIN profiles p ON u.id = p.user_id 
+         WHERE u.mobile_number = $1`,
         [mobileNumber]
       );
 
@@ -283,6 +286,7 @@ authRouter.post('/login', async (req, res, next) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        profileImage: user.profile_image,
         garageName,
         mobileNumber: user.mobile_number,
         status: user.status,
@@ -308,7 +312,13 @@ authRouter.post('/refresh', async (req, res) => {
 
     await deleteRefreshTokenInDb(refreshToken);
 
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    const userResult = await query(
+      `SELECT u.*, p.avatar_url as profile_image 
+       FROM users u 
+       LEFT JOIN profiles p ON u.id = p.user_id 
+       WHERE u.id = $1`, 
+      [userId]
+    );
     if (userResult.rows.length === 0) {
       return error(res, 'User not found', 'UNAUTHORIZED', 401);
     }
@@ -364,7 +374,13 @@ authRouter.get('/me', authenticate, async (req, res) => {
     if (!userId) {
       return error(res, 'User ID missing in token', 'UNAUTHORIZED', 401);
     }
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    const userResult = await query(
+      `SELECT u.*, p.avatar_url as profile_image 
+       FROM users u 
+       LEFT JOIN profiles p ON u.id = p.user_id 
+       WHERE u.id = $1`, 
+      [userId]
+    );
     if (userResult.rows.length === 0) {
       return error(res, 'User not found', 'NOT_FOUND', 404);
     }
@@ -388,6 +404,7 @@ authRouter.get('/me', authenticate, async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        profileImage: user.profile_image,
         garageName,
         mobileNumber: user.mobile_number,
         status: user.status,

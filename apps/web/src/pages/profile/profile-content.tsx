@@ -1,8 +1,9 @@
 'use client';
 import { Card } from '@/components/common/card';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/common/button';
-import { Edit2, Save, CameraIcon, Check, AlertCircle } from 'lucide-react';
+import { Modal } from '@/components/common/modal';
+import { Edit2, Save, CameraIcon, Trash2, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { apiClient } from '@/lib/api-client';
 
@@ -11,6 +12,83 @@ export function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', mobileNumber: '' });
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (photoMenuRef.current && !photoMenuRef.current.contains(event.target as Node)) {
+        setIsPhotoMenuOpen(false);
+      }
+    };
+    if (isPhotoMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isPhotoMenuOpen]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result as string;
+      try {
+        const payload = {
+          name: user?.name || '',
+          email: user?.email || '',
+          mobileNumber: user?.mobileNumber || '',
+          profileImage: base64
+        };
+        const updatedUser = await apiClient.put<any>('/users/profile', payload);
+        showToast('Profile photo updated successfully', 'success');
+        const activeToken = token || (typeof document !== 'undefined' ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1] : null);
+        if (activeToken) {
+          login(activeToken, undefined, { ...user, ...updatedUser, roles: user?.roles || [] });
+        }
+      } catch (err: any) {
+        console.error(err);
+        showToast(err.message || 'Failed to update profile photo', 'error');
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be selected again if needed
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemovePhoto = async () => {
+    if (isRemoving) return;
+    setIsRemoving(true);
+    try {
+      const payload = {
+        name: user?.name || '',
+        email: user?.email || '',
+        mobileNumber: user?.mobileNumber || '',
+        profileImage: null // explicit null to clear photo
+      };
+      const updatedUser = await apiClient.put<any>('/users/profile', payload);
+      showToast('Profile photo removed', 'success');
+      setIsRemoveModalOpen(false);
+      const activeToken = token || (typeof document !== 'undefined' ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1] : null);
+      if (activeToken) {
+        login(activeToken, undefined, { ...user, ...updatedUser, roles: user?.roles || [] });
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || 'Failed to remove profile photo', 'error');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
 
   const showToast = (message: string, type: 'success'|'error') => {
     setToast({ message, type });
@@ -71,14 +149,64 @@ export function ProfileContent() {
 
       <Card className="p-6 flex items-center gap-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
         <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold">
-            {initials}
-          </div>
-          {isEditing && (
-            <button className="absolute bottom-0 right-0 p-1.5 bg-white dark:bg-[#1A2233] border rounded-full text-slate-600 dark:text-slate-400 hover:text-blue-600 shadow-sm">
+          {user.profileImage ? (
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-blue-600 text-white flex items-center justify-center border-2 border-white dark:border-[#1A2233]">
+              <img src={user.profileImage} alt={user.name || 'Profile'} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center text-3xl font-bold border-2 border-white dark:border-[#1A2233]">
+              {initials}
+            </div>
+          )}
+          
+          <div className="absolute bottom-0 right-0 z-10" ref={photoMenuRef}>
+            <button 
+              type="button"
+              onClick={() => setIsPhotoMenuOpen(!isPhotoMenuOpen)}
+              className="p-1.5 bg-white dark:bg-[#1A2233] border rounded-full text-slate-600 dark:text-slate-400 hover:text-blue-600 shadow-sm"
+              title="Photo Options"
+            >
               <CameraIcon className="w-4 h-4" />
             </button>
-          )}
+            
+            {isPhotoMenuOpen && (
+              <div className="absolute top-full mt-2 -left-12 sm:left-0 z-50 w-44 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1A2233] shadow-lg py-1 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPhotoMenuOpen(false);
+                    fileInputRef.current?.click();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <CameraIcon className="w-4 h-4" />
+                  Change Photo
+                </button>
+                
+                {user.profileImage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPhotoMenuOpen(false);
+                      setIsRemoveModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remove Photo
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileSelect} 
+            accept="image/jpeg, image/png, image/webp" 
+            className="hidden" 
+          />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user.name || 'N/A'}</h2>
@@ -139,6 +267,34 @@ export function ProfileContent() {
           </Button>
         </div>
       )}
+      
+      <Modal 
+        isOpen={isRemoveModalOpen} 
+        onClose={() => !isRemoving && setIsRemoveModalOpen(false)}
+        title="Remove Profile Photo?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Are you sure you want to remove your profile photo? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsRemoveModalOpen(false)}
+              disabled={isRemoving}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRemovePhoto} 
+              disabled={isRemoving}
+              className="bg-red-600 hover:bg-red-700 text-white border-none"
+            >
+              {isRemoving ? 'Removing...' : 'Remove Photo'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

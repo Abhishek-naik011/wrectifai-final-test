@@ -162,6 +162,7 @@ export function GarageDetailPage({
   const [reviewPage, setReviewPage] = useState(0);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const detailImageSources = ((garage as any).photos && (garage as any).photos.length > 0
     ? (garage as any).photos
@@ -281,14 +282,37 @@ export function GarageDetailPage({
           <div className="space-y-6">
             {/* Banner Container */}
             <div className="relative h-[240px] w-full overflow-hidden rounded-[16px] border border-white/60 bg-gradient-to-r from-slate-900 to-slate-800 shadow-[0_16px_40px_rgba(22,48,112,0.08)] sm:h-[300px]">
-              {garage.image && (
+              {detailImageSources.length > 0 && (
                 <Image
-                  src={garage.image}
+                  src={detailImageSources[currentImageIndex]}
                   alt={garage.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 70vw"
                   className="object-cover opacity-90"
                 />
+              )}
+              {detailImageSources.length > 1 && (
+                <>
+                  {currentImageIndex > 0 && (
+                    <button
+                      onClick={() => setCurrentImageIndex(i => i - 1)}
+                      className="absolute left-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                  )}
+                  {currentImageIndex < detailImageSources.length - 1 && (
+                    <button
+                      onClick={() => setCurrentImageIndex(i => i + 1)}
+                      className="absolute right-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors z-10"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  )}
+                  <div className="absolute bottom-5 right-5 z-10 rounded-[8px] bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm backdrop-blur-sm">
+                    {currentImageIndex + 1} / {detailImageSources.length}
+                  </div>
+                </>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
 

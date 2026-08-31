@@ -60,12 +60,12 @@ export const navItems: NavItem[] = [
 ];
 
 export const categoryItems = [
-  { label: 'Repair Services', icon: Wrench, href: '/shop', image: '/assets/repair-services.png' },
-  { label: 'Maintenance', icon: Fuel, href: '/shop', image: '/assets/maintenance.svg' },
+  { label: 'Repair Services', icon: Wrench, href: '/services', image: '/assets/repair-services.png' },
+  { label: 'Maintenance', icon: Fuel, href: '/services', image: '/assets/maintenance.svg' },
   { label: 'Parts & Components', icon: Settings, href: '/shop', image: '/assets/Parts and components.png' },
-  { label: 'Tyres & Wheels', icon: Disc3, href: '/shop', image: '/assets/tyres_and_wheels.png' },
-  { label: 'Car Care & Detailing', icon: Sparkles, href: '/shop', image: '/assets/car-care.svg' },
-  { label: 'Insurance', icon: ShieldCheck, href: '/shop', image: '/assets/isurance.svg' },
+  { label: 'Tyres & Wheels', icon: Disc3, href: '/services', image: '/assets/tyres_and_wheels.png' },
+  { label: 'Car Care & Detailing', icon: Sparkles, href: '#', image: '/assets/car-care.svg', isComingSoon: true },
+  { label: 'Insurance', icon: ShieldCheck, href: '#', image: '/assets/isurance.svg', isComingSoon: true },
   { label: 'Accessories & Upgrades', icon: CarFront, href: '/shop', image: '/assets/Accessories.png' },
 ];
 
@@ -151,5 +151,6 @@ export type Garage = {
   distance?: string;
   price?: string;
   image?: string;
+  photos?: string[];
   href: string;
 };

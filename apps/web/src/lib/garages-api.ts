@@ -17,6 +17,7 @@ export interface Garage {
   artwork?: string;
   verified: boolean;
   image?: string;
+  photos?: string[];
 }
 
 export interface Promo {

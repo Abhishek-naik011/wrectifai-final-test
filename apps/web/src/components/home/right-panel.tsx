@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ChevronDown, CalendarDays, Package, FileText, Car } from 'lucide-react';
 import Image from 'next/image';
 import { Card } from '@/components/common/card';
@@ -18,9 +18,32 @@ function OverviewPanel() {
   const [vehicleDesc, setVehicleDesc] = useState<string>('No vehicles added');
   const [ordersCount, setOrdersCount] = useState<number>(0);
 
-  const loadStats = () => {
+  const [period, setPeriod] = useState<string>('this-month');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const periodOptions = [
+    { value: 'this-month', label: 'This Month' },
+    { value: 'last-month', label: 'Last Month' },
+    { value: 'last-3-months', label: 'Last 3 Months' },
+    { value: 'this-year', label: 'This Year' },
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
+
+  const loadStats = (currentPeriod: string) => {
     let active = true;
-    apiClient.get('/users/customer/stats')
+    apiClient.get(`/users/customer/stats?period=${currentPeriod}`)
       .then((data: any) => {
         if (!active || !data) return;
         setBookingsCount(data.bookingsCount || 0);
@@ -47,13 +70,14 @@ function OverviewPanel() {
   };
 
   useEffect(() => {
-    const cleanup = loadStats();
-    window.addEventListener('dashboard_refresh', loadStats);
+    const cleanup = loadStats(period);
+    const handler = () => loadStats(period);
+    window.addEventListener('dashboard_refresh', handler);
     return () => {
       cleanup();
-      window.removeEventListener('dashboard_refresh', loadStats);
+      window.removeEventListener('dashboard_refresh', handler);
     };
-  }, []);
+  }, [period]);
 
   const items = [
     {
@@ -100,9 +124,36 @@ function OverviewPanel() {
         <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           My Overview
         </h2>
-        <div className="flex h-9 items-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] px-3 text-[11.5px] font-semibold text-[#17307a] dark:text-white">
-          This Month
-          <ChevronDown className="h-4 w-4" />
+        <div className="relative" ref={dropdownRef}>
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex h-9 cursor-pointer select-none items-center gap-2 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[11.5px] font-semibold text-[#17307a] hover:border-[#bfd1ff] hover:bg-[#f8fbff] dark:text-white dark:hover:border-slate-600 dark:hover:bg-slate-800 transition-colors"
+          >
+            {periodOptions.find(opt => opt.value === period)?.label || 'This Month'}
+            <ChevronDown className={cn("h-4 w-4 transition-transform", isDropdownOpen && "rotate-180")} />
+          </div>
+          
+          {isDropdownOpen && (
+            <div className="absolute right-0 top-full mt-1.5 z-50 w-36 overflow-hidden rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] shadow-[0_16px_36px_rgba(30,58,138,0.11)]">
+              {periodOptions.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    setPeriod(opt.value);
+                    setIsDropdownOpen(false);
+                  }}
+                  className={cn(
+                    "cursor-pointer px-3 py-2.5 text-[11.5px] font-semibold transition-colors",
+                    period === opt.value 
+                      ? "bg-[#eef4ff] text-[#1a56db] dark:bg-blue-900/30 dark:text-blue-400" 
+                      : "text-[#17307a] hover:bg-[#f8fbff] dark:text-slate-200 dark:hover:bg-slate-800"
+                  )}
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

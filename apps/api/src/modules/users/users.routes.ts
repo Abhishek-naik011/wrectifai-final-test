@@ -14,7 +14,7 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
 
-    const { name, email, mobileNumber } = req.body;
+    const { name, email, mobileNumber, profileImage } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return error(res, 'Name is required', 'VALIDATION_ERROR', 400);
@@ -34,7 +34,25 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
       return error(res, 'User not found', 'NOT_FOUND', 404);
     }
 
-    return success(res, result.rows[0]);
+    if (profileImage !== undefined) {
+      if (profileImage === null || profileImage === '') {
+        await query(
+          `UPDATE profiles SET avatar_url = NULL WHERE user_id = $1`,
+          [userId]
+        );
+      } else if (typeof profileImage === 'string') {
+        await query(
+          `INSERT INTO profiles (id, user_id, avatar_url) 
+           VALUES (uuid_generate_v4(), $1, $2)
+           ON CONFLICT (user_id) DO UPDATE SET avatar_url = $2`,
+          [userId, profileImage]
+        );
+      }
+    }
+
+    const finalResult = { ...result.rows[0], profileImage };
+
+    return success(res, finalResult);
   } catch (err: any) {
     console.error('Failed to update profile', err);
     if (err.code === '23505') {
@@ -55,22 +73,53 @@ usersRouter.get('/customer/stats', authenticate, async (req, res) => {
     const customerId = req.user?.userId;
     if (!customerId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
 
-    // Active Bookings Count
-    const bookingsRes = await query(`
+    const period = req.query.period as string || 'this-month';
+    const now = new Date();
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (period === 'this-month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (period === 'last-month') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    } else if (period === 'last-3-months') {
+      startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    } else if (period === 'this-year') {
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    }
+
+    let bookingsQuery = `
       SELECT COUNT(*) as count, MIN(scheduled_at) as next_booking
       FROM bookings 
       WHERE customer_id = $1 AND status IN ('pendingPayment', 'confirmed', 'in_progress', 'pending', 'accepted')
-    `, [customerId]);
+    `;
+    const bookingsParams: any[] = [customerId];
+    if (startDate && endDate) {
+      bookingsParams.push(startDate.toISOString(), endDate.toISOString());
+      bookingsQuery += ` AND scheduled_at >= $2 AND scheduled_at <= $3`;
+    }
+
+    const bookingsRes = await query(bookingsQuery, bookingsParams);
 
     // Pending Quotes Count (Quote requests with actual quotes that are not booked)
-    const quotesRes = await query(`
+    let quotesQuery = `
       SELECT COUNT(DISTINCT q.id) as count
       FROM quotes q
       JOIN quote_requests qr ON q.quote_request_id = qr.id
       WHERE qr.customer_id = $1 AND NOT EXISTS (
         SELECT 1 FROM bookings b WHERE b.quote_id = q.id
       ) AND q.status NOT IN ('rejected', 'cancelled', 'expired')
-    `, [customerId]);
+    `;
+    const quotesParams: any[] = [customerId];
+    if (startDate && endDate) {
+      quotesParams.push(startDate.toISOString(), endDate.toISOString());
+      quotesQuery += ` AND q.created_at >= $2 AND q.created_at <= $3`;
+    }
+    const quotesRes = await query(quotesQuery, quotesParams);
 
 
     // Vehicles Count

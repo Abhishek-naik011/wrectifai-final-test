@@ -61,6 +61,7 @@ export type Garage = {
   tone: string;
   verified: boolean;
   image?: string;
+  photos?: string[];
   services?: Array<{
     id: string;
     name: string;
@@ -232,7 +233,7 @@ function GarageCard({
 }: Garage & { compact?: boolean; isWishlisted?: boolean; onClick?: (e: React.MouseEvent) => void }) {
   return (
     <Card
-      className="overflow-hidden rounded-[18px] border-[#e7eefc] shadow-[0_14px_34px_rgba(21,48,122,0.08)] cursor-pointer hover:border-[#1a56db]/20 transition-all duration-300 hover:scale-[1.01]"
+      className="overflow-hidden rounded-[18px] border-[#e7eefc] shadow-[0_14px_34px_rgba(21,48,122,0.08)] cursor-pointer hover:border-[#1a56db]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(21,48,122,0.12)]"
     >
       <div
         className={cn(
@@ -403,6 +404,7 @@ function mapBackendGarageToFrontend(g: any): Garage {
     tone: getGarageTone(name),
     verified: g.verified !== undefined ? g.verified : false,
     image,
+    photos: g.photos,
   };
 }
 

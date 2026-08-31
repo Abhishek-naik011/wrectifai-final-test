@@ -162,6 +162,7 @@ function mapBackendGarageToFrontend(g: any): Garage {
     tone: getGarageTone(name),
     verified: g.verified !== undefined ? g.verified : false,
     image,
+    photos: g.photos,
   };
 }
 

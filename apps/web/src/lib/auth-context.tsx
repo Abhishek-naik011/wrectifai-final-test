@@ -10,6 +10,7 @@ export interface User {
   roles: string[];
   mobileNumber?: string;
   status?: string;
+  profileImage?: string;
 }
 
 export interface AuthContextType {
