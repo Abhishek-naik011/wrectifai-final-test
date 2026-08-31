@@ -92,7 +92,7 @@ export function DashboardShell({
               onToggle={handleToggle}
               onMobileClose={() => setMobileOpen(false)}
               customNavItems={customNavItems}
-              hideBottomWidget={hideBottomWidget}
+              hideBottomWidget={hideBottomWidget ?? roleKey !== 'customer'}
             />
           </div>
 

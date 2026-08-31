@@ -2701,6 +2701,7 @@ export function AIDiagnosePage() {
   const [attachedMedia, setAttachedMedia] = useState<Array<{ mediaType: 'image' | 'video' | 'audio'; base64: string; name: string }>>([]);
   const [isRecording, setIsRecording] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -3114,6 +3115,12 @@ export function AIDiagnosePage() {
       mediaRecorderRef.current?.stop();
       return;
     }
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Your browser does not support audio recording.');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -3137,7 +3144,7 @@ export function AIDiagnosePage() {
       recorder.start();
       setIsRecording(true);
     } catch {
-      console.error('Microphone access denied');
+      alert('Microphone permission is required to record audio.');
     }
   }, [isRecording]);
 
@@ -3674,9 +3681,18 @@ export function AIDiagnosePage() {
                     <ImageIcon className="h-3.5 w-3.5 text-[#6a8cff]" />
                     <span>Upload Photo</span>
                   </button>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e, 'video')}
+                  />
+
                   <button
                     type="button"
-                    disabled={!selectedVehicleId}
+                    disabled={!selectedVehicleId || isAnalyzingResults}
+                    onClick={() => videoInputRef.current?.click()}
                     className="flex items-center gap-1.5 hover:text-[#1a56db] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Video className="h-3.5 w-3.5 text-[#6a8cff]" />

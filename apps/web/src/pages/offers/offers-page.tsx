@@ -97,7 +97,7 @@ export function OffersPage() {
         )}
 
         {/* Hero Banner Placeholder */}
-        {!searchQuery && selectedCategory === 'All' && (
+        {!searchQuery && (
           <Card className="h-48 rounded-[24px] bg-gradient-to-r from-blue-50 to-blue-100 flex items-center p-8 relative overflow-hidden border-blue-200 shadow-sm">
             <div className="relative z-10 w-2/3">
               <h2 className="text-2xl font-bold text-blue-900 mb-2">Save More. Drive Better.</h2>

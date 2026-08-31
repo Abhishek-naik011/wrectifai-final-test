@@ -220,7 +220,11 @@ export function CarTipsPage() {
             
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex gap-3">
               <Button className="flex-1 bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => setSelectedArticle(null)}>Close Article</Button>
-              <Button className="flex-1 bg-blue-600 text-white" onClick={() => { setSelectedArticle(null); router.push('/ai-diagnose'); }}>Diagnose an Issue</Button>
+              <Button className="flex-1 bg-blue-600 text-white" onClick={() => { 
+                const context = `I’m concerned about ${selectedArticle.category ? selectedArticle.category.toLowerCase() : 'car'} issues after reading the article '${selectedArticle.title}'. Please help me check whether my vehicle may have these symptoms.`;
+                setSelectedArticle(null); 
+                router.push(`/ai-diagnose?issue=${encodeURIComponent(context)}`); 
+              }}>Diagnose an Issue</Button>
             </div>
           </div>
         )}

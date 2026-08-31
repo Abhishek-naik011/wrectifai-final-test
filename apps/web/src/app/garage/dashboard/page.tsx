@@ -35,7 +35,7 @@ export default function GarageDashboard() {
         });
         setActiveJobs(jobsData.slice(0, 4)); // Get up to 4 for the floor
         setRecentRequests(requestsData.slice(0, 3));
-        setRecentQuotes(quotesData.slice(0, 5));
+        setRecentQuotes(requestsData.slice(0, 5));
       } catch (err) {
         console.error('Failed to load dashboard data', err);
       }
@@ -137,10 +137,10 @@ export default function GarageDashboard() {
                             <div className="flex-1 overflow-hidden">
                               <p className="text-sm font-semibold truncate">{quote.customerName || 'Customer'}</p>
                               <p className="text-xs text-slate-500 truncate">{quote.vehicleMake} {quote.vehicleModel}</p>
-                              <p className="text-xs text-slate-400 truncate">ETA: {quote.etaNote || (quote.etaDays ? `${quote.etaDays} Days` : 'N/A')}</p>
+                              <p className="text-xs text-slate-400 truncate">Status: {quote.status || 'Pending'}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold">USD {quote.totalCost?.toLocaleString()}</p>
+                              <p className="text-sm font-bold">{quote.id.substring(0, 8).toUpperCase()}</p>
                               <p className="text-[10px] text-blue-600 font-medium">{formatTime(quote.createdAt)}</p>
                             </div>
                           </div>
