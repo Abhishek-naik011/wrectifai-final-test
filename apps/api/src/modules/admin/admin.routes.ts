@@ -88,7 +88,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
                  ORDER BY gd.created_at DESC LIMIT 1),
                 'unverified'
               ) as "verificationStatus",
-              g.created_at as "createdAt", g.updated_at as "updatedAt", g.city, g.state, g.postal_code as pincode, g.specializations,
+              g.created_at as "createdAt", g.updated_at as "updatedAt", g.city, g.state, g.postal_code as pincode, g.specializations as services, g.description,
               u.name as "ownerName", u.mobile_number as phone, u.email as "ownerEmail",
               u.status as "userStatus"
        FROM garages g
@@ -104,7 +104,7 @@ adminRouter.get('/onboarding/garages', async (req, res) => {
 
 adminRouter.post('/onboarding/garages', async (req, res) => {
   try {
-    const { name, email, registrationNumber, address, city, state, pincode, ownerName } = req.body;
+    const { name, email, registrationNumber, address, city, state, pincode, ownerName, description, services } = req.body;
     const phone = req.body.phone?.replace(/\s+/g, '');
     
     // Enforce ONE PHONE = ONE ACCOUNT
@@ -130,9 +130,9 @@ adminRouter.post('/onboarding/garages', async (req, res) => {
 
     // New garage starts as pending approval
     const newGarage = await query(
-      `INSERT INTO garages (name, address, city, state, postal_code, owner_user_id, approval_status, is_approved)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending', false) RETURNING id`,
-      [name, address, city, state, pincode, resolvedUserId]
+      `INSERT INTO garages (name, address, city, state, postal_code, owner_user_id, approval_status, is_approved, description, specializations)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending', false, $7, $8) RETURNING id`,
+      [name, address, city, state, pincode, resolvedUserId, description || null, Array.isArray(services) ? services : null]
     );
 
     return success(res, { id: newGarage.rows[0].id }, 201);

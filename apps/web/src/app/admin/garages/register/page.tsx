@@ -1,19 +1,121 @@
 'use client';
 import { Card } from '@/components/common/card';
-import { Check, ShieldCheck, HeadphonesIcon, UploadCloud, FileText, X, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ShieldCheck, HeadphonesIcon, UploadCloud, FileText, X, CheckCircle, Search, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { CITIES } from '@/components/home/top-navbar';
 import { initialMockServices } from '@/pages/services/services-page';
 import { apiClient } from '@/lib/api-client';
+
+function CityCombobox({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [dynamicCities, setDynamicCities] = useState<string[]>(CITIES);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Fetch unique cities dynamically from existing garages
+    apiClient.get<any[]>('/admin/onboarding/garages')
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          const uniqueCities = new Set<string>(CITIES);
+          data.forEach(g => {
+            if (g.city || g.location) {
+              const c = (g.city || g.location).trim();
+              if (c) {
+                uniqueCities.add(c.charAt(0).toUpperCase() + c.slice(1).toLowerCase());
+              }
+            }
+          });
+          setDynamicCities(Array.from(uniqueCities).sort());
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCities = dynamicCities.filter(c => c.toLowerCase().includes(search.toLowerCase()));
+  const exactMatch = dynamicCities.some(c => c.toLowerCase() === search.toLowerCase().trim());
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <div 
+        className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white outline-none cursor-pointer flex justify-between items-center ${value ? 'text-slate-700' : 'text-slate-400'} focus-within:border-blue-500`}
+        onClick={() => { setIsOpen(!isOpen); setSearch(''); }}
+      >
+        <span>{value || 'Select city'}</span>
+        <span className="text-slate-400 text-[10px]">▼</span>
+      </div>
+      
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <div className="sticky top-0 bg-white p-2 border-b">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                className="w-full pl-9 pr-3 py-2 text-sm border rounded-md outline-none focus:border-blue-500"
+                placeholder="Search or add city..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            </div>
+          </div>
+          
+          <div className="p-1">
+            {filteredCities.map(city => (
+              <div 
+                key={city}
+                className={`px-3 py-2 text-sm rounded-md cursor-pointer hover:bg-slate-100 ${value === city ? 'bg-blue-50 text-blue-600 font-medium' : 'text-slate-700'}`}
+                onClick={() => { onChange(city); setIsOpen(false); }}
+              >
+                {city}
+              </div>
+            ))}
+            
+            {search.trim() !== '' && !exactMatch && (
+              <div 
+                className="px-3 py-2 text-sm rounded-md cursor-pointer text-blue-600 hover:bg-blue-50 font-medium flex items-center gap-2"
+                onClick={() => { 
+                  const newCity = search.trim().charAt(0).toUpperCase() + search.trim().slice(1).toLowerCase();
+                  onChange(newCity); 
+                  setIsOpen(false); 
+                }}
+              >
+                <Plus className="h-4 w-4" /> Add "{search.trim()}"
+              </div>
+            )}
+            
+            {filteredCities.length === 0 && search.trim() === '' && (
+              <div className="px-3 py-4 text-sm text-center text-slate-500">No cities found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RegisterGaragePage() {
   const [formData, setFormData] = useState<any>({
     name: '',
     garageType: '',
+    registrationNumber: '',
     establishedYear: '',
     city: '',
     phone: '',
     address: '',
+    description: '',
     area: '',
     ownerName: '',
     ownerEmail: '',
@@ -43,12 +145,14 @@ export default function RegisterGaragePage() {
         name: formData.name || formData.garageType || 'New Garage',
         phone: formData.phone || formData.ownerPhone || '0000000000',
         email: formData.ownerEmail || 'new@garage.com',
-        registrationNumber: '',
+        registrationNumber: formData.registrationNumber || '',
         address: formData.address || 'Some Address',
         city: formData.city || 'Bangalore',
         state: 'Karnataka',
         pincode: '560000',
-        ownerName: formData.ownerName || 'Garage Owner'
+        ownerName: formData.ownerName || 'Garage Owner',
+        description: formData.description || '',
+        services: formData.services || []
       });
       
       const garageId = (response as any).data?.id || (response as any).id;
@@ -97,6 +201,7 @@ export default function RegisterGaragePage() {
   const handleStep1Next = () => {
     const newErrors: {[key:string]: string} = {};
     if (!formData.name?.trim()) newErrors.name = 'Garage name is required.';
+    if (!formData.registrationNumber?.trim()) newErrors.registrationNumber = 'Registration number is required.';
     if (!formData.phone?.trim()) {
       newErrors.phone = 'Phone number is required.';
     } else if (!/^\d{10}$/.test(formData.phone.trim())) {
@@ -201,8 +306,9 @@ export default function RegisterGaragePage() {
                  </select>
                </div>
                <div>
-                 <label className="block text-xs font-bold text-slate-700 mb-2">Registration Number <span className="text-slate-400 font-normal">(Optional)</span></label>
-                 <input type="text" placeholder="Enter registration number" className="w-full border rounded-lg px-4 py-2.5 text-sm bg-white outline-none focus:border-blue-500" />
+                 <label className="block text-xs font-bold text-slate-700 mb-2">Registration Number <span className="text-red-500">*</span></label>
+                 <input type="text" value={formData.registrationNumber || ''} onChange={e => setFormData({...formData, registrationNumber: e.target.value})} placeholder="Enter registration number" className="w-full border rounded-lg px-4 py-2.5 text-sm bg-white outline-none focus:border-blue-500" />
+                 {errors.registrationNumber && <p className="text-red-500 text-xs mt-1">{errors.registrationNumber}</p>}
                </div>
                <div>
                  <label className="block text-xs font-bold text-slate-700 mb-2">Established Year</label>
@@ -235,16 +341,7 @@ export default function RegisterGaragePage() {
                </div>
                <div>
                  <label className="block text-xs font-bold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
-                 <select 
-                   value={formData.city}
-                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                   className={`w-full border rounded-lg px-4 py-2.5 text-sm bg-white outline-none focus:border-blue-500 ${formData.city ? 'text-slate-700' : 'text-slate-400'}`}
-                 >
-                   <option value="" disabled className="text-slate-400">Select city</option>
-                   {CITIES.map(city => (
-                     <option key={city} value={city} className="text-slate-700">{city}</option>
-                   ))}
-                 </select>
+                 <CityCombobox value={formData.city} onChange={(val) => setFormData({ ...formData, city: val })} />
                </div>
                <div>
                  <label className="block text-xs font-bold text-slate-700 mb-2">Area / Locality <span className="text-red-500">*</span></label>
@@ -255,15 +352,15 @@ export default function RegisterGaragePage() {
             
             <div className="mb-6">
                <label className="block text-xs font-bold text-slate-700 mb-2">Complete Address <span className="text-red-500">*</span></label>
-               <textarea value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Enter complete address" className="w-full border rounded-lg px-4 py-3 text-sm bg-white outline-none h-24 focus:border-blue-500"></textarea>
+               <textarea value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} maxLength={200} placeholder="Enter complete address" className="w-full border rounded-lg px-4 py-3 text-sm bg-white outline-none h-24 focus:border-blue-500"></textarea>
                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-               <div className="text-right text-[10px] text-slate-400 mt-1">0/200</div>
+               <div className="text-right text-[10px] text-slate-400 mt-1">{(formData.address || '').length}/200</div>
             </div>
             
             <div className="mb-8">
                <label className="block text-xs font-bold text-slate-700 mb-2">Garage Description <span className="text-slate-400 font-normal">(Optional)</span></label>
-               <textarea placeholder="Briefly describe your garage, experience, and services..." className="w-full border rounded-lg px-4 py-3 text-sm bg-white outline-none h-24 focus:border-blue-500"></textarea>
-               <div className="text-right text-[10px] text-slate-400 mt-1">0/300</div>
+               <textarea value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} maxLength={300} placeholder="Briefly describe your garage, experience, and services..." className="w-full border rounded-lg px-4 py-3 text-sm bg-white outline-none h-24 focus:border-blue-500"></textarea>
+               <div className="text-right text-[10px] text-slate-400 mt-1">{(formData.description || '').length}/300</div>
             </div>
 
             <div className="mb-8">
