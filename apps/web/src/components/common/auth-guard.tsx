@@ -17,7 +17,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = pathname === '/login' || pathname === '/signup';
+  const isPublicPath = pathname === '/login' || pathname?.startsWith('/signup');
 
   useEffect(() => {
     if (isLoading) return;
@@ -47,7 +47,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       const onCustomerPath = !onAdminPath && !onGaragePath && !isRoot && !isPublicPath;
 
       // 0. Public Path Redirects (Authenticated user lands on login/signup)
-      if (isPublicPath) {
+      if (pathname === '/login' || pathname?.startsWith('/signup')) {
         if (primaryRole === 'admin') {
           router.replace('/admin/dashboard');
           return;
