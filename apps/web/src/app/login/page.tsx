@@ -27,10 +27,10 @@ function PublicNavbar() {
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/#how-it-works" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">How It Works</Link>
-            <Link href="/#ai-diagnose" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">AI Diagnose</Link>
-            <Link href="/#quotes" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">Quotes</Link>
-            <Link href="/#for-garages" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">For Garages</Link>
+            <a href="/#how-it-works" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">How It Works</a>
+            <a href="/#ai-diagnose" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">AI Diagnose</a>
+            <a href="/#quotes" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">Quotes</a>
+            <a href="/#for-garages" className="text-sm font-medium text-slate-600 hover:text-[#1a56db] transition-colors">For Garages</a>
           </div>
 
           <div className="flex items-center space-x-4">
