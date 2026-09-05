@@ -107,6 +107,18 @@ adminRouter.post('/onboarding/garages', async (req, res) => {
     const { name, email, registrationNumber, address, city, state, pincode, ownerName, description, services } = req.body;
     const phone = req.body.phone?.replace(/\s+/g, '');
     
+    const regNum = registrationNumber?.trim() || '';
+    if (!regNum) {
+      return error(res, 'Registration number is required', 'VALIDATION_ERROR', 400);
+    }
+    const hasLetterOrNumber = /[a-zA-Z0-9]/.test(regNum);
+    const hasInvalidChars = /[^a-zA-Z0-9\-\/\s]/.test(regNum);
+    const isGibberish = /([a-zA-Z0-9]{2,})\1{2,}/.test(regNum) || /([a-zA-Z1-9])\1{4,}/.test(regNum);
+    
+    if (regNum.length < 5 || regNum.length > 30 || !hasLetterOrNumber || hasInvalidChars || isGibberish) {
+      return error(res, 'Enter a valid garage registration number (5–30 characters; letters, numbers, / and - allowed).', 'VALIDATION_ERROR', 400);
+    }
+    
     // Enforce ONE PHONE = ONE ACCOUNT
     const userCheck = await query(
       `SELECT id FROM users WHERE (mobile_number = $1 AND $1 IS NOT NULL AND $1 != '') OR (email = $2 AND $2 IS NOT NULL AND $2 != '') LIMIT 1`,
@@ -379,11 +391,23 @@ adminRouter.get('/users', async (req, res) => {
   try {
     const result = await query(
       `SELECT u.id, u.name, u.email, u.mobile_number as phone, u.created_at as "joined", u.status,
+       p.address_line as address, p.city, p.state, p.postal_code as pincode,
        (SELECT COUNT(*) FROM bookings b WHERE b.customer_id = u.id) as bookings,
-       (SELECT COUNT(*) FROM vehicles v WHERE v.customer_id = u.id) as vehicles
+       (
+         SELECT json_agg(json_build_object(
+           'vehicleNumber', v.plate_number,
+           'vehicleBrand', v.make,
+           'vehicleModel', v.model,
+           'vehicleType', v.trim,
+           'fuelType', v.fuel_type,
+           'year', v.year
+         ))
+         FROM vehicles v WHERE v.customer_id = u.id
+       ) as vehicles_list
        FROM users u
        JOIN user_roles ur ON u.id = ur.user_id
        JOIN roles r ON ur.role_id = r.id
+       LEFT JOIN profiles p ON u.id = p.user_id
        WHERE r.code = 'user'
        ORDER BY u.created_at DESC`
     );
@@ -399,7 +423,23 @@ adminRouter.post('/users', async (req, res) => {
   try {
     const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, status } = req.body;
     const phone = req.body.phone?.replace(/\s+/g, '');
-    if (!name || !email) return error(res, 'Name and email are required', 'BAD_REQUEST', 400);
+    
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return error(res, 'Name is required', 'VALIDATION_ERROR', 400);
+    }
+    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return error(res, 'A valid email is required', 'VALIDATION_ERROR', 400);
+    }
+    if (!phone || typeof phone !== 'string' || phone.trim() === '') return error(res, 'Phone is required', 'VALIDATION_ERROR', 400);
+    if (!status || typeof status !== 'string' || status.trim() === '') return error(res, 'Status is required', 'VALIDATION_ERROR', 400);
+    if (!address || typeof address !== 'string' || address.trim() === '') return error(res, 'Address is required', 'VALIDATION_ERROR', 400);
+    if (!city || typeof city !== 'string' || city.trim() === '') return error(res, 'City is required', 'VALIDATION_ERROR', 400);
+    if (!state || typeof state !== 'string' || state.trim() === '') return error(res, 'State is required', 'VALIDATION_ERROR', 400);
+    if (!pincode || typeof pincode !== 'string' || pincode.trim() === '') return error(res, 'Pincode is required', 'VALIDATION_ERROR', 400);
+    if (!vehicleNumber || typeof vehicleNumber !== 'string' || vehicleNumber.trim() === '') return error(res, 'Vehicle Number is required', 'VALIDATION_ERROR', 400);
+    if (!vehicleBrand || typeof vehicleBrand !== 'string' || vehicleBrand.trim() === '') return error(res, 'Vehicle Brand is required', 'VALIDATION_ERROR', 400);
+    if (!vehicleModel || typeof vehicleModel !== 'string' || vehicleModel.trim() === '') return error(res, 'Vehicle Model is required', 'VALIDATION_ERROR', 400);
+    if (!vehicleType || typeof vehicleType !== 'string' || vehicleType.trim() === '') return error(res, 'Vehicle Type is required', 'VALIDATION_ERROR', 400);
     
     // Check if user already exists
     const existing = await query('SELECT id FROM users WHERE email = $1 OR (mobile_number = $2 AND mobile_number IS NOT NULL)', [email, phone || null]);

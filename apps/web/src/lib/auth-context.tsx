@@ -11,6 +11,11 @@ export interface User {
   mobileNumber?: string;
   status?: string;
   profileImage?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  createdAt?: string;
 }
 
 export interface AuthContextType {
@@ -164,9 +169,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setIsAuthenticated(false);
     
-    // Redirect to login page to prevent back navigation
+    // Redirect to public homepage on logout
     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   }, []);
 

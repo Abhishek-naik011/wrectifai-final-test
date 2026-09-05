@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { fetchGarageStats, fetchGarageActiveJobs, fetchGarageQuotes, getGarageIncomingRequests } from '@/lib/quotes-api';
 import { useRouter } from 'next/navigation';
+import { SupportBot } from '@/components/garages/support-bot';
 
 export default function GarageDashboard() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function GarageDashboard() {
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
   const [recentQuotes, setRecentQuotes] = useState<any[]>([]);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -230,13 +232,14 @@ export default function GarageDashboard() {
               <div className="bg-[#17307a] rounded-xl p-5 text-white">
                 <h3 className="font-bold mb-2 text-sm flex items-center gap-2">Need Help?</h3>
                 <p className="text-xs text-blue-200 mb-4">Connect with your WrectifAI Manager for priority support.</p>
-                <button className="w-full bg-white text-[#17307a] py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">Chat Now</button>
+                <button onClick={() => setIsSupportOpen(true)} className="w-full bg-white text-[#17307a] py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">Chat Now</button>
               </div>
 
             </div>
           </div>
         </div>
       </DashboardShell>
+      <SupportBot isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
     </RoleGuard>
   );
 }

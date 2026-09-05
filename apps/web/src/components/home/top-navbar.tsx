@@ -118,7 +118,7 @@ export function TopNavbar() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const path = window.location.pathname;
-    const isLocalSearch = ['/services', '/shop', '/shop-all', '/wallet-payments', '/offers', '/car-tips'].includes(path);
+    const isLocalSearch = ['/quotes', '/services', '/shop', '/shop-all', '/wallet-payments', '/offers', '/car-tips'].includes(path);
     
     if (isLocalSearch) {
       return; // Handled by local pages

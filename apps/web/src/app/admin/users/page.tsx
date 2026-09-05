@@ -84,6 +84,7 @@ export default function CustomersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewCustomer, setViewCustomer] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
     vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
@@ -105,8 +106,32 @@ export default function CustomersPage() {
     loadData();
   }, []);
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.name?.trim()) errors.name = 'Name is required.';
+    if (!formData.email?.trim()) {
+      errors.email = 'Email is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'A valid email is required.';
+    }
+    if (!formData.phone?.trim()) errors.phone = 'Phone is required.';
+    if (!formData.status?.trim()) errors.status = 'Status is required.';
+    if (!formData.address?.trim()) errors.address = 'Address is required.';
+    if (!formData.city?.trim()) errors.city = 'City is required.';
+    if (!formData.state?.trim()) errors.state = 'State is required.';
+    if (!formData.pincode?.trim()) errors.pincode = 'Pincode is required.';
+    if (!formData.vehicleNumber?.trim()) errors.vehicleNumber = 'Vehicle Number is required.';
+    if (!formData.vehicleBrand?.trim()) errors.vehicleBrand = 'Vehicle Brand is required.';
+    if (!formData.vehicleModel?.trim()) errors.vehicleModel = 'Vehicle Model is required.';
+    if (!formData.vehicleType?.trim()) errors.vehicleType = 'Vehicle Type is required.';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSubmitting(true);
     try {
       await apiClient.post('/admin/users', formData);
@@ -116,6 +141,7 @@ export default function CustomersPage() {
         name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
         vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
       });
+      setFormErrors({});
       setToastMessage({ type: 'success', text: 'Customer created successfully.' });
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err: any) {
@@ -311,13 +337,26 @@ export default function CustomersPage() {
         </div>
       </Card>
 
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Customer">
+      <Modal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); setFormErrors({}); }} title="Add New Customer">
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-2">
            <div className="grid grid-cols-2 gap-4">
-             <div><label className="block text-xs font-semibold mb-1">Name</label><input required className="w-full border rounded p-2 text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Email</label><input required type="email" className="w-full border rounded p-2 text-sm" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Phone</label><input className="w-full border rounded p-2 text-sm" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Status</label>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Name <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.name ? 'border-red-500 bg-red-50' : ''}`} value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); if (formErrors.name) setFormErrors({...formErrors, name: ''}); }} />
+               {formErrors.name && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.name}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Email <span className="text-red-500">*</span></label>
+               <input type="email" className={`w-full border rounded p-2 text-sm ${formErrors.email ? 'border-red-500 bg-red-50' : ''}`} value={formData.email} onChange={e => { setFormData({...formData, email: e.target.value}); if (formErrors.email) setFormErrors({...formErrors, email: ''}); }} />
+               {formErrors.email && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.email}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Phone <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.phone ? 'border-red-500 bg-red-50' : ''}`} value={formData.phone} onChange={e => { setFormData({...formData, phone: e.target.value}); if (formErrors.phone) setFormErrors({...formErrors, phone: ''}); }} />
+               {formErrors.phone && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.phone}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Status <span className="text-red-500">*</span></label>
                <select className="w-full border rounded p-2 text-sm" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
                  <option value="active">Active</option>
                  <option value="suspended">Suspended</option>
@@ -327,18 +366,54 @@ export default function CustomersPage() {
            
            <h3 className="text-sm font-bold border-b pb-1 mt-4">Address Details</h3>
            <div className="grid grid-cols-2 gap-4">
-             <div className="col-span-2"><label className="block text-xs font-semibold mb-1">Address</label><input className="w-full border rounded p-2 text-sm" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">City</label><SearchableSelect value={formData.city} onChange={v => setFormData({...formData, city: v})} options={CITIES} placeholder="Select City" /></div>
-             <div><label className="block text-xs font-semibold mb-1">State</label><SearchableSelect value={formData.state} onChange={v => setFormData({...formData, state: v})} options={STATES} placeholder="Select State" /></div>
-             <div><label className="block text-xs font-semibold mb-1">Pincode</label><input className="w-full border rounded p-2 text-sm" value={formData.pincode} onChange={e => setFormData({...formData, pincode: e.target.value})} /></div>
+             <div className="col-span-2">
+               <label className="block text-xs font-semibold mb-1">Address <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.address ? 'border-red-500 bg-red-50' : ''}`} value={formData.address} onChange={e => { setFormData({...formData, address: e.target.value}); if (formErrors.address) setFormErrors({...formErrors, address: ''}); }} />
+               {formErrors.address && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.address}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">City <span className="text-red-500">*</span></label>
+               <div className={formErrors.city ? 'border border-red-500 rounded bg-red-50' : ''}>
+                 <SearchableSelect value={formData.city} onChange={v => { setFormData({...formData, city: v}); if (formErrors.city) setFormErrors({...formErrors, city: ''}); }} options={CITIES} placeholder="Select City" />
+               </div>
+               {formErrors.city && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.city}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">State <span className="text-red-500">*</span></label>
+               <div className={formErrors.state ? 'border border-red-500 rounded bg-red-50' : ''}>
+                 <SearchableSelect value={formData.state} onChange={v => { setFormData({...formData, state: v}); if (formErrors.state) setFormErrors({...formErrors, state: ''}); }} options={STATES} placeholder="Select State" />
+               </div>
+               {formErrors.state && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.state}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Pincode <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.pincode ? 'border-red-500 bg-red-50' : ''}`} value={formData.pincode} onChange={e => { setFormData({...formData, pincode: e.target.value}); if (formErrors.pincode) setFormErrors({...formErrors, pincode: ''}); }} />
+               {formErrors.pincode && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.pincode}</p>}
+             </div>
            </div>
 
            <h3 className="text-sm font-bold border-b pb-1 mt-4">Vehicle Details</h3>
            <div className="grid grid-cols-2 gap-4">
-             <div><label className="block text-xs font-semibold mb-1">Vehicle Number</label><input className="w-full border rounded p-2 text-sm" value={formData.vehicleNumber} onChange={e => setFormData({...formData, vehicleNumber: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Vehicle Brand</label><input className="w-full border rounded p-2 text-sm" value={formData.vehicleBrand} onChange={e => setFormData({...formData, vehicleBrand: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Vehicle Model</label><input className="w-full border rounded p-2 text-sm" value={formData.vehicleModel} onChange={e => setFormData({...formData, vehicleModel: e.target.value})} /></div>
-             <div><label className="block text-xs font-semibold mb-1">Vehicle Type</label><input className="w-full border rounded p-2 text-sm" value={formData.vehicleType} onChange={e => setFormData({...formData, vehicleType: e.target.value})} /></div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Vehicle Number <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleNumber ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleNumber} onChange={e => { setFormData({...formData, vehicleNumber: e.target.value}); if (formErrors.vehicleNumber) setFormErrors({...formErrors, vehicleNumber: ''}); }} />
+               {formErrors.vehicleNumber && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleNumber}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Vehicle Brand <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleBrand ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleBrand} onChange={e => { setFormData({...formData, vehicleBrand: e.target.value}); if (formErrors.vehicleBrand) setFormErrors({...formErrors, vehicleBrand: ''}); }} />
+               {formErrors.vehicleBrand && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleBrand}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Vehicle Model <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleModel ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleModel} onChange={e => { setFormData({...formData, vehicleModel: e.target.value}); if (formErrors.vehicleModel) setFormErrors({...formErrors, vehicleModel: ''}); }} />
+               {formErrors.vehicleModel && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleModel}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Vehicle Type <span className="text-red-500">*</span></label>
+               <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleType ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleType} onChange={e => { setFormData({...formData, vehicleType: e.target.value}); if (formErrors.vehicleType) setFormErrors({...formErrors, vehicleType: ''}); }} />
+               {formErrors.vehicleType && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleType}</p>}
+             </div>
            </div>
 
            <h3 className="text-sm font-bold border-b pb-1 mt-4">Documents</h3>
@@ -385,24 +460,30 @@ export default function CustomersPage() {
         </div>
       </Modal>
 
-      <Modal isOpen={!!viewCustomer} onClose={() => setViewCustomer(null)} title="Customer Details" className="max-w-2xl">
+      <Modal isOpen={!!viewCustomer} onClose={() => setViewCustomer(null)} title="Customer Details" className="max-w-lg">
         {viewCustomer && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Customer Name</p>
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Name</p>
                 <p className="text-sm font-semibold text-slate-900">{viewCustomer.name || 'N/A'}</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Email</p>
-                <p className="text-sm font-semibold text-slate-900">{viewCustomer.email || 'N/A'}</p>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Email</p>
+                <p className="text-sm font-semibold text-slate-900 truncate" title={viewCustomer.email}>{viewCustomer.email || 'N/A'}</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Phone</p>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Phone</p>
                 <p className="text-sm font-semibold text-slate-900">{viewCustomer.phone || 'N/A'}</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Status</p>
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Joined</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {viewCustomer.joined ? new Date(viewCustomer.joined).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-1">Status</p>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border inline-block ${
                   viewCustomer.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' : 
                   viewCustomer.status === 'suspended' ? 'bg-orange-50 text-orange-700 border-orange-100' :
@@ -411,55 +492,67 @@ export default function CustomersPage() {
                   {viewCustomer.status || 'Unknown'}
                 </span>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 font-bold mb-1">Created Date</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {viewCustomer.joined ? new Date(viewCustomer.joined).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
-                </p>
-              </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-4">
-              <p className="text-sm font-bold text-[#17307a] mb-3">Location Information</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-slate-500 font-bold mb-1">Address</p>
-                  <p className="text-sm font-semibold text-slate-900">{viewCustomer.address || 'N/A'}</p>
+            <div className="border-t border-slate-100 pt-3">
+              <p className="text-xs font-bold text-[#17307a] uppercase tracking-wider mb-2">Location & Activity</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Address</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate" title={viewCustomer.address || ''}>{viewCustomer.address || 'N/A'}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-500 font-bold mb-1">City / State</p>
-                  <p className="text-sm font-semibold text-slate-900">
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">City / State</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {[viewCustomer.city, viewCustomer.state].filter(Boolean).join(', ') || 'N/A'}
                     {viewCustomer.pincode ? ` - ${viewCustomer.pincode}` : ''}
                   </p>
                 </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-[11px] uppercase tracking-wider text-slate-500 font-bold mb-0.5">Total Bookings</p>
+                  <p className="text-sm font-semibold text-slate-900">{viewCustomer.bookings || 0}</p>
+                </div>
               </div>
             </div>
 
-            {(viewCustomer.vehicleNumber || viewCustomer.vehicleModel || viewCustomer.vehicleBrand) && (
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-sm font-bold text-[#17307a] mb-3">Vehicle Details</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {viewCustomer.vehicleNumber && (
-                    <div>
-                      <p className="text-xs text-slate-500 font-bold mb-1">Vehicle Number</p>
-                      <p className="text-sm font-semibold text-slate-900">{viewCustomer.vehicleNumber}</p>
+            {viewCustomer.vehicles_list && viewCustomer.vehicles_list.length > 0 && viewCustomer.vehicles_list[0] !== null && (
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-xs font-bold text-[#17307a] uppercase tracking-wider mb-2">Vehicles ({viewCustomer.vehicles_list.length})</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                  {viewCustomer.vehicles_list.map((v: any, idx: number) => (
+                    <div key={idx} className="bg-slate-50 p-2.5 rounded border border-slate-100">
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
+                        {v.vehicleNumber && (
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Number</p>
+                            <p className="text-xs font-bold text-slate-900">{v.vehicleNumber}</p>
+                          </div>
+                        )}
+                        {v.vehicleBrand && (
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Brand</p>
+                            <p className="text-xs font-semibold text-slate-900">{v.vehicleBrand}</p>
+                          </div>
+                        )}
+                        {v.vehicleModel && (
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Model / Type</p>
+                            <p className="text-xs font-semibold text-slate-900">
+                              {[v.vehicleModel, v.vehicleType].filter(Boolean).join(' - ')}
+                            </p>
+                          </div>
+                        )}
+                        {v.fuelType && (
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Fuel / Year</p>
+                            <p className="text-xs font-semibold text-slate-900">
+                              {[v.fuelType, v.year].filter(Boolean).join(' - ')}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {viewCustomer.vehicleBrand && (
-                    <div>
-                      <p className="text-xs text-slate-500 font-bold mb-1">Brand</p>
-                      <p className="text-sm font-semibold text-slate-900">{viewCustomer.vehicleBrand}</p>
-                    </div>
-                  )}
-                  {viewCustomer.vehicleModel && (
-                    <div>
-                      <p className="text-xs text-slate-500 font-bold mb-1">Model / Type</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {[viewCustomer.vehicleModel, viewCustomer.vehicleType].filter(Boolean).join(' - ')}
-                      </p>
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             )}

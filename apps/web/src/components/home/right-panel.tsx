@@ -119,7 +119,7 @@ function OverviewPanel() {
   ];
 
   return (
-    <Card id="overview" className="p-4">
+    <Card id="overview" className="p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           My Overview
@@ -185,7 +185,7 @@ function OverviewPanel() {
 
 function EmergencyHelp() {
   return (
-    <Card id="emergency" className="p-4 border-[#fff0f0] dark:border-[#2A3446] bg-[#fffbfa] dark:bg-[#1A2233]">
+    <Card id="emergency" className="p-4 border-[#fff0f0] dark:border-[#2A3446] bg-[#fffbfa] dark:bg-[#1A2233] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#ff3b30]">
@@ -205,7 +205,7 @@ function EmergencyHelp() {
           return (
             <div
               key={title}
-              className="flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[14px] border border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-1 py-1 text-center shadow-[0_4px_12px_rgba(20,44,112,0.03)] cursor-pointer hover:border-[#ffcccc] dark:hover:border-slate-700 transition-all hover:bg-[#fffdfd] dark:hover:bg-slate-800"
+              className="flex min-h-[68px] flex-col items-center justify-center gap-1 rounded-[14px] border border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-1 py-1 text-center shadow-[0_4px_12px_rgba(20,44,112,0.03)] cursor-pointer hover:border-[#ffcccc] dark:hover:border-slate-700 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(26,86,219,0.1)] hover:bg-[#fffdfd] dark:hover:bg-slate-800"
             >
               <div
                 className={cn(
@@ -260,7 +260,7 @@ function OfferCard({
 
   return (
     <Card
-      className="overflow-hidden border-0 p-0 shadow-none"
+      className="overflow-hidden border-0 p-0 shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]"
       style={{ backgroundColor: cardColor }}
     >
       <div className="grid min-h-[138px] grid-cols-[1.18fr_0.82fr] items-center">
@@ -349,7 +349,7 @@ function OffersPanel() {
   }, []);
 
   return (
-    <Card id="offers" className="p-4 border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233]">
+    <Card id="offers" className="p-4 border-[#f0f4ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-[14.5px] font-semibold tracking-[-0.03em] text-[#17307a] dark:text-white">
           Offers &amp; Promos

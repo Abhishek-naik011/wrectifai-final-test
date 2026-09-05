@@ -124,12 +124,12 @@ export default function RegisterGaragePage() {
     taxDocument: null,
     services: [] as string[],
     workingHours: [
-      { day: 'Monday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
-      { day: 'Tuesday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
-      { day: 'Wednesday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
-      { day: 'Thursday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
-      { day: 'Friday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
-      { day: 'Saturday', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Monday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Tuesday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Wednesday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Thursday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Friday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+      { day: 'Saturday', isOpen: false, openTime: '09:00', closeTime: '18:00' },
       { day: 'Sunday', isOpen: false, openTime: '09:00', closeTime: '18:00' }
     ],
     photos: [] as string[]
@@ -201,7 +201,17 @@ export default function RegisterGaragePage() {
   const handleStep1Next = () => {
     const newErrors: {[key:string]: string} = {};
     if (!formData.name?.trim()) newErrors.name = 'Garage name is required.';
-    if (!formData.registrationNumber?.trim()) newErrors.registrationNumber = 'Registration number is required.';
+    const regNum = formData.registrationNumber?.trim() || '';
+    if (!regNum) {
+      newErrors.registrationNumber = 'Registration number is required.';
+    } else {
+      const hasLetterOrNumber = /[a-zA-Z0-9]/.test(regNum);
+      const hasInvalidChars = /[^a-zA-Z0-9\-\/\s]/.test(regNum);
+      const isGibberish = /([a-zA-Z0-9]{2,})\1{2,}/.test(regNum) || /([a-zA-Z1-9])\1{4,}/.test(regNum);
+      if (regNum.length < 5 || regNum.length > 30 || !hasLetterOrNumber || hasInvalidChars || isGibberish) {
+        newErrors.registrationNumber = 'Enter a valid garage registration number (5–30 characters; letters, numbers, / and - allowed).';
+      }
+    }
     if (!formData.phone?.trim()) {
       newErrors.phone = 'Phone number is required.';
     } else if (!/^\d{10}$/.test(formData.phone.trim())) {
@@ -240,6 +250,87 @@ export default function RegisterGaragePage() {
       setStep(3);
     }
   };
+
+  // Validate Step 3 Business Documents
+  const handleStep3Next = () => {
+    const newErrors: {[key:string]: string} = {};
+    if (!formData.tradeLicense) {
+      newErrors.tradeLicense = 'Trade License document is required.';
+    } else {
+      newErrors.tradeLicense = '';
+    }
+    if (!formData.taxDocument) {
+      newErrors.taxDocument = 'Tax Document (GST) is required.';
+    } else {
+      newErrors.taxDocument = '';
+    }
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    if (!formData.tradeLicense || !formData.taxDocument) {
+      return;
+    }
+    setStep(4);
+  };
+
+  // Validate Step 4 Services Offered
+  const handleStep4Next = () => {
+    if (!formData.services || formData.services.length === 0) {
+      setErrors(prev => ({ ...prev, services: 'Please select at least one service before continuing.' }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, services: '' }));
+    setStep(5);
+  };
+
+  // Validate Step 5 Working Hours
+  const handleStep5Next = () => {
+    const selectedDays = (formData.workingHours || []).filter((wh: any) => wh.isOpen);
+    if (selectedDays.length === 0) {
+      setErrors(prev => ({ ...prev, workingHours: 'Please select at least one working day.' }));
+      return;
+    }
+    const hasInvalidTimes = selectedDays.some((wh: any) => !wh.openTime || !wh.closeTime || !wh.openTime.trim() || !wh.closeTime.trim());
+    if (hasInvalidTimes) {
+      setErrors(prev => ({ ...prev, workingHours: 'Please set the start and end time for the selected day.' }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, workingHours: '' }));
+    setStep(6);
+  };
+  const calculateProgress = () => {
+    let completed = 0;
+    const totalRequired = 15; // Updated total
+
+    // Step 1
+    if (formData.name?.trim()) completed++;
+    if (formData.garageType) completed++;
+    if (formData.registrationNumber?.trim()) completed++;
+    if (formData.establishedYear) completed++; // Added
+    if (formData.phone?.trim() && /^\d{10}$/.test(formData.phone.trim())) completed++;
+    if (formData.ownerEmail?.trim() && /^\S+@\S+\.\S+$/.test(formData.ownerEmail.trim())) completed++;
+    if (formData.city?.trim()) completed++;
+    if (formData.area?.trim()) completed++;
+    if (formData.address?.trim()) completed++;
+    
+    // Step 2
+    if (formData.ownerName?.trim()) completed++;
+    if (formData.ownerPhone?.trim() && /^\d{10}$/.test(formData.ownerPhone.trim())) completed++;
+
+    // Step 3
+    if (formData.tradeLicense) completed++;
+    if (formData.taxDocument) completed++;
+
+    // Step 4
+    if (formData.services && formData.services.length > 0) completed++;
+
+    // Step 5: Working Hours
+    // Progress increases if at least one day is selected (isOpen: true)
+    if (formData.workingHours && formData.workingHours.some((wh: any) => wh.isOpen)) {
+      completed++;
+    }
+
+    return Math.round((completed / totalRequired) * 100);
+  };
+
   const currentYear = new Date().getFullYear();
   const validYears = Array.from({ length: 50 }, (_, i) => currentYear - i);
 
@@ -476,10 +567,12 @@ export default function RegisterGaragePage() {
                      <input type="file" accept=".svg,.png,.jpg,.jpeg,.pdf" className="hidden" onChange={(e) => {
                        if (e.target.files && e.target.files[0]) {
                          setFormData({...formData, tradeLicense: e.target.files[0]});
+                         setErrors(prev => ({ ...prev, tradeLicense: '' }));
                        }
                      }} />
                    </label>
                  )}
+                 {errors.tradeLicense && <p className="text-red-500 text-xs mt-1 font-medium">{errors.tradeLicense}</p>}
                </div>
                
                <div>
@@ -507,16 +600,18 @@ export default function RegisterGaragePage() {
                      <input type="file" accept=".svg,.png,.jpg,.jpeg,.pdf" className="hidden" onChange={(e) => {
                        if (e.target.files && e.target.files[0]) {
                          setFormData({...formData, taxDocument: e.target.files[0]});
+                         setErrors(prev => ({ ...prev, taxDocument: '' }));
                        }
                      }} />
                    </label>
                  )}
+                 {errors.taxDocument && <p className="text-red-500 text-xs mt-1 font-medium">{errors.taxDocument}</p>}
                </div>
             </div>
             
             <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                <button onClick={() => setStep(2)} className="border border-slate-200 text-slate-600 px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-50">Back</button>
-               <button onClick={() => setStep(4)} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
+               <button onClick={handleStep3Next} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
             </div>
           </div>
           )}
@@ -536,10 +631,15 @@ export default function RegisterGaragePage() {
                       className="hidden" 
                       checked={isSelected}
                       onChange={() => {
+                        let newServices: string[];
                         if (isSelected) {
-                          setFormData({...formData, services: formData.services.filter((s: string) => s !== service.name)});
+                          newServices = formData.services.filter((s: string) => s !== service.name);
                         } else {
-                          setFormData({...formData, services: [...formData.services, service.name]});
+                          newServices = [...formData.services, service.name];
+                        }
+                        setFormData({...formData, services: newServices});
+                        if (newServices.length > 0) {
+                          setErrors(prev => ({ ...prev, services: '' }));
                         }
                       }}
                     />
@@ -556,10 +656,11 @@ export default function RegisterGaragePage() {
                 );
               })}
             </div>
+            {errors.services && <p className="text-red-500 text-xs mb-4 font-medium">{errors.services}</p>}
             
             <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                <button onClick={() => setStep(3)} className="border border-slate-200 text-slate-600 px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-50">Back</button>
-               <button onClick={() => { if(formData.services.length > 0) { setStep(5); } }} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
+               <button onClick={handleStep4Next} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
             </div>
           </div>
           )}
@@ -580,6 +681,7 @@ export default function RegisterGaragePage() {
                         const newWorkingHours = [...formData.workingHours];
                         newWorkingHours[index].isOpen = e.target.checked;
                         setFormData({...formData, workingHours: newWorkingHours});
+                        setErrors(prev => ({ ...prev, workingHours: '' }));
                       }}
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -594,6 +696,7 @@ export default function RegisterGaragePage() {
                         const newWorkingHours = [...formData.workingHours];
                         newWorkingHours[index].openTime = e.target.value;
                         setFormData({...formData, workingHours: newWorkingHours});
+                        setErrors(prev => ({ ...prev, workingHours: '' }));
                       }}
                       className={`border rounded-lg px-3 py-2 text-sm bg-white outline-none focus:border-blue-500 flex-1 ${!wh.isOpen ? 'bg-slate-50 text-slate-400' : ''}`}
                     />
@@ -606,6 +709,7 @@ export default function RegisterGaragePage() {
                         const newWorkingHours = [...formData.workingHours];
                         newWorkingHours[index].closeTime = e.target.value;
                         setFormData({...formData, workingHours: newWorkingHours});
+                        setErrors(prev => ({ ...prev, workingHours: '' }));
                       }}
                       className={`border rounded-lg px-3 py-2 text-sm bg-white outline-none focus:border-blue-500 flex-1 ${!wh.isOpen ? 'bg-slate-50 text-slate-400' : ''}`}
                     />
@@ -613,10 +717,11 @@ export default function RegisterGaragePage() {
                 </div>
               ))}
             </div>
+            {errors.workingHours && <p className="text-red-500 text-xs mb-4 font-medium">{errors.workingHours}</p>}
             
             <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                <button onClick={() => setStep(4)} className="border border-slate-200 text-slate-600 px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-50">Back</button>
-               <button onClick={() => setStep(6)} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
+               <button onClick={handleStep5Next} className="bg-blue-600 text-white px-8 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-blue-700 shadow-md">Save & Continue &rarr;</button>
             </div>
           </div>
           )}
@@ -733,9 +838,9 @@ export default function RegisterGaragePage() {
              <p className="text-[10px] text-slate-500 mb-4">Step {step} of 6</p>
              <div className="flex items-center gap-3 mb-6">
                 <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                   <div className="h-full bg-blue-600 rounded-full transition-all duration-300" style={{ width: `${(step / 6) * 100}%` }}></div>
+                   <div className="h-full bg-blue-600 rounded-full transition-all duration-300" style={{ width: `${calculateProgress()}%` }}></div>
                 </div>
-                <span className="text-[10px] font-bold text-slate-500">{Math.round((step / 6) * 100)}%</span>
+                <span className="text-[10px] font-bold text-slate-500">{calculateProgress()}%</span>
              </div>
              
              <div className="space-y-4">

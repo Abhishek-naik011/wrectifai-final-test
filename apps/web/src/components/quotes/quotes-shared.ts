@@ -41,9 +41,25 @@ export type QuoteItem = {
   customerName?: string;
 };
 
-const DOLLAR = '$';
+const RUPEE = '₹';
 
 export const quoteContextDefaultIssueIds = ['wheel-balance', 'wheel-alignment'];
-export const aiEstimatedQuoteRange = `${DOLLAR}2,800 - ${DOLLAR}3,600`;
+export const aiEstimatedQuoteRange = `${RUPEE}2,800 - ${RUPEE}3,600`;
+
+export function formatCurrencyINR(val: any): string {
+  if (val === null || val === undefined || val === '') return '₹0';
+  if (typeof val === 'number') {
+    return `₹${val.toLocaleString('en-IN')}`;
+  }
+  const str = String(val).trim();
+  if (str === 'Awaiting Quote') return 'Awaiting Quote';
+  if (str.startsWith('$') || str.startsWith('USD')) {
+    return str.replace(/\$/g, '₹').replace(/USD\s*/g, '₹');
+  }
+  if (/^\d+$/.test(str)) {
+    return `₹${Number(str).toLocaleString('en-IN')}`;
+  }
+  return str.startsWith('₹') ? str : `₹${str}`;
+}
 
 export const quotesList: QuoteItem[] = [];

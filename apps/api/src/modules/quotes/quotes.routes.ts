@@ -282,7 +282,7 @@ quotesRouter.post('/requests', authenticate, async (req, res) => {
     if (garageId === 'ALL') {
       const garagesRes = await query(`SELECT id FROM garages WHERE is_approved = true OR approval_status = 'approved'`);
       if (garagesRes.rows.length === 0) {
-        return error(res, 'No approved garages found', 'BAD_REQUEST', 400);
+        return error(res, 'No approved garages found', 'NOT_FOUND', 404);
       }
       const createdRequests = [];
       for (const row of garagesRes.rows) {
@@ -545,15 +545,69 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
       [req.params.quoteId]
     );
 
+    const userId = req.user?.userId;
+    const userRoles = req.user?.roles || [];
+
     if (result.rows.length === 0) {
-      return error(res, 'Quote not found', 'NOT_FOUND', 404);
+      const reqRes = await query(
+        `SELECT qr.id as "quoteRequestId", qr.customer_id as "requestCustomerId", qr.garage_id as "garageId", qr.created_at as "requestCreatedAt", qr.issue_summary as "requestIssueSummary", qr.status as "requestStatus",
+                g.name as "garageName", g.owner_user_id as "garageOwnerId", g.rating_avg as "ratingAvg", g.rating_count as "ratingCount", g.pickup_drop_supported as "pickupDropSupported",
+                v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin", v.mileage as "vehicleMileage"
+         FROM quote_requests qr
+         JOIN garages g ON qr.garage_id = g.id
+         LEFT JOIN vehicles v ON qr.vehicle_id = v.id
+         WHERE qr.id = $1`,
+        [req.params.quoteId]
+      );
+
+      if (reqRes.rows.length === 0) {
+        return error(res, 'Quote not found', 'NOT_FOUND', 404);
+      }
+
+      const row = reqRes.rows[0];
+      if (!userRoles.includes('admin') && row.requestCustomerId !== userId && row.garageOwnerId !== userId) {
+        return error(res, 'Forbidden: You do not have access to this quote', 'FORBIDDEN', 403);
+      }
+
+      const mappedReq = {
+        id: row.quoteRequestId,
+        quoteRequestId: row.quoteRequestId,
+        garageId: row.garageId,
+        status: row.requestStatus || 'open',
+        garage: row.garageName,
+        image: '/assets/garage_1_1778071156220.png',
+        rating: String(row.ratingAvg || '4.5'),
+        reviews: Number(row.ratingCount || 0),
+        distance: '3.0 km away',
+        meta: 'Certified technicians',
+        metaSecondary: '6 Months warranty',
+        price: 'Awaiting Quote',
+        savings: undefined,
+        time: 'TBD',
+        tag: undefined,
+        requestCreatedAt: row.requestCreatedAt,
+        requestIssueSummary: row.requestIssueSummary,
+        vehicle: row.vehicleMake ? {
+          make: row.vehicleMake,
+          model: row.vehicleModel,
+          year: row.vehicleYear,
+          vin: row.vehicleVin,
+          mileage: row.vehicleMileage
+        } : null,
+        details: {
+          parts: 0,
+          labour: 0,
+          remarks: undefined,
+          pickupDrop: row.pickupDropSupported ? 'Available' : 'Not Available',
+        }
+      };
+
+      return success(res, mappedReq);
     }
 
     const row = result.rows[0];
     
     // Data isolation check for quote
-    const userId = req.user?.userId;
-    const userRoles = req.user?.roles || [];
     if (!userRoles.includes('admin') && row.requestCustomerId !== userId && row.garageOwnerId !== userId) {
       return error(res, 'Forbidden: You do not have access to this quote', 'FORBIDDEN', 403);
     }
@@ -566,6 +620,7 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
     const mapped = {
       id: row.id,
       quoteRequestId: row.quoteRequestId,
+      garageId: row.quoteGarageId,
       status: row.status || 'open',
       garage: row.garageName,
       image: '/assets/garage_1_1778071156220.png',
@@ -574,7 +629,7 @@ quotesRouter.get('/:quoteId', authenticate, async (req, res) => {
       distance: '3.0 km away',
       meta: 'Certified technicians',
       metaSecondary: '6 Months warranty',
-      price: `$${amountNum.toLocaleString('en-US')}`,
+      price: amountNum > 0 ? `$${amountNum.toLocaleString('en-US')}` : 'Awaiting Quote',
       savings: undefined,
       time: row.etaNote || (row.etaDays ? `${row.etaDays} days` : 'TBD'),
       tag: undefined,

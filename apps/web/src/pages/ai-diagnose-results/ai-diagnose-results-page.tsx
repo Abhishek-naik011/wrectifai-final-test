@@ -28,6 +28,7 @@ interface Vehicle {
   year: number;
   vin?: string;
   mileage?: number;
+  photos?: string[];
 }
 
 export function AIDiagnoseResultsPage() {
@@ -52,7 +53,6 @@ export function AIDiagnoseResultsPage() {
   const [uploadedPhotos, setUploadedPhotos] = useState<{ id: string; url: string; name: string }[]>([]);
   const [uploadedVideo, setUploadedVideo] = useState<{ name: string; size: string } | null>(null);
   const [uploadedAudio, setUploadedAudio] = useState<{ name: string; size: string } | null>(null);
-
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -152,14 +152,18 @@ export function AIDiagnoseResultsPage() {
 
               <div className="mt-5 grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <div className="flex flex-col items-center justify-center rounded-[14px] bg-[radial-gradient(circle_at_top,#f8faff_0%,#ffffff_70%)] border border-[#e8ecf8] px-4 py-4 text-center">
-                  <Image
-                    src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
-                    alt="Car"
-                    width={230}
-                    height={132}
-                    className="h-auto w-[180px] object-contain"
-                    unoptimized={true}
-                  />
+                  {selectedVehicle?.photos?.[0] ? (
+                    <Image
+                      src={selectedVehicle.photos[0]}
+                      alt="Car"
+                      width={230}
+                      height={132}
+                      className="h-auto w-[180px] object-contain"
+                      unoptimized={true}
+                    />
+                  ) : (
+                    <div className="h-auto w-[180px] object-contain bg-gray-100" />
+                  )}
                   <div className="mt-3 text-[14px] font-bold text-[#17307a] dark:text-white">
                     {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.vin ? `(${selectedVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
                   </div>
@@ -343,7 +347,7 @@ export function AIDiagnoseResultsPage() {
                     <span className="mt-2 text-[13px] font-semibold text-[#17307a] dark:text-white">Drag & drop or click to upload photos</span>
                     <span className="mt-1 text-[11px] text-[#8ea0c7]">Supports PNG, JPG up to 10MB</span>
                   </label>
-                  
+
                   {uploadedPhotos.length > 0 && (
                     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 pt-1">
                       {uploadedPhotos.map((photo) => (

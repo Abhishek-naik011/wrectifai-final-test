@@ -10,7 +10,15 @@ import { apiClient } from '@/lib/api-client';
 export function ProfileContent() {
   const { user, token, login } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', mobileNumber: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    mobileNumber: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: ''
+  });
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'} | null>(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -99,7 +107,11 @@ export function ProfileContent() {
     setFormData({ 
       name: user?.name || '', 
       email: user?.email || '', 
-      mobileNumber: user?.mobileNumber || '' 
+      mobileNumber: user?.mobileNumber || '',
+      address: user?.address || '',
+      city: user?.city || '',
+      state: user?.state || '',
+      pincode: user?.pincode || ''
     });
     setIsEditing(true);
   };
@@ -219,7 +231,7 @@ export function ProfileContent() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Personal Information</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Account Details</h3>
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Full Name</span>
@@ -237,7 +249,7 @@ export function ProfileContent() {
                 <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.email || 'N/A'}</span>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Phone Number</span>
               {isEditing ? (
                 <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.mobileNumber} onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} />
@@ -245,15 +257,55 @@ export function ProfileContent() {
                 <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.mobileNumber ?? 'N/A'}</span>
               )}
             </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">User ID</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.id ? user.id.substring(0, 8).toUpperCase() : 'N/A'}</span>
+            </div>
+            {user.createdAt && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2">
+                <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Joined Date</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">
+                  {new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            )}
           </div>
         </Card>
 
         <Card className="p-6 shadow-sm border-slate-100 dark:border-slate-800 rounded-[24px]">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Account Information</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Address</h3>
           <div className="space-y-6">
-            <div className="flex justify-between pb-2">
-              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">User ID</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">{user.id ? user.id.substring(0,8).toUpperCase() : 'N/A'}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Address</span>
+              {isEditing ? (
+                <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
+              ) : (
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.address || 'N/A'}</span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">City</span>
+              {isEditing ? (
+                <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+              ) : (
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.city || 'N/A'}</span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">State</span>
+              {isEditing ? (
+                <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.state} onChange={(e) => setFormData({...formData, state: e.target.value})} />
+              ) : (
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.state || 'N/A'}</span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400 w-1/3">Pincode</span>
+              {isEditing ? (
+                <input type="text" className="border rounded p-2 text-sm w-full sm:w-2/3" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} />
+              ) : (
+                <span className="text-sm font-bold text-slate-900 dark:text-white text-right w-full sm:w-2/3">{user.pincode || 'N/A'}</span>
+              )}
             </div>
           </div>
         </Card>

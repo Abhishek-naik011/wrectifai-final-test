@@ -12,14 +12,14 @@ import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
 export const initialMockProducts: any[] = [
-  { id: 1, name: 'Mobil 1 5W-30 Fully Synthetic Engine Oil', category: 'Oils & Fluids', price: '$12.99', oldPrice: 1599, discount: '19% OFF', rating: '4.6', reviews: 128, img: '/assets/engine_oil_bottle.png', status: 'approved' },
-  { id: 2, name: 'Bosch Car Air Filter', category: 'Engine Parts', price: '$5.99', oldPrice: 799, discount: '25% OFF', rating: '4.5', reviews: 96, img: '/assets/Parts and components.png', status: 'approved' },
-  { id: 3, name: 'Amaron Pro Rider Battery 42B20L', category: 'Batteries', price: '$42.99', oldPrice: 4999, discount: '14% OFF', rating: '4.7', reviews: 78, img: '/assets/car_battery.png', status: 'approved' },
-  { id: 4, name: 'Brembo Front Brake Pads', category: 'Brakes', price: '$18.99', oldPrice: 2299, discount: '17% OFF', rating: '4.6', reviews: 64, img: '/assets/brake_disc_1778070670609.png', status: 'approved' },
-  { id: 5, name: 'Philips H7 LED Headlight Bulb', category: 'Electrical', price: '$14.99', oldPrice: 1899, discount: '21% OFF', rating: '4.4', reviews: 54, img: '/assets/Electrical.png', status: 'approved' },
-  { id: 6, name: 'Bosch Aerotwin Wiper Blade Set', category: 'Accessories', price: '$8.99', oldPrice: 1199, discount: '25% OFF', rating: '4.5', reviews: 112, img: '/assets/wiper_blade_1778070781712.png', status: 'approved' },
-  { id: 7, name: 'Bosch Oil Filter', category: 'Engine Parts', price: '$2.99', oldPrice: 399, discount: '25% OFF', rating: '4.6', reviews: 88, img: '/assets/Accessories (2).png', status: 'approved' },
-  { id: 8, name: 'Liqui Moly Coolant Ready Mix 1L', category: 'Oils & Fluids', price: '$4.99', oldPrice: 649, discount: '23% OFF', rating: '4.3', reviews: 46, img: '/assets/oil_pour_1778070767058.png', status: 'approved' },
+  { id: 1, name: 'Mobil 1 5W-30 Fully Synthetic Engine Oil', category: 'Oils & Fluids', price: '₹12.99', oldPrice: 1599, discount: '19% OFF', rating: '4.6', reviews: 128, img: '/assets/engine_oil_bottle.png', status: 'approved' },
+  { id: 2, name: 'Bosch Car Air Filter', category: 'Engine Parts', price: '₹5.99', oldPrice: 799, discount: '25% OFF', rating: '4.5', reviews: 96, img: '/assets/Parts and components.png', status: 'approved' },
+  { id: 3, name: 'Amaron Pro Rider Battery 42B20L', category: 'Batteries', price: '₹42.99', oldPrice: 4999, discount: '14% OFF', rating: '4.7', reviews: 78, img: '/assets/car_battery.png', status: 'approved' },
+  { id: 4, name: 'Brembo Front Brake Pads', category: 'Brakes', price: '₹18.99', oldPrice: 2299, discount: '17% OFF', rating: '4.6', reviews: 64, img: '/assets/brake_disc_1778070670609.png', status: 'approved' },
+  { id: 5, name: 'Philips H7 LED Headlight Bulb', category: 'Electrical', price: '₹14.99', oldPrice: 1899, discount: '21% OFF', rating: '4.4', reviews: 54, img: '/assets/Electrical.png', status: 'approved' },
+  { id: 6, name: 'Bosch Aerotwin Wiper Blade Set', category: 'Accessories', price: '₹8.99', oldPrice: 1199, discount: '25% OFF', rating: '4.5', reviews: 112, img: '/assets/wiper_blade_1778070781712.png', status: 'approved' },
+  { id: 7, name: 'Bosch Oil Filter', category: 'Engine Parts', price: '₹2.99', oldPrice: 399, discount: '25% OFF', rating: '4.6', reviews: 88, img: '/assets/Accessories (2).png', status: 'approved' },
+  { id: 8, name: 'Liqui Moly Coolant Ready Mix 1L', category: 'Oils & Fluids', price: '₹4.99', oldPrice: 649, discount: '23% OFF', rating: '4.3', reviews: 46, img: '/assets/oil_pour_1778070767058.png', status: 'approved' },
 ];
 
 export function ShopPage() {
@@ -159,7 +159,7 @@ export function ShopPage() {
                   </div>
                   <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2 h-10 mb-2">{product.name}</h4>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-slate-900 dark:text-white">{product.price}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{product.price?.replace('$', '₹')}</span>
                     <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{product.discount}</span>
                   </div>
                   <div className="flex items-center gap-1 text-xs font-semibold text-amber-500 mb-4">

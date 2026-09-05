@@ -242,7 +242,7 @@ authRouter.post('/login', async (req, res, next) => {
       }
 
       const userResult = await query(
-        `SELECT u.*, p.avatar_url as profile_image 
+        `SELECT u.*, p.avatar_url as profile_image, p.address_line as address, p.city, p.state, p.postal_code as pincode 
          FROM users u 
          LEFT JOIN profiles p ON u.id = p.user_id 
          WHERE u.mobile_number = $1`,
@@ -290,6 +290,11 @@ authRouter.post('/login', async (req, res, next) => {
         garageName,
         mobileNumber: user.mobile_number,
         status: user.status,
+        createdAt: user.created_at,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        pincode: user.pincode,
         roles,
       },
       requiresPasswordChange,
@@ -339,12 +344,14 @@ authRouter.post('/refresh', async (req, res) => {
 
     const newAccessToken = generateAccessToken({ userId, email: user.email, name: user.name, roles, garageId });
     const newRefreshToken = generateRefreshToken({ userId });
-
     await storeRefreshToken(userId, newRefreshToken);
-
     setTokensInCookies(res, newAccessToken, newRefreshToken);
 
-    return success(res, { message: 'Token refreshed successfully' });
+    return success(res, { 
+      message: 'Token refreshed successfully',
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
   } catch (err) {
     return error(res, err instanceof Error ? err.message : 'Invalid refresh token', 'UNAUTHORIZED', 401);
   }
@@ -375,7 +382,7 @@ authRouter.get('/me', authenticate, async (req, res) => {
       return error(res, 'User ID missing in token', 'UNAUTHORIZED', 401);
     }
     const userResult = await query(
-      `SELECT u.*, p.avatar_url as profile_image 
+      `SELECT u.*, p.avatar_url as profile_image, p.address_line as address, p.city, p.state, p.postal_code as pincode 
        FROM users u 
        LEFT JOIN profiles p ON u.id = p.user_id 
        WHERE u.id = $1`, 
@@ -408,6 +415,11 @@ authRouter.get('/me', authenticate, async (req, res) => {
         garageName,
         mobileNumber: user.mobile_number,
         status: user.status,
+        createdAt: user.created_at,
+        address: user.address,
+        city: user.city,
+        state: user.state,
+        pincode: user.pincode,
         roles,
       },
     });

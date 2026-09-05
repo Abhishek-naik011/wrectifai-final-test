@@ -15,6 +15,7 @@ export type DiagnosticIssueResult = {
   risks: string[];
   estimatedCost: string;
   imageSrc: string;
+  longDescription?: string;
 };
 
 export type IssueCategoryConfig = {
@@ -115,6 +116,7 @@ export const issueCategories: IssueCategoryConfig[] = [
     summaryMeaning: 'Cooling issues often begin with refrigerant, airflow, or compressor-side faults and can worsen quickly in traffic or hot weather.',
     keywords: [
       'ac not cooling',
+      'ac is not cooling',
       'air conditioner not cooling',
       'weak ac',
       'hot air from ac',

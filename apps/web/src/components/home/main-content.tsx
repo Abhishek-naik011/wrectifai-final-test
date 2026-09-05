@@ -157,7 +157,7 @@ function CategoriesModal({
                 const { label, icon: Icon, image, href, isComingSoon } = item as any;
                 const content = (
                   <Card
-                    className="flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-[12px] border-[#e8eefc] px-2 py-2.5 text-center shadow-none transition-all duration-200 hover:shadow-[0_4px_12px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
+                    className="flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-[12px] border-[#e8eefc] px-2 py-2.5 text-center shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
                   >
                     {image ? (
                       <Image 
@@ -207,7 +207,7 @@ function CategoriesModal({
                 const { label, icon: Icon, image, href, isComingSoon } = item as any;
                 const content = (
                   <Card
-                    className="flex min-h-[54px] items-center gap-3 rounded-[12px] border-[#e8eefc] px-4 py-2 shadow-none transition-all duration-200 hover:shadow-[0_4px_12px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
+                    className="flex min-h-[54px] items-center gap-3 rounded-[12px] border-[#e8eefc] px-4 py-2 shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)] hover:border-[#c0d0f0] cursor-pointer"
                   >
                     {image ? (
                       <Image 
@@ -255,7 +255,7 @@ function CategoriesModal({
             </div>
           </div>
 
-          <Card className="mt-5 flex flex-col gap-3 rounded-[16px] border-[#e8eefc] bg-[linear-gradient(180deg,#f7faff_0%,#f2f6ff_100%)] px-4 py-3 shadow-none sm:flex-row sm:items-center sm:justify-between">
+          <Card className="mt-5 flex flex-col gap-3 rounded-[16px] border-[#e8eefc] bg-[linear-gradient(180deg,#f7faff_0%,#f2f6ff_100%)] px-4 py-3 shadow-none sm:flex-row sm:items-center sm:justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]">
             <div className="flex items-start gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-[#1A2233] text-[#1a56db] shadow-[0_6px_18px_rgba(26,86,219,0.08)]">
                 <Sparkles className="h-4.5 w-4.5" />
@@ -339,7 +339,7 @@ function HeroBanner() {
   return (
     <Card
       id="ai-diagnose"
-      className="relative overflow-hidden border-0 bg-[linear-gradient(109deg,#07163b_0%,#132c66_48%,#3d1565_100%)] px-5 py-3 text-white sm:px-6 sm:py-3.5"
+      className="relative overflow-hidden border-0 bg-[linear-gradient(109deg,#07163b_0%,#132c66_48%,#3d1565_100%)] px-5 py-3 text-white sm:px-6 sm:py-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_68%_25%,rgba(41,98,255,0.45),transparent_20%),radial-gradient(circle_at_84%_35%,rgba(84,225,255,0.18),transparent_15%),radial-gradient(circle_at_86%_72%,rgba(213,55,255,0.2),transparent_18%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(180deg,transparent,rgba(13,22,51,0.6))]" />
@@ -862,7 +862,7 @@ function SeasonalDeals({
               <Card
                 key={deal.title}
                 style={{ backgroundColor: deal.bgColor }}
-                className="w-[270px] shrink-0 overflow-hidden border border-[#e5e9f2]/50 p-0 shadow-[0_3px_10px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_4px_12px_-1px_rgba(0,0,0,0.05)] hover:-translate-y-0.5"
+                className="w-[270px] shrink-0 overflow-hidden border border-[#e5e9f2]/50 p-0 shadow-[0_3px_10px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)] hover:-translate-y-1"
               >
                 <div className="grid min-h-[96px] grid-cols-[1.25fr_0.75fr]">
                   <div className="p-3 pb-2.5 relative z-10 flex flex-col justify-between">
@@ -972,7 +972,7 @@ function CareTips({
           className="flex gap-3 overflow-x-auto pr-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {tips.map(({ title, icon: Icon, image }, index) => (
-            <Card key={title} className="grid min-h-[86px] w-[220px] shrink-0 grid-cols-[1fr_75px] items-center overflow-hidden p-0 border border-[#e5e9f2]/50 shadow-[0_3px_10px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_4px_12px_-1px_rgba(0,0,0,0.05)] hover:-translate-y-0.5">
+            <Card key={title} className="grid min-h-[86px] w-[220px] shrink-0 grid-cols-[1fr_75px] items-center overflow-hidden p-0 border border-[#e5e9f2]/50 shadow-[0_3px_10px_-1px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)] hover:-translate-y-1">
               <div className="p-3 py-2.5">
                 <p className="text-[11px] font-medium leading-[1.3] text-[#17307a] dark:text-white line-clamp-4">{title}</p>
               </div>
@@ -1217,7 +1217,7 @@ export function MainContent() {
         {filteredDeals.length > 0 ? <SeasonalDeals deals={filteredDeals} /> : null}
         {filteredTips.length > 0 ? <CareTips tips={filteredTips} /> : null}
         {!hasResults ? (
-          <Card className="rounded-[18px] border-[#e4ecff] px-5 py-6 text-center shadow-[0_8px_20px_rgba(20,44,112,0.04)]">
+          <Card className="rounded-[18px] border-[#e4ecff] px-5 py-6 text-center shadow-[0_8px_20px_rgba(20,44,112,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(26,86,219,0.12)]">
             <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">No dashboard matches found</div>
             <div className="mt-2 text-[12px] text-[#66759e]">
               Try another search term for services, parts, garages, or tips.

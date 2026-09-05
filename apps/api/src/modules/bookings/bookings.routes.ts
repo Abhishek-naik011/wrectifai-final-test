@@ -47,7 +47,7 @@ bookingsRouter.get('/', authenticate, async (req, res) => {
         v.year as "vehicleYear",
         v.vin as "vehicleVin",
         q.eta_note as "estimatedDays",
-        qr.issue_summary as "issueDescription",
+        COALESCE(b.issue_description, qr.issue_summary) as "issueDescription",
         qr.preferred_date as "preferredDate",
         u.name as "customerName",
         u.mobile_number as "customerPhone",
@@ -123,9 +123,9 @@ async function createBookingInternal(req: any, res: any, data: {
 
   try {
     const result = await query(
-      `INSERT INTO bookings (customer_id, garage_id, vehicle_id, quote_id, booking_type, scheduled_at, status, total_amount, currency)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pendingPayment', $7, $8)
-       RETURNING id, customer_id as "customerId", garage_id as "garageId", vehicle_id as "vehicleId", quote_id as "quoteId", booking_type as "bookingType", scheduled_at as "scheduledAt", status, total_amount as "totalAmount", currency, created_at as "createdAt"`,
+      `INSERT INTO bookings (customer_id, garage_id, vehicle_id, quote_id, booking_type, scheduled_at, status, total_amount, currency, issue_description)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pendingPayment', $7, $8, $9)
+       RETURNING id, customer_id as "customerId", garage_id as "garageId", vehicle_id as "vehicleId", quote_id as "quoteId", booking_type as "bookingType", scheduled_at as "scheduledAt", status, total_amount as "totalAmount", currency, issue_description as "issueDescription", created_at as "createdAt"`,
       [
         customerId,
         garageId,
@@ -134,7 +134,8 @@ async function createBookingInternal(req: any, res: any, data: {
         bookingType,
         scheduledAt,
         totalAmount,
-        currency || 'USD'
+        currency || 'USD',
+        serviceType || null
       ]
     );
 
@@ -175,7 +176,7 @@ bookingsRouter.get('/garage-incoming', authenticate, async (req, res) => {
               v.make as "vehicleMake", v.model as "vehicleModel", v.year as "vehicleYear", v.vin as "vehicleVin",
               u.name as "customerName", u.mobile_number as "customerPhone", p.avatar_url as "customerAvatar",
               q.details as "quoteDetails", q.amount as "quoteAmount", q.eta_note as "estimatedDays",
-              qr.issue_summary as "issueSummary"
+              COALESCE(b.issue_description, qr.issue_summary) as "issueSummary"
        FROM bookings b
        LEFT JOIN vehicles v ON b.vehicle_id = v.id
        LEFT JOIN users u ON b.customer_id = u.id
@@ -307,7 +308,7 @@ bookingsRouter.get('/:bookingId', authenticate, async (req, res) => {
         v.year as "vehicleYear",
         v.vin as "vehicleVin",
         q.eta_note as "estimatedDays",
-        qr.issue_summary as "issueDescription",
+        COALESCE(b.issue_description, qr.issue_summary) as "issueDescription",
         qr.preferred_date as "preferredDate",
         u.name as "customerName",
         u.mobile_number as "customerPhone",

@@ -75,13 +75,21 @@ garagesRouter.get('/my-customers', authenticate, async (req, res) => {
     const garageId = req.user?.garageId;
     if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
 
-    // Get unique customers who have bookings with this garage
+    // Get unique customers who have bookings OR quotes with this garage
     const result = await query(
-      `SELECT DISTINCT u.id, u.name, u.email, u.mobile_number as "mobileNumber", NULL as "avatarUrl", b.created_at as "firstBookingDate"
+      `WITH customer_activity AS (
+         SELECT customer_id, created_at FROM bookings WHERE garage_id = $1
+         UNION ALL
+         SELECT qr.customer_id, q.created_at 
+         FROM quotes q
+         JOIN quote_requests qr ON q.quote_request_id = qr.id
+         WHERE q.garage_id = $1
+       )
+       SELECT u.id, u.name, u.email, u.mobile_number as "mobileNumber", NULL as "avatarUrl", MAX(ca.created_at) as "joinDate"
        FROM users u
-       JOIN bookings b ON u.id = b.customer_id
-       WHERE b.garage_id = $1
-       ORDER BY b.created_at DESC`,
+       JOIN customer_activity ca ON u.id = ca.customer_id
+       GROUP BY u.id, u.name, u.email, u.mobile_number
+       ORDER BY "joinDate" DESC`,
       [garageId]
     );
 
@@ -91,12 +99,84 @@ garagesRouter.get('/my-customers', authenticate, async (req, res) => {
       email: row.email,
       phone: row.mobileNumber,
       avatar: row.avatarUrl,
-      joinDate: row.firstBookingDate
+      joinDate: row.joinDate
     }));
 
     return success(res, customers);
   } catch (err) {
     return error(res, 'Failed to fetch customers', 'DATABASE_ERROR', 500);
+  }
+});
+
+garagesRouter.get('/my-customers/:customerId', authenticate, async (req, res) => {
+  try {
+    const garageUserId = req.user?.userId;
+    if (!garageUserId || !req.user?.roles?.includes('garage')) {
+      return error(res, 'Unauthorized', 'UNAUTHORIZED', 403);
+    }
+    const garageId = req.user?.garageId;
+    if (!garageId) return error(res, 'Garage not found for this user', 'BAD_REQUEST', 400);
+
+    const customerId = req.params.customerId;
+
+    // Verify relation
+    const relationCheck = await query(
+      `SELECT 1 FROM bookings WHERE garage_id = $1 AND customer_id = $2
+       UNION
+       SELECT 1 FROM quotes q JOIN quote_requests qr ON q.quote_request_id = qr.id WHERE q.garage_id = $1 AND qr.customer_id = $2
+       LIMIT 1`,
+      [garageId, customerId]
+    );
+
+    if (relationCheck.rows.length === 0) {
+      return error(res, 'Customer not found or unauthorized', 'NOT_FOUND', 404);
+    }
+
+    // Fetch customer info
+    const custRes = await query(
+      `SELECT id, name, email, mobile_number as "mobileNumber" FROM users WHERE id = $1`,
+      [customerId]
+    );
+    const customer = custRes.rows[0];
+
+    // Fetch vehicles
+    const vehRes = await query(
+      `SELECT id, make, model, year, vin, created_at as "createdAt" FROM vehicles WHERE customer_id = $1`,
+      [customerId]
+    );
+
+    // Fetch quotes
+    const quotesRes = await query(
+      `SELECT q.id, q.status, (q.details->>'labour')::numeric as "labourCost", (q.details->>'parts')::numeric as "partsCost", q.amount as "totalCost", q.eta_days as "estimatedTime", q.created_at as "createdAt", qr.issue_summary as "issueSummary"
+       FROM quotes q
+       JOIN quote_requests qr ON q.quote_request_id = qr.id
+       WHERE q.garage_id = $1 AND qr.customer_id = $2
+       ORDER BY q.created_at DESC`,
+      [garageId, customerId]
+    );
+
+    // Fetch bookings
+    const bookingsRes = await query(
+      `SELECT id, status, created_at as "createdAt", total_amount as "amount", scheduled_at as "serviceDate"
+       FROM bookings
+       WHERE garage_id = $1 AND customer_id = $2
+       ORDER BY created_at DESC`,
+      [garageId, customerId]
+    );
+
+    return success(res, {
+      customer: {
+        id: customer.id,
+        name: customer.name || 'Unknown',
+        email: customer.email,
+        phone: customer.mobileNumber
+      },
+      vehicles: vehRes.rows,
+      quotes: quotesRes.rows,
+      bookings: bookingsRes.rows
+    });
+  } catch (err) {
+    return error(res, 'Failed to fetch customer details', 'DATABASE_ERROR', 500);
   }
 });
 

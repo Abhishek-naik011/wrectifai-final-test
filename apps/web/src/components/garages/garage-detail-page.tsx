@@ -345,9 +345,7 @@ export function GarageDetailPage({
               </button>
             </div>
 
-            <div className="flex gap-3">
-              <button onClick={handleRequestQuote} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-purple-700">Request Quote</button>
-            </div>
+
             
             {/* Garage Details Header Row */}
             <Card className="rounded-[22px] border-[#e7eefc] p-6 shadow-[0_12px_32px_rgba(21,48,122,0.05)] bg-white dark:bg-[#1A2233]">
@@ -471,7 +469,7 @@ export function GarageDetailPage({
                       ) : null}
                     </div>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="mt-5 grid gap-3 sm:grid-cols-1 md:grid-cols-3">
                       <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
                         <div className="text-[11px] font-medium text-[#62749f]">
                           Current Quote
@@ -480,22 +478,26 @@ export function GarageDetailPage({
                           {quoteContext.quote.price}
                         </div>
                       </div>
-                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
-                        <div className="text-[11px] font-medium text-[#62749f]">
-                          WrectifAI Estimate
+                      {quoteContext.aiEstimateRange ? (
+                        <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
+                          <div className="text-[11px] font-medium text-[#62749f]">
+                            WrectifAI Estimate
+                          </div>
+                          <div className="mt-2 whitespace-nowrap text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#159a5d]">
+                            {quoteContext.aiEstimateRange}
+                          </div>
                         </div>
-                        <div className="mt-2 whitespace-nowrap text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#159a5d]">
-                          {quoteContext.aiEstimateRange}
+                      ) : null}
+                      {quoteContext.quote.savings ? (
+                        <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
+                          <div className="text-[11px] font-medium text-[#62749f]">
+                            Estimated Savings
+                          </div>
+                          <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a] dark:text-white">
+                            {quoteContext.quote.savings}
+                          </div>
                         </div>
-                      </div>
-                      <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
-                        <div className="text-[11px] font-medium text-[#62749f]">
-                          Estimated Savings
-                        </div>
-                        <div className="mt-2 text-[16px] font-extrabold leading-none tracking-[-0.03em] text-[#17307a] dark:text-white">
-                          {quoteContext.quote.savings}
-                        </div>
-                      </div>
+                      ) : null}
                     </div>
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -561,32 +563,47 @@ export function GarageDetailPage({
                     </p>
 
                     <div className="mt-4 space-y-3">
-                      {quoteContext.issues.map((issue) => (
-                        <div
-                          key={issue.id}
-                          className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-[12.5px] font-bold text-[#17307a] dark:text-white">
-                              {issue.title}
+                      {quoteContext.issues && quoteContext.issues.length > 0 ? (
+                        quoteContext.issues.map((issue) => (
+                          <div
+                            key={issue.id}
+                            className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="text-[12.5px] font-bold text-[#17307a] dark:text-white">
+                                {issue.title}
+                              </div>
+                              <span
+                                className={cn(
+                                  'rounded-full px-2.5 py-1 text-[10px] font-bold',
+                                  issue.badgeClass
+                                )}
+                              >
+                                {issue.badge}
+                              </span>
                             </div>
-                            <span
-                              className={cn(
-                                'rounded-full px-2.5 py-1 text-[10px] font-bold',
-                                issue.badgeClass
-                              )}
-                            >
-                              {issue.badge}
-                            </span>
+                            <p className="mt-2 text-[11px] leading-5 text-[#536891]">
+                              {issue.description}
+                            </p>
+                            <div className="mt-3 text-[11px] font-medium text-[#17307a] dark:text-white">
+                              Estimated match: {issue.match}%
+                            </div>
+                          </div>
+                        ))
+                      ) : quoteContext.quote.requestIssueSummary ? (
+                        <div className="rounded-[16px] border border-[#e2eefc] bg-[#fbfdff] p-4">
+                          <div className="text-[12.5px] font-bold text-[#17307a] dark:text-white">
+                            Requested Issue
                           </div>
                           <p className="mt-2 text-[11px] leading-5 text-[#536891]">
-                            {issue.description}
+                            {quoteContext.quote.requestIssueSummary}
                           </p>
-                          <div className="mt-3 text-[11px] font-medium text-[#17307a] dark:text-white">
-                            Estimated match: {issue.match}%
-                          </div>
                         </div>
-                      ))}
+                      ) : (
+                        <div className="text-[11px] text-[#62749f]">
+                          No issue details specified for this request.
+                        </div>
+                      )}
                     </div>
                   </Card>
                 </section>

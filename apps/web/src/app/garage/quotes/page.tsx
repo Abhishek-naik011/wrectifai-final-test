@@ -62,6 +62,16 @@ export default function QuotesPage() {
   const handleSendQuote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRequest) return;
+
+    if (Number(labourCost) < 0 || Number(partsCost) < 0) {
+      setErrorMsg('Costs cannot be negative.');
+      return;
+    }
+    if (Number(estimatedTime) < 0) {
+      setErrorMsg('Estimated days cannot be negative.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     try {
@@ -106,7 +116,6 @@ export default function QuotesPage() {
                <table className="w-full text-left border-collapse text-sm">
                  <thead className="bg-slate-100">
                    <tr>
-                     <th className="p-4 font-bold text-slate-600 border-b">Quote ID</th>
                      <th className="p-4 font-bold text-slate-600 border-b">Customer</th>
                      <th className="p-4 font-bold text-slate-600 border-b">Vehicle</th>
                      <th className="p-4 font-bold text-slate-600 border-b">Created</th>
@@ -117,15 +126,14 @@ export default function QuotesPage() {
                  <tbody className="divide-y divide-slate-100">
                    {loading ? (
                        <tr>
-                          <td colSpan={6} className="p-8 text-center text-slate-500">Loading records...</td>
+                          <td colSpan={5} className="p-8 text-center text-slate-500">Loading records...</td>
                        </tr>
                    ) : requests.length === 0 ? (
                        <tr>
-                          <td colSpan={6} className="p-8 text-center text-slate-500">No records found.</td>
+                          <td colSpan={5} className="p-8 text-center text-slate-500">No records found.</td>
                        </tr>
                    ) : requests.map(req => (
                      <tr key={req.id} className="hover:bg-slate-50">
-                       <td className="p-4 text-slate-800 font-medium">REQ-{req.id.substring(0,8).toUpperCase()}</td>
                        <td className="p-4 text-slate-700">{req.customerName || 'Customer'}</td>
                        <td className="p-4 text-slate-700">{req.vehicle?.make} {req.vehicle?.model} {req.vehicle?.year}</td>
                        <td className="p-4 text-slate-600">{formatTime(req.createdAt)}</td>
@@ -223,10 +231,11 @@ export default function QuotesPage() {
                   )}
                   
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Labour Cost ($)</label>
+                    <label className="block font-bold text-slate-700 mb-1">Labour Cost (₹)</label>
                     <input
                       type="number"
                       required
+                      min="0"
                       value={labourCost}
                       onChange={(e) => setLabourCost(e.target.value)}
                       placeholder="0.00"
@@ -234,10 +243,11 @@ export default function QuotesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Parts Cost ($)</label>
+                    <label className="block font-bold text-slate-700 mb-1">Parts Cost (₹)</label>
                     <input
                       type="number"
                       required
+                      min="0"
                       value={partsCost}
                       onChange={(e) => setPartsCost(e.target.value)}
                       placeholder="0.00"
@@ -245,7 +255,7 @@ export default function QuotesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block font-bold text-slate-700 mb-1">Total ($) (Auto)</label>
+                    <label className="block font-bold text-slate-700 mb-1">Total (₹) (Auto)</label>
                     <input
                       type="number"
                       disabled
@@ -258,6 +268,7 @@ export default function QuotesPage() {
                     <input
                       type="number"
                       required
+                      min="0"
                       value={estimatedTime}
                       onChange={(e) => setEstimatedTime(e.target.value)}
                       placeholder="e.g. 2"

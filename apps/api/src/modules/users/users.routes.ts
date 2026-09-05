@@ -14,7 +14,7 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
     const userId = req.user?.userId;
     if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
 
-    const { name, email, mobileNumber, profileImage } = req.body;
+    const { name, email, mobileNumber, profileImage, address, city, state, pincode } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return error(res, 'Name is required', 'VALIDATION_ERROR', 400);
@@ -50,7 +50,32 @@ usersRouter.put('/profile', authenticate, async (req, res) => {
       }
     }
 
-    const finalResult = { ...result.rows[0], profileImage };
+    if (address !== undefined || city !== undefined || state !== undefined || pincode !== undefined) {
+      const addrVal = typeof address === 'string' && address.trim() !== '' ? address.trim() : null;
+      const cityVal = typeof city === 'string' && city.trim() !== '' ? city.trim() : null;
+      const stateVal = typeof state === 'string' && state.trim() !== '' ? state.trim() : null;
+      const pincodeVal = typeof pincode === 'string' && pincode.trim() !== '' ? pincode.trim() : null;
+
+      await query(
+        `INSERT INTO profiles (id, user_id, address_line, city, state, postal_code) 
+         VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)
+         ON CONFLICT (user_id) DO UPDATE SET 
+           address_line = EXCLUDED.address_line,
+           city = EXCLUDED.city,
+           state = EXCLUDED.state,
+           postal_code = EXCLUDED.postal_code`,
+        [userId, addrVal, cityVal, stateVal, pincodeVal]
+      );
+    }
+
+    const finalResult = { 
+      ...result.rows[0], 
+      profileImage,
+      address: typeof address === 'string' ? address : undefined,
+      city: typeof city === 'string' ? city : undefined,
+      state: typeof state === 'string' ? state : undefined,
+      pincode: typeof pincode === 'string' ? pincode : undefined
+    };
 
     return success(res, finalResult);
   } catch (err: any) {
@@ -136,6 +161,121 @@ usersRouter.get('/customer/stats', authenticate, async (req, res) => {
     });
   } catch (err) {
     console.error('Failed to fetch customer stats', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+usersRouter.post('/support-requests', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const { subject, category, description, attachment, conversationId } = req.body;
+
+    if (!subject || !category || !description) {
+      return error(res, 'Missing required fields', 'VALIDATION_ERROR', 400);
+    }
+
+    const result = await query(
+      `INSERT INTO support_requests (id, user_id, subject, category, description, status, attachment, conversation_id) 
+       VALUES (uuid_generate_v4(), $1, $2, $3, $4, 'pending', $5, $6) 
+       RETURNING id`,
+      [userId, subject, category, description, attachment || null, conversationId || null]
+    );
+
+    return success(res, { id: result.rows[0].id });
+  } catch (err) {
+    console.error('Failed to create support request', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+usersRouter.get('/support-requests', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const result = await query(
+      `SELECT id, subject, category, description, status, attachment, conversation_id, created_at 
+       FROM support_requests 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    return success(res, result.rows);
+  } catch (err) {
+    console.error('Failed to fetch support requests', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+usersRouter.post('/attachments', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const { fileData } = req.body;
+    if (!fileData) {
+      return error(res, 'Missing fileData', 'VALIDATION_ERROR', 400);
+    }
+
+    const result = await query(
+      `INSERT INTO support_attachments (id, user_id, file_data) 
+       VALUES (uuid_generate_v4(), $1, $2) 
+       RETURNING id`,
+      [userId, fileData]
+    );
+
+    return success(res, { id: result.rows[0].id });
+  } catch (err) {
+    console.error('Failed to upload attachment', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+usersRouter.post('/support-messages', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const { conversationId, sender, text, attachment } = req.body;
+    if (!conversationId || !sender) {
+      return error(res, 'Missing required fields', 'VALIDATION_ERROR', 400);
+    }
+
+    const result = await query(
+      `INSERT INTO support_messages (id, conversation_id, user_id, sender, text, attachment) 
+       VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5) 
+       RETURNING id, created_at`,
+      [conversationId, userId, sender, text || null, attachment || null]
+    );
+
+    return success(res, result.rows[0]);
+  } catch (err) {
+    console.error('Failed to save support message', err);
+    return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
+  }
+});
+
+usersRouter.get('/support-messages/:conversationId', authenticate, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return error(res, 'Unauthorized', 'UNAUTHORIZED', 401);
+
+    const { conversationId } = req.params;
+
+    const result = await query(
+      `SELECT id, sender, text, attachment, created_at 
+       FROM support_messages 
+       WHERE conversation_id = $1 AND user_id = $2 
+       ORDER BY created_at ASC`,
+      [conversationId, userId]
+    );
+
+    return success(res, result.rows);
+  } catch (err) {
+    console.error('Failed to fetch support messages', err);
     return error(res, 'Internal error', 'INTERNAL_SERVER_ERROR', 500);
   }
 });

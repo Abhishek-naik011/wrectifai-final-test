@@ -230,10 +230,12 @@ function GarageCard({
   compact = false,
   isWishlisted,
   onClick,
-}: Garage & { compact?: boolean; isWishlisted?: boolean; onClick?: (e: React.MouseEvent) => void }) {
+  onCardClick,
+}: Garage & { compact?: boolean; isWishlisted?: boolean; onClick?: (e: React.MouseEvent) => void; onCardClick?: () => void }) {
   return (
     <Card
-      className="overflow-hidden rounded-[18px] border-[#e7eefc] shadow-[0_14px_34px_rgba(21,48,122,0.08)] cursor-pointer hover:border-[#1a56db]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(21,48,122,0.12)]"
+      onClick={onCardClick}
+      className="h-full flex flex-col overflow-hidden rounded-[18px] border-[#e7eefc] shadow-[0_14px_34px_rgba(21,48,122,0.08)] cursor-pointer group-hover:border-[#1a56db]/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_20px_40px_rgba(21,48,122,0.12)]"
     >
       <div
         className={cn(
@@ -279,13 +281,13 @@ function GarageCard({
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex flex-col flex-1 p-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-[14.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white">
+          <h3 className="text-[14.5px] font-bold tracking-[-0.03em] text-[#17307a] dark:text-white truncate">
             {name}
           </h3>
           {verified ? (
-            <BadgeCheck className="h-4 w-4 fill-[#1a56db] text-white" />
+            <BadgeCheck className="h-4 w-4 shrink-0 fill-[#1a56db] text-white" />
           ) : null}
         </div>
 
@@ -323,21 +325,23 @@ function GarageCard({
           ))}
         </div>
 
-        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 border-t border-[#eef3ff] pt-2">
-          <div className="flex min-w-0 items-start gap-1 font-normal text-[#17307a] dark:text-white">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1a56db]" />
-            <div className="min-w-0 text-[8.5px] tracking-tight font-normal leading-[1.25]">
-              <div>No upfront payment &#8226;</div>
-              <div>Final quote after inspection</div>
+        <div className="mt-auto pt-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 border-t border-[#eef3ff] pt-3">
+            <div className="flex min-w-0 items-start gap-1 font-normal text-[#17307a] dark:text-white">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1a56db]" />
+              <div className="min-w-0 text-[8.5px] tracking-tight font-normal leading-[1.25]">
+                <div>No upfront payment &#8226;</div>
+                <div>Final quote after inspection</div>
+              </div>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-8 shrink-0 rounded-[9px] px-2 text-[10.5px] font-semibold"
+            >
+              Book Appointment
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-8 shrink-0 rounded-[9px] px-2 text-[10.5px] font-semibold"
-          >
-            Book Appointment
-          </Button>
         </div>
       </div>
     </Card>
@@ -715,12 +719,15 @@ function GaragesContent() {
     apiClient.get<any>(`/quotes/${quoteId}`)
       .then((quote) => {
         if (!active || !quote) return;
-        const garageFromQuote = garagesList.find((item) => item.name === quote.garage);
+        const garageFromQuote = garagesList.find(
+          (item) => (quote.garageId && item.id === quote.garageId) || item.name === quote.garage
+        );
         const issueIds = (searchParams?.get('issues') || '')
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean);
         const issues = resultIssues.filter((issue) => issueIds.includes(issue.id));
+        const estimateRange = quote.aiEstimateRange || quote.estimateRange || null;
 
         if (garageFromQuote) {
           setQuoteContext({
@@ -728,7 +735,7 @@ function GaragesContent() {
             quote,
             issues,
             issueIds,
-            aiEstimateRange: aiEstimatedQuoteRange,
+            aiEstimateRange: estimateRange,
           });
         } else {
           const fallbackGarage: Garage = {
@@ -752,7 +759,7 @@ function GaragesContent() {
             quote,
             issues,
             issueIds,
-            aiEstimateRange: aiEstimatedQuoteRange,
+            aiEstimateRange: estimateRange,
           });
         }
       })
@@ -950,13 +957,13 @@ function GaragesContent() {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-2">
             {paginatedGarages.map((garage) => (
-              <div key={garage.id} className="relative group">
-                <div className="absolute inset-0 z-0 cursor-pointer" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
+              <div key={garage.id} className="relative group h-full">
                 <GarageCard
                   {...garage}
                   compact
                   isWishlisted={wishlistItems.some((i: any) => i.id === garage.name || i.name === garage.name)}
                   onClick={(e) => toggleWishlist(e, garage)}
+                  onCardClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
                 />
               </div>
             ))}
@@ -1001,12 +1008,12 @@ function GaragesContent() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {paginatedGarages.map((garage) => (
-            <div key={garage.id} className="relative group">
-              <div className="absolute inset-0 z-0 cursor-pointer" onClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)} />
+            <div key={garage.id} className="relative group h-full">
               <GarageCard
                 {...garage}
                 isWishlisted={wishlistItems.some((i: any) => i.id === garage.name || i.name === garage.name)}
                 onClick={(e) => toggleWishlist(e, garage)}
+                onCardClick={() => router.push(`/garages?garage=${encodeURIComponent(garage.name)}`)}
               />
             </div>
           ))}

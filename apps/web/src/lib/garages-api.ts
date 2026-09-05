@@ -50,3 +50,32 @@ export async function fetchGarage(id: string): Promise<Garage> {
 export async function fetchPromos(): Promise<Promo[]> {
   return apiClient.get('/promos');
 }
+
+export interface GarageCustomer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  joinDate: string;
+}
+
+export interface GarageCustomerDetails {
+  customer: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  vehicles: any[];
+  quotes: any[];
+  bookings: any[];
+}
+
+export async function fetchGarageCustomers(): Promise<GarageCustomer[]> {
+  return apiClient.get('/garages/my-customers');
+}
+
+export async function fetchGarageCustomerDetails(customerId: string): Promise<GarageCustomerDetails> {
+  return apiClient.get(`/garages/my-customers/${customerId}`);
+}

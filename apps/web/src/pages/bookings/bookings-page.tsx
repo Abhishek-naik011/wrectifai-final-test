@@ -8,6 +8,7 @@ import { Button } from '@/components/common/button';
 import { Modal } from '@/components/common/modal';
 import { fetchBookings, updateBookingStatus } from '@/lib/bookings-api';
 import type { Booking } from '@/lib/bookings-api';
+import { formatCurrencyINR } from '@/components/quotes/quotes-shared';
 import { cn } from '@/utils/cn';
 import { Calendar, Clock, Wrench, XCircle, AlertTriangle, ShieldCheck, AlertCircle } from 'lucide-react';
 
@@ -230,7 +231,7 @@ export function BookingsPage() {
                 <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t sm:border-t-0 border-[#eef3ff] pt-3 sm:pt-0">
                   <div className="text-left sm:text-right">
                     <p className="text-[10px] font-bold text-[#8a96b8] uppercase">Total Cost</p>
-                    <p className="text-[15.5px] font-extrabold text-[#17307a] dark:text-white">{b.currency} {b.totalAmount}</p>
+                    <p className="text-[15.5px] font-extrabold text-[#17307a] dark:text-white">{formatCurrencyINR(b.totalAmount)}</p>
                   </div>
 
                   <div className="flex gap-2">
@@ -261,14 +262,6 @@ export function BookingsPage() {
       {viewDetailsBooking && (
         <Modal isOpen={true} onClose={() => setViewDetailsBooking(null)} title="Booking Details" className="max-w-2xl">
           <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700">
-            <div>
-              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Booking ID</span>
-              <p className="font-semibold">{viewDetailsBooking.id}</p>
-            </div>
-            <div>
-              <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Quote ID</span>
-              <p className="font-semibold">{viewDetailsBooking.quoteId || 'N/A'}</p>
-            </div>
             <div>
               <span className="block font-bold text-slate-500 dark:text-slate-400 mb-1">Garage Name</span>
               <p className="font-semibold">{viewDetailsBooking.garageName}</p>

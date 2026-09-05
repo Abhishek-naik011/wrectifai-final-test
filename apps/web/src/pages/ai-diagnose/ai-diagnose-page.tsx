@@ -26,6 +26,7 @@ interface Vehicle {
   year: number;
   vin?: string;
   mileage?: number;
+  photos?: string[];
 }
 
 interface LlmIssue {
@@ -80,6 +81,8 @@ import {
   Scale,
   Star,
   MapPin,
+  FileText,
+  ThumbsUp,
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/common/button';
@@ -185,38 +188,45 @@ function getBadgeForIssue(name: string, overallRisk?: string, index?: number) {
 function mapLlmIssueToDiagnosticResult(llmIssue: LlmIssue, index: number, overallRisk?: string, diySteps?: string[], selectedVehicle?: Vehicle | null): DiagnosticIssueResult {
   const match = llmIssue.confidence;
   const priceRange = llmIssue.estimatedPriceRange;
-  const estimatedCost = `$${priceRange.min} - $${priceRange.max}`;
+  const estimatedCost = `Rs. ${priceRange.min.toLocaleString()} - Rs. ${priceRange.max.toLocaleString()}`;
   const id = `llm_issue_${index}`;
   const title = llmIssue.name;
 
-  const { badge, badgeClass } = getBadgeForIssue(title, overallRisk, index);
+  let badge = 'Low Match';
+  let badgeClass = 'bg-[#edf7ed] text-[#2e7d32]';
+  if (match >= 80) {
+    badge = 'High Match';
+    badgeClass = 'bg-[#ffe8ea] text-[#ff4f68]';
+  } else if (match >= 60) {
+    badge = 'Medium Match';
+    badgeClass = 'bg-[#fff2df] text-[#f59a23]';
+  }
 
   const capitalizedRisk = overallRisk ? overallRisk.charAt(0).toUpperCase() + overallRisk.slice(1) : 'Medium';
 
-  let reasoning = llmIssue.description || '';
+  let longReasoning = '';
   if (index === 0 && diySteps && diySteps.length > 0) {
     const reasoningStep = diySteps.find(step => step.toLowerCase().includes('why this diagnosis') || step.toLowerCase().includes('technical reasoning'));
     if (reasoningStep) {
-        reasoning = reasoningStep.replace(/^(?:\\*\\*)?(?:why this diagnosis\\??|technical reasoning):?(?:\\*\\*)?\\s*/i, '');
+      longReasoning = reasoningStep.replace(/^(?:\\*\\*)?(?:why this diagnosis\\??|technical reasoning):?(?:\\*\\*)?\\s*/i, '');
     } else {
-        reasoning = diySteps[0];
+      longReasoning = diySteps[0];
     }
   }
 
-  if (!reasoning) {
-    reasoning = `Diagnosed issue: ${title}.`;
-  }
+  let shortDesc = llmIssue.description || `Diagnosed issue: ${title}.`;
 
   return {
     id,
     title,
     badge,
     badgeClass,
-    description: reasoning,
+    description: shortDesc,
+    longDescription: longReasoning || shortDesc,
     match,
     risks: [capitalizedRisk],
     estimatedCost,
-    imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year),
+    imageSrc: llmIssue.imageSrc || '',
   };
 }
 
@@ -469,6 +479,9 @@ function IssueVisual({
   const [hasImageError, setHasImageError] = useState(false);
   const { icon: Icon, accentClass, fillClass } = getIssueVisualMeta(issue);
 
+  const src = vehicleImageSrc || issue.imageSrc;
+  const showImage = !hasImageError && !!src;
+
   return (
     <div
       className={cn(
@@ -477,9 +490,9 @@ function IssueVisual({
       )}
       style={{ width: size, height: size }}
     >
-      {!hasImageError ? (
+      {showImage ? (
         <Image
-          src={vehicleImageSrc || issue.imageSrc}
+          src={src}
           alt={issue.title}
           width={size}
           height={size}
@@ -535,7 +548,7 @@ function IssueDetailsModal({
               <div>
                 <h3 className={homeSectionHeadingClass}>{issue.title}</h3>
                 <p className="mt-1 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
-                  {issue.description}
+                  {issue.longDescription || issue.description}
                 </p>
                 <span
                   className={cn(
@@ -593,7 +606,7 @@ function IssueDetailsModal({
 function buildInitialFlow(issueText: string): InitialFlowState {
   const trimmedIssue = issueText.trim();
   const lowerIssue = trimmedIssue.toLowerCase();
-  
+
   const matchedCategory = issueCategories.find((cat) =>
     cat.keywords.some((kw) => lowerIssue.includes(kw.toLowerCase()))
   );
@@ -601,9 +614,9 @@ function buildInitialFlow(issueText: string): InitialFlowState {
   return {
     issueText: trimmedIssue || DEFAULT_ISSUE_TEXT,
     introText: trimmedIssue
-      ? (matchedCategory 
-          ? `I received your symptom description: "${trimmedIssue}". Let's narrow this down.` 
-          : `I received your symptom description: "${trimmedIssue}". Selecting your vehicle on the right will immediately begin the diagnosis.`)
+      ? (matchedCategory
+        ? `I received your symptom description: "${trimmedIssue}". Let's narrow this down.`
+        : `I received your symptom description: "${trimmedIssue}". Selecting your vehicle on the right will immediately begin the diagnosis.`)
       : 'Hello! I am WrectifAI, your automotive diagnostic assistant. Please select your vehicle on the right, then describe the issues or symptoms your vehicle is experiencing below to start the diagnosis.',
     initialQuestion: matchedCategory ? matchedCategory.questions[0] : null,
     activeCategoryId: matchedCategory ? matchedCategory.id : null,
@@ -1064,14 +1077,14 @@ type ReasoningState = {
 
 function extractEvidencePipeline(symptoms: string[], notes = ""): Observation[] {
   const obs: Observation[] = [];
-  
+
   symptoms.forEach(s => {
     obs.push({ type: 'symptom', value: s.toLowerCase(), source: 'questionnaire' });
   });
 
   if (notes) {
     const notesLower = notes.toLowerCase();
-    
+
     // Extract maintenance
     const maintenanceKeywords = ['replace', 'new', 'refill', 'recharge', 'service', 'flush', 'jump', 'change'];
     maintenanceKeywords.forEach(k => {
@@ -1090,7 +1103,7 @@ function extractEvidencePipeline(symptoms: string[], notes = ""): Observation[] 
 
     // Extract raw symptoms if none of the above matched distinctly, or just add the whole note
     if (obs.filter(o => o.source === 'additional_info').length === 0) {
-       obs.push({ type: 'symptom', value: notesLower, source: 'additional_info' });
+      obs.push({ type: 'symptom', value: notesLower, source: 'additional_info' });
     }
   }
   return obs;
@@ -1116,7 +1129,7 @@ function evaluateCandidates(observations: Observation[]): CandidateDiagnosis[] {
   // Evaluate against observations
   observations.forEach(obs => {
     const val = obs.value;
-    
+
     // AC
     if (val.includes("ac ") || val.includes("cool") || val.includes("air")) {
       candidates.find(c => c.id === "ac_leak")!.supportedBy.push(obs);
@@ -1194,7 +1207,7 @@ function reasonOverEvidencePipeline(candidates: CandidateDiagnosis[]): Candidate
 
   // Filter to only those with support
   let viable = candidates.filter(c => c.supportedBy.length > 0);
-  
+
   if (viable.length === 0) {
     viable = [{
       id: "mech_general",
@@ -1224,7 +1237,7 @@ function calculateConfidence(state: ReasoningState): number {
   if (state.mostProbable) {
     // Increase for multiple supporting observations
     if (state.mostProbable.supportedBy.length > 1) confidence += 15;
-    
+
     // Increase if alternative was explicitly eliminated
     const eliminatedAlts = state.candidates.filter(c => c.eliminated && c.id.split('_')[0] === state.mostProbable!.id.split('_')[0]);
     if (eliminatedAlts.length > 0) confidence += 10;
@@ -1246,7 +1259,7 @@ function generateNaturalSummary(state: ReasoningState): string {
 
   const hasAddInfo = state.observations.some(o => o.source === 'additional_info');
   const addInfoObs = state.observations.find(o => o.source === 'additional_info');
-  
+
   const eliminatedAlt = state.candidates.find(c => c.eliminated && c.id.split('_')[0] === primary.id.split('_')[0]);
 
   let summary = "";
@@ -1357,8 +1370,8 @@ function DiagnoseResultsScreen({
       prev.includes(garageId)
         ? prev.filter((id) => id !== garageId)
         : prev.length < 3
-        ? [...prev, garageId]
-        : prev
+          ? [...prev, garageId]
+          : prev
     );
   };
 
@@ -1398,7 +1411,7 @@ function DiagnoseResultsScreen({
       <IssueDetailsModal
         issue={activeIssueDetails}
         onClose={() => setActiveIssueDetails(null)}
-        vehicleImageSrc={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
+        vehicleImageSrc={selectedVehicle?.photos?.[0]}
       />
       <div>
         <div>
@@ -1410,61 +1423,32 @@ function DiagnoseResultsScreen({
         </div>
       </div>
 
-      <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)] overflow-y-auto [scrollbar-width:thin]">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1">
+      <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-6 py-4 shadow-[0_12px_28px_rgba(37,73,153,0.04)]">
+        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 flex-1">
             <div className={homeSectionHeadingClass}>Your Issue</div>
-
-            <div className="mt-3">
-              <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">{diagnosisState.primaryIssue}</div>
-              {diagnosisState.isRefined && (
-                <div className="mt-1 text-[11px] font-semibold text-[#25a24a] flex items-center gap-1">
-                  ✓ Refined using your additional information
-                </div>
-              )}
-              <div className="mt-1.5 flex gap-2">
-                <span className="rounded-full bg-[#fff4e5] px-2.5 py-0.5 text-[11px] font-bold text-[#b54708]">Severity: {diagnosisState.severity}</span>
-                <span className="rounded-full bg-[#e8f8eb] px-2.5 py-0.5 text-[11px] font-bold text-[#25a24a]">Confidence: {diagnosisState.confidence}</span>
+            {activeCategory ? (
+              <div className="mt-3 inline-flex rounded-full bg-[#dfe9ff] px-3.5 py-1.5 text-[12px] font-semibold text-[#1a56db] shadow-[0_6px_16px_rgba(26,86,219,0.08)]">
+                Detected issue family: {activeCategory.label}
               </div>
-              <div className="mt-4">
-                <div className="text-[14.5px] font-bold text-[#17307a] dark:text-white">Why this diagnosis?</div>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#4c5f8f]">
-                  {diagnosisState.summary}
-                </p>
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                {diagnosisState.symptoms.map(sym => (
-                  <span key={sym} className="rounded-md bg-[#f4f7ff] dark:bg-[#1A2233] px-2.5 py-1 text-[11.5px] font-medium text-[#1a56db]">{sym}</span>
+            ) : null}
+            {answerSummaryItems.length ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {answerSummaryItems.map(({ label, value }) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-[#cfe0ff] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#17307a] shadow-[0_4px_12px_rgba(20,44,112,0.04)]"
+                  >
+                    {label}: {value}
+                  </span>
                 ))}
               </div>
-
-
-            </div>
-
-
-
-            <div className="mt-4 border-t border-[#e6ecfb] dark:border-[#2A3446] pt-3">
-              <label className="text-[14.5px] font-bold text-[#17307a] dark:text-white">Additional Information</label>
-              <p className="mt-0.5 text-[12.5px] text-[#6b7ba5]">Add any new observations not covered in the original questionnaire.</p>
-              <textarea
-                className="mt-2.5 w-full rounded-xl border border-[#dbe6ff] dark:border-[#2A3446] p-3 text-[13.5px] text-[#17307a] dark:text-white focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db] focus:outline-none placeholder:text-[#8ea0c7] transition-all resize-y"
-                rows={2}
-                value={additionalNotes}
-                onChange={(e) => setAdditionalNotes(e.target.value)}
-                placeholder="e.g. Issue started after hitting a pothole"
-              />
-              <div className="mt-3 flex flex-wrap gap-2.5 pb-1">
-                <button type="button" onClick={handleRegenerateDiagnosis} disabled={isRegenerating || !additionalNotes.trim()} className="inline-flex h-[36px] items-center justify-center rounded-[10px] bg-[#1a56db] px-4 text-[13px] font-semibold text-white hover:bg-[#17307a] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
-                  {isRegenerating ? 'Regenerating...' : 'Regenerate Diagnosis'}
-                </button>
-              </div>
-            </div>
+            ) : null}
           </div>
-
           <button
             type="button"
             onClick={onEditIssue}
-            className="shrink-0 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff] dark:hover:bg-slate-800"
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[12px] border border-[#dde6ff] px-5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
           >
             <PenLine className="h-4 w-4" />
             <span>Edit Issue</span>
@@ -1486,14 +1470,18 @@ function DiagnoseResultsScreen({
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)]">
               <div className="flex flex-col items-center justify-center rounded-[14px] bg-[radial-gradient(circle_at_top,#f8faff_0%,#ffffff_70%)] border border-[#e8ecf8] px-4 py-4 text-center">
-                <Image
-                  src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
-                  alt="Car"
-                  width={230}
-                  height={132}
-                  className="h-auto w-[180px] object-contain"
-                  unoptimized={true}
-                />
+                {selectedVehicle?.photos?.[0] ? (
+                  <Image
+                    src={selectedVehicle?.photos?.[0] as string}
+                    alt="Car"
+                    width={230}
+                    height={132}
+                    className="h-auto w-[180px] object-contain"
+                    unoptimized={true}
+                  />
+                ) : (
+                  <div className="h-auto w-[180px] object-contain bg-gray-100" />
+                )}
                 <div className={cn('mt-3', homeCardHeadingClass)}>
                   {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City (TS07 AB 1234)'}
                 </div>
@@ -1562,11 +1550,11 @@ function DiagnoseResultsScreen({
             </div>
           </Card>
 
-          <Card className="rounded-[22px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className={homeSectionHeadingClass}>Top Possible Issues</h2>
-                <span className="text-[11px] text-[#5f7099] dark:text-slate-400">
+          <Card className="rounded-[22px] border-[#e6ecfb] bg-white px-4 py-4 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className={homeSectionHeadingClass}>Top Possible Issues</h2>
+                <span className="text-[11px] text-[#5f7099]">
                   (Select one or more to request quotes)
                 </span>
               </div>
@@ -1596,7 +1584,7 @@ function DiagnoseResultsScreen({
                       />
                     </label>
                     <div className="flex justify-center md:justify-start">
-                      <IssueVisual issue={issue} size={56} vehicleImageSrc={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)} />
+                      <IssueVisual issue={issue} size={56} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
@@ -1612,19 +1600,19 @@ function DiagnoseResultsScreen({
                           {issue.badge}
                         </span>
                       </div>
-                      <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099] dark:text-slate-400">
+                      <p className="mt-1.5 text-[11px] leading-5 text-[#5f7099]">
                         {issue.description}
                       </p>
-                      <div className="mt-2.5 text-[11px] font-semibold text-[#17307a] dark:text-white">
+                      <div className="mt-2.5 text-[11px] font-semibold text-[#17307a]">
                         Risk if ignored:
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#5f7099] dark:text-slate-400">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#5f7099]">
                         {issue.risks.map((risk) => (
                           <span key={risk}>• {risk}</span>
                         ))}
                       </div>
-                      <div className="mt-2.5 text-[11px] text-[#5f7099] dark:text-slate-400">
-                        <span className="font-semibold text-[#17307a] dark:text-white">
+                      <div className="mt-2.5 text-[11px] text-[#5f7099]">
+                        <span className="font-semibold text-[#17307a]">
                           Estimated Cost:
                         </span>{' '}
                         <span>{issue.estimatedCost}</span>
@@ -1634,13 +1622,13 @@ function DiagnoseResultsScreen({
                       <div className="text-[20px] font-semibold tracking-[-0.03em] text-[#1a56db]">
                         {issue.match}%
                       </div>
-                      <div className="text-[11px] text-[#5f7099] dark:text-slate-400">Match</div>
+                      <div className="text-[11px] text-[#5f7099]">Match</div>
                     </div>
                     <div className="flex items-center md:justify-end">
                       <button
                         type="button"
                         onClick={() => setActiveIssueDetails(issue)}
-                        className="inline-flex h-9 items-center justify-center rounded-[12px] border border-[#dde6ff] px-3.5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff] dark:hover:bg-slate-800"
+                        className="inline-flex h-9 items-center justify-center rounded-[12px] border border-[#dde6ff] px-3.5 text-[12px] font-semibold text-[#1a56db] transition-colors hover:bg-[#f8fbff]"
                       >
                         View Details
                       </button>
@@ -1733,6 +1721,32 @@ function DiagnoseResultsScreen({
               24/7 Available
             </div>
           </Card>
+
+          <Card className="rounded-[22px] border-[#e6ecfb] bg-white dark:bg-[#1A2233] px-4 py-6 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
+            <h3 className="text-[16px] font-semibold text-[#183db1]">Next Steps</h3>
+            <div className="relative mt-6 space-y-6">
+              <div className="absolute left-[15px] top-4 bottom-4 w-[1.5px] bg-[#e4ecff] z-0" />
+              {resultNextSteps.map((step, index) => {
+                const stepIcons = [FileText, ThumbsUp, Zap, ShieldCheck];
+                const IconComponent = stepIcons[index];
+                return (
+                  <div key={step.step} className="flex gap-3 relative z-10">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f2f5ff] text-[12px] font-semibold text-[#3059e1] z-10 border border-white">
+                      {step.step}
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-semibold text-[#2243a4]">{step.title}</div>
+                      <p className="mt-1 text-[12px] leading-5 text-[#6b7ca8]">{step.body}</p>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-[6px] bg-[#f2f5ff] px-2.5 py-1 text-[11px] font-medium text-[#2451f6]">
+                        {IconComponent && <IconComponent className="h-3 w-3 text-[#2451f6]" />}
+                        <span>{step.meta}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       </div>
 
@@ -1778,227 +1792,6 @@ function DiagnoseResultsScreen({
         </div>
       </Card>
 
-      {/* NEARBY GARAGES RECOMMENDATION SECTION */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6ecfb] dark:border-[#2A3446] pb-3">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[18px] font-bold text-[#17307a] dark:text-white">
-                Recommended Nearby Garages
-              </h2>
-              <span className="rounded-full bg-[#eef4ff] dark:bg-blue-900/30 px-2.5 py-0.5 text-[11px] font-bold text-[#1a56db]">
-                {garages.length} Available
-              </span>
-            </div>
-            <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
-              Verified workshops equipped to resolve your diagnosed issue near{' '}
-              <span className="font-semibold text-[#17307a] dark:text-white">Hyderabad</span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {compareGarageIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsCompareOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#1a56db] px-3.5 py-2 text-[12px] font-bold text-white shadow-sm hover:bg-[#1644ad] transition-colors"
-              >
-                <Scale className="h-4 w-4" />
-                <span>Compare ({compareGarageIds.length})</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => router.push('/garages')}
-              className="text-[12.5px] font-bold text-[#1a56db] hover:underline"
-            >
-              View All Garages &rarr;
-            </button>
-          </div>
-        </div>
-
-        {actionSuccessMessage && (
-          <div className="rounded-[12px] bg-[#e8f8eb] border border-[#b8ecc1] p-3 text-[13px] font-semibold text-[#25a24a] flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4.5 w-4.5" />
-              <span>{actionSuccessMessage}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActionSuccessMessage(null)}
-              className="text-[#25a24a] hover:opacity-75"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
-        {loadingGarages ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-[310px] rounded-[18px] border border-[#eef3fc] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-4 animate-pulse"
-              >
-                <div className="h-[120px] rounded-[12px] bg-[#f0f4fc] dark:bg-[#1A2233]" />
-                <div className="mt-4 h-4 w-3/4 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
-                <div className="mt-2 h-3 w-1/2 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
-                <div className="mt-6 h-8 rounded bg-[#f0f4fc] dark:bg-[#1A2233]" />
-              </div>
-            ))}
-          </div>
-        ) : garages.length === 0 ? (
-          <Card className="rounded-[18px] border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-8 text-center shadow-sm">
-            <p className="text-[13px] text-[#5f7099] dark:text-slate-400">
-              No garages currently found in this location.
-            </p>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {garages.slice(0, 6).map((garage) => {
-              const isSelectedForCompare = garage.id
-                ? compareGarageIds.includes(garage.id)
-                : false;
-
-              return (
-                <Card
-                  key={garage.id || garage.name}
-                  className={cn(
-                    'overflow-hidden rounded-[18px] border bg-white dark:bg-[#1A2233] shadow-[0_10px_28px_rgba(21,48,122,0.06)] transition-all duration-200 hover:border-[#1a56db]/30 hover:shadow-md flex flex-col justify-between',
-                    isSelectedForCompare
-                      ? 'border-[#1a56db] ring-2 ring-[#1a56db]/20'
-                      : 'border-[#e7eefc]'
-                  )}
-                >
-                  {/* Garage Top Banner */}
-                  <div
-                    className={cn(
-                      'relative h-[120px] bg-gradient-to-r cursor-pointer',
-                      garage.tone
-                    )}
-                    onClick={() => setSelectedGarageForDetail(garage)}
-                  >
-                    {garage.image && (
-                      <Image
-                        src={garage.image}
-                        alt={garage.name}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#09101d]/60 via-transparent to-black/20" />
-                    
-                    {garage.badge && (
-                      <div
-                        className={cn(
-                          'absolute left-3 top-3 rounded-[8px] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm',
-                          garage.badgeTone
-                        )}
-                      >
-                        {garage.badge}
-                      </div>
-                    )}
-
-                    {/* Compare Button */}
-                    <button
-                      type="button"
-                      title="Compare Garage"
-                      onClick={(e) => garage.id && handleToggleCompare(garage.id, e)}
-                      className={cn(
-                        'absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-md transition-all z-10',
-                        isSelectedForCompare
-                          ? 'bg-[#1a56db] text-white ring-2 ring-white'
-                          : 'bg-white/90 text-[#17307a] dark:text-white hover:bg-white dark:bg-[#1A2233]'
-                      )}
-                    >
-                      <Scale className="h-3 w-3" />
-                      <span>{isSelectedForCompare ? 'Selected' : 'Compare'}</span>
-                    </button>
-
-                    <div className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white/90 drop-shadow">
-                      {garage.facade}
-                    </div>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => setSelectedGarageForDetail(garage)}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="text-[14.5px] font-bold tracking-tight text-[#17307a] dark:text-white hover:text-[#1a56db] transition-colors truncate">
-                            {garage.name}
-                          </h3>
-                          {garage.verified && (
-                            <BadgeCheck className="h-4 w-4 fill-[#1a56db] text-white shrink-0" />
-                          )}
-                        </div>
-
-                        <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-[#5f7099] dark:text-slate-400">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3.5 w-3.5 fill-[#ff9f1a] text-[#ff9f1a]" />
-                            <span className="font-bold text-[#f28c28]">
-                              {garage.rating.toFixed(1)}
-                            </span>
-                            <span>({garage.reviews})</span>
-                          </div>
-                          <span>•</span>
-                          <span className="truncate">{garage.location}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-[#17307a] dark:text-white">
-                        <div className="flex items-center gap-1 text-[#4c5f8f]">
-                          <MapPin className="h-3.5 w-3.5 text-[#1a56db]" />
-                          <span>{garage.distanceKm.toFixed(1)} km away</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[#4c5f8f]">
-                          <Clock3 className="h-3.5 w-3.5 text-[#1a56db]" />
-                          <span>~{garage.responseMins}m response</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        {garage.chips.slice(0, 3).map((chip) => (
-                          <span
-                            key={chip}
-                            className="rounded-md bg-[#edf5ff] px-2 py-0.5 text-[9.5px] font-semibold text-[#1a56db]"
-                          >
-                            {chip}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#edf2fb] pt-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => garage.id && setQuoteGarageId(garage.id)}
-                        className="h-[34px] rounded-[10px] text-[11.5px] font-bold border-[#dbe6ff] dark:border-[#2A3446] text-[#1a56db] hover:bg-[#f4f8ff] dark:bg-[#1A2233] hover:text-[#17307a] dark:text-white"
-                      >
-                        Request Quote
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => garage.id && setBookingGarageId(garage.id)}
-                        className="h-[34px] rounded-[10px] bg-[#1a56db] text-[11.5px] font-bold text-white hover:bg-[#1644ad]"
-                      >
-                        Book
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       <div className="grid gap-4 rounded-[22px] border border-[#e6ecfb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-6 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)] md:grid-cols-2 xl:grid-cols-4">
         {resultTrustItems.map(({ title, description, icon: Icon }) => (
           <div key={title} className="flex items-start gap-3">
@@ -2035,7 +1828,7 @@ function DiagnoseResultsScreen({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <GarageDetailPage
                 garage={selectedGarageForDetail}
@@ -2185,7 +1978,7 @@ function DiagnoseResultsScreen({
       {isDiyDrawerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-[#0f172a]/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setIsDiyDrawerOpen(false)} />
-          
+
           {(diyType === 'repair' || diyType === 'troubleshooting') && nextSteps && nextSteps.length > 0 ? (
             <div className="relative w-full max-w-2xl bg-white dark:bg-[#1A2233] shadow-2xl rounded-[24px] flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between border-b border-[#e6ecfb] dark:border-[#2A3446] px-6 py-5 bg-white dark:bg-[#1A2233] z-10 rounded-t-[24px]">
@@ -2196,7 +1989,7 @@ function DiagnoseResultsScreen({
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="mb-6 rounded-[16px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#fbfcff] dark:bg-[#1A2233] p-5">
                   <div className="flex items-center gap-2 font-bold text-[#17307a] dark:text-white mb-2">
@@ -2413,9 +2206,20 @@ function FindingQuotesScreen({
         <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
           <h3 className={homeSectionHeadingClass}>Your Vehicle</h3>
           <div className="mt-10 flex flex-col items-center text-center">
-            <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-              <CarFront className="h-11 w-11" />
-            </span>
+            {selectedVehicle?.photos?.[0] ? (
+              <Image
+                src={selectedVehicle.photos[0]}
+                alt="Vehicle"
+                width={180}
+                height={100}
+                className="h-auto w-[160px] object-contain my-2"
+                unoptimized={true}
+              />
+            ) : (
+              <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                <CarFront className="h-11 w-11" />
+              </span>
+            )}
             <div className={cn('mt-8', homeCardHeadingClass)}>
               {selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : 'Honda City (TS07 AB 1234)'}
             </div>
@@ -2446,15 +2250,21 @@ function FindingQuotesScreen({
                 className="grid gap-4 py-5 md:grid-cols-[76px_minmax(0,1fr)_92px] md:items-center"
               >
                 <div className="flex justify-center md:justify-start">
-                  <Image
-                    src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
-                    alt={issue.title}
-                    width={72}
-                    height={72}
-                    className="h-[66px] w-[66px] object-contain"
-                    style={{ width: '66px', height: '66px' }}
-                    unoptimized={true}
-                  />
+                  {issue.imageSrc ? (
+                    <Image
+                      src={issue.imageSrc}
+                      alt={issue.title}
+                      width={72}
+                      height={72}
+                      className="h-[66px] w-[66px] object-contain"
+                      style={{ width: '66px', height: '66px' }}
+                      unoptimized={true}
+                    />
+                  ) : (
+                    <div className="flex h-[66px] w-[66px] items-center justify-center rounded-[16px] border border-[#e8eefc] bg-[#f4f8ff] text-[#1a56db]">
+                      <CarFront className="h-7 w-7" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
@@ -2588,7 +2398,7 @@ function normalizeInput(text: string): string {
 
 function extractEntities(text: string): ExtractedEntity[] {
   const entities: ExtractedEntity[] = [];
-  
+
   for (const [category, keywords] of Object.entries(ENTITY_DICTIONARY)) {
     for (const keyword of keywords) {
       if (text.includes(keyword)) {
@@ -2606,19 +2416,19 @@ function extractEntities(text: string): ExtractedEntity[] {
 function determineMissingContext(entities: ExtractedEntity[], turns: number): { isSufficient: boolean, missing: IntentCategory[] } {
   const hasSymptom = entities.some(e => e.category === 'symptom' || e.category === 'warning_light');
   const hasCondition = entities.some(e => e.category === 'operating_condition' || e.category === 'timing' || e.category === 'environmental' || e.category === 'recent_event');
-  
+
   const missing: IntentCategory[] = [];
-  
+
   if (!hasSymptom) {
     missing.push('symptom');
-  } else if (!hasCondition && turns < 2) { 
+  } else if (!hasCondition && turns < 2) {
     // Ask for condition if we have a symptom but no condition, up to a limit
     missing.push('operating_condition');
   }
 
   // It is sufficient if we have a symptom, and we've either collected condition/context or we've asked at least twice.
   const isSufficient = hasSymptom && (hasCondition || turns >= 2);
-  
+
   return { isSufficient, missing };
 }
 
@@ -2651,7 +2461,19 @@ export function AIDiagnosePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('wrectifai_selected_vehicle');
+      if (stored) {
+        try {
+          return JSON.parse(stored) as Vehicle;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return null;
+  });
   const initialIssueParam = searchParams?.get('issue')?.trim() ?? '';
   const initialFlow = buildInitialFlow(initialIssueParam);
   const [pageLoadTime] = useState(() => {
@@ -2712,6 +2534,7 @@ export function AIDiagnosePage() {
   // Derived progress and step states to prevent static stuck/inconsistent states
   const progress = useMemo(() => {
     if (isDiagnosed) return 100;
+    if (dynamicQuestions.length > 0 && Object.keys(dynamicAnswers).length >= dynamicQuestions.length) return 100;
     if (isAnalyzingResults) return 90;
     if (!selectedVehicleId) return 0;
     if (!hasStartedDiagnose) return 20;
@@ -2721,7 +2544,7 @@ export function AIDiagnosePage() {
       return 40 + Math.round((currentQuestionIdx / dynamicQuestions.length) * 40);
     }
     return 40;
-  }, [isDiagnosed, isAnalyzingResults, selectedVehicleId, hasStartedDiagnose, dynamicQuestions, currentQuestionIdx]);
+  }, [isDiagnosed, isAnalyzingResults, selectedVehicleId, hasStartedDiagnose, dynamicQuestions, currentQuestionIdx, dynamicAnswers]);
 
   const stepTitle = useMemo(() => {
     if (progress === 100) return 'Analysis Complete!';
@@ -2861,7 +2684,7 @@ export function AIDiagnosePage() {
             setApiError(response.message || "We couldn't generate the diagnosis right now. Please try again.");
             return;
           }
-          
+
           setApiResult(response);
 
           if (response.result && response.result.issues) {
@@ -2896,7 +2719,7 @@ export function AIDiagnosePage() {
 
   const applyDiagnoseFlow = (nextIssue: string) => {
     const flow = buildInitialFlow(nextIssue);
-    
+
     const initialMessages: ChatEntry[] = [
       {
         id: 'message-1',
@@ -3057,9 +2880,10 @@ export function AIDiagnosePage() {
   const activeCategory = activeCategoryId
     ? getCategoryById(activeCategoryId)
     : undefined;
-  const resultIssues = customResultIssues || (activeCategoryId
-    ? getResolvedIssues(activeCategoryId)
-    : legacyResultIssues);
+  const isFallbackResult = customResultIssues && customResultIssues.length === 1 && customResultIssues[0].title === 'Undetermined Issue';
+  const resultIssues = (customResultIssues && !isFallbackResult)
+    ? customResultIssues
+    : (activeCategoryId ? getResolvedIssues(activeCategoryId) : legacyResultIssues);
   const answerSummaryItems = buildAnswerSummaryItems(
     Object.keys(dynamicAnswers).length > 0 ? dynamicAnswers : answers
   );
@@ -3071,13 +2895,13 @@ export function AIDiagnosePage() {
 
   const nextSteps = apiResult && apiResult.result && apiResult.result.diyAllowed && rawDiySteps.length > 0
     ? rawDiySteps
-        .filter(s => !s.toLowerCase().startsWith('diy category:'))
-        .map((stepText: string, index: number) => ({
-          step: `0${index + 1}`,
-          title: `Step ${index + 1}`,
-          body: stepText,
-          meta: diyType === 'troubleshooting' ? 'Troubleshooting' : 'DIY Guidance',
-        }))
+      .filter(s => !s.toLowerCase().startsWith('diy category:'))
+      .map((stepText: string, index: number) => ({
+        step: `0${index + 1}`,
+        title: `Step ${index + 1}`,
+        body: stepText,
+        meta: diyType === 'troubleshooting' ? 'Troubleshooting' : 'DIY Guidance',
+      }))
     : undefined;
 
   const confidenceScore = apiResult?.result?.confidenceScore;
@@ -3115,7 +2939,7 @@ export function AIDiagnosePage() {
       mediaRecorderRef.current?.stop();
       return;
     }
-    
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert('Your browser does not support audio recording.');
       return;
@@ -3193,7 +3017,7 @@ export function AIDiagnosePage() {
 
       try {
         const response = await chatDiagnosis({ vehicleId: selectedVehicleId, conversationHistory: chatHistory });
-        
+
         setIsTyping(false);
 
         if (response?.sufficient) {
@@ -3203,7 +3027,7 @@ export function AIDiagnosePage() {
         }
 
         const followUp = response?.followUpQuestion || "Could you provide more details about the symptoms you're experiencing?";
-        
+
         setMessages((prev) => [
           ...prev,
           {
@@ -3537,7 +3361,7 @@ export function AIDiagnosePage() {
                                 )}
                                 <div className="relative z-10 mt-[2px]">
                                   {isQuestion1 ? (
-                                    <div className="flex h-7 w-7 items-center justify-center bg-white dark:bg-[#1A2233] rounded-full z-20">
+                                    <div className="flex h-7 w-7 items-center justify-center bg-white rounded-full z-20">
                                       <div className="h-2.5 w-2.5 rounded-full bg-[#2b61f0] border-2 border-white shadow-[0_2px_6px_rgba(43,97,240,0.2)]" />
                                     </div>
                                   ) : (
@@ -3554,7 +3378,7 @@ export function AIDiagnosePage() {
                                     </span>
                                   </div>
 
-                                  <div className="w-full max-w-[290px] rounded-[14px] border border-[#ebf0fb] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] p-4 shadow-[0_12px_24px_rgba(35,64,143,0.05)]">
+                                  <div className="w-full max-w-[290px] rounded-[14px] border border-[#ebf0fb] bg-white p-4 shadow-[0_12px_24px_rgba(35,64,143,0.05)]">
                                     <h3
                                       className={cn(
                                         'leading-5',
@@ -3571,7 +3395,7 @@ export function AIDiagnosePage() {
                                           <button
                                             key={option}
                                             type="button"
-                                            disabled={hasSelected || !selectedVehicleId}
+                                            disabled={hasSelected}
                                             onClick={() =>
                                               handleSelectOption(
                                                 entry.id,
@@ -3581,10 +3405,10 @@ export function AIDiagnosePage() {
                                             className={cn(
                                               'flex w-full h-[42px] items-center justify-between rounded-[9px] border px-3.5 text-[13px] font-medium transition-all text-left',
                                               isSelected
-                                                ? 'border-[#4d81ff] bg-[#fbfdff] dark:bg-[#1A2233] text-[#2a5eea] shadow-[inset_0_0_0_1px_rgba(77,129,255,0.14)] font-bold'
-                                                : (hasSelected || !selectedVehicleId)
-                                                  ? 'border-[#f2f4f8] bg-[#fafbfc] dark:bg-[#1A2233] text-[#b0c0df] cursor-not-allowed'
-                                                  : 'border-[#e8edf8] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
+                                                ? 'border-[#4d81ff] bg-[#fbfdff] text-[#2a5eea] shadow-[inset_0_0_0_1px_rgba(77,129,255,0.14)] font-bold'
+                                                : hasSelected
+                                                  ? 'border-[#f2f4f8] bg-[#fafbfc] text-[#b0c0df] cursor-not-allowed'
+                                                  : 'border-[#e8edf8] bg-white text-[#52658f] hover:border-[#b9ccf9] hover:bg-[#f6f9ff]'
                                             )}
                                           >
                                             <span>{option}</span>
@@ -3615,9 +3439,9 @@ export function AIDiagnosePage() {
                                     WrectifAI
                                   </span>
                                 </div>
-                                <div className="inline-flex rounded-[12px] border border-[#e7ecf8] bg-[#fafdff] dark:bg-[#1A2233] px-4 py-3 shadow-[0_8px_20px_rgba(39,73,154,0.04)]">
+                                <div className="inline-flex rounded-[12px] border border-[#e7ecf8] bg-[#fafdff] px-4 py-3 shadow-[0_8px_20px_rgba(39,73,154,0.04)]">
                                   <div className="flex items-center gap-2.5">
-                                    <span className="text-[12px] text-[#17307a] dark:text-white font-medium whitespace-pre-line leading-relaxed">
+                                    <span className="text-[12px] text-[#17307a] font-medium whitespace-pre-line leading-relaxed">
                                       {typingText}
                                     </span>
                                     <span className="flex items-center gap-1 shrink-0">
@@ -3703,8 +3527,8 @@ export function AIDiagnosePage() {
                     disabled={!selectedVehicleId || isAnalyzingResults}
                     onClick={handleToggleRecording}
                     className={`flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isRecording
-                        ? 'text-red-500 animate-pulse'
-                        : 'hover:text-[#1a56db]'
+                      ? 'text-red-500 animate-pulse'
+                      : 'hover:text-[#1a56db]'
                       }`}
                   >
                     <Mic className="h-3.5 w-3.5 text-[#6a8cff]" />

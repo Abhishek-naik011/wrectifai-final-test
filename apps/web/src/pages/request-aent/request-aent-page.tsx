@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Star, CarFront } from 'lucide-react';
+import { Check, Star, CarFront, Snowflake, Wind, Settings } from 'lucide-react';
 import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 import { Card } from '@/components/common/card';
@@ -16,45 +16,79 @@ const BULLET = '\u2022';
 
 const homeSectionHeadingClass = 'ui-page-title';
 const homeCardHeadingClass = 'ui-card-title';
+function getIssueVisualMeta(title: string) {
+  const titleLower = title.toLowerCase();
+  if (titleLower.includes('refrigerant')) {
+    return {
+      icon: Snowflake,
+      accentClass: 'text-[#1a56db]',
+      fillClass: 'bg-[#f4f8ff] dark:bg-[#1A2233]',
+    };
+  }
+  if (titleLower.includes('blower') || titleLower.includes('filter')) {
+    return {
+      icon: Wind,
+      accentClass: 'text-[#f59a23]',
+      fillClass: 'bg-[#fff7ed]',
+    };
+  }
+  return {
+    icon: Settings,
+    accentClass: 'text-[#238453]',
+    fillClass: 'bg-[#f0fdf4]',
+  };
+}
+
 function IssuePreview({
   issueTitle,
   selectedVehicle,
+  imageSrc,
 }: {
   issueTitle: string;
   selectedVehicle: Vehicle | null;
+  imageSrc?: string;
 }) {
   const [showFallbackIcon, setShowFallbackIcon] = useState(false);
-
-  if (showFallbackIcon) {
-    return (
-      <span className="flex h-[60px] w-[60px] items-center justify-center rounded-[14px] bg-[radial-gradient(circle_at_top,#f6f8ff_0%,#eef2ff_100%)] text-[#2451e5]">
-        <CarFront className="h-8 w-8" />
-      </span>
-    );
-  }
+  const { icon: Icon, accentClass, fillClass } = getIssueVisualMeta(issueTitle);
+  const showImage = !showFallbackIcon && !!imageSrc;
 
   return (
-    <Image
-      src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
-      alt={issueTitle}
-      width={60}
-      height={60}
-      className="h-[60px] w-[60px] object-contain"
-      onError={() => setShowFallbackIcon(true)}
-      unoptimized={true}
-    />
+    <div className={cn("flex h-[60px] w-[60px] items-center justify-center rounded-[14px] overflow-hidden", fillClass)}>
+      {showImage ? (
+        <Image
+          src={imageSrc}
+          alt={issueTitle}
+          width={60}
+          height={60}
+          className="h-[60px] w-[60px] object-contain p-1"
+          onError={() => setShowFallbackIcon(true)}
+          unoptimized={true}
+        />
+      ) : (
+        <Icon className={cn("h-[50%] w-[50%]", accentClass)} strokeWidth={2.2} />
+      )}
+    </div>
   );
 }
 
 function VehiclePreview({ selectedVehicle }: { selectedVehicle: Vehicle | null }) {
+  const photoSrc = (selectedVehicle as any)?.photos?.[0];
+  if (!photoSrc) {
+    return (
+      <div className="flex h-[112px] w-[112px] items-center justify-center rounded-[24px] bg-[radial-gradient(circle_at_top,#f7f9ff_0%,#eef3ff_62%,#e9efff_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+        <CarFront className="h-10 w-10 text-[#5f7099]/30" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[112px] w-[112px] items-center justify-center rounded-[24px] bg-[radial-gradient(circle_at_top,#f7f9ff_0%,#eef3ff_62%,#e9efff_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
+    <div className="flex h-[112px] w-[112px] items-center justify-center overflow-hidden rounded-[24px] bg-[radial-gradient(circle_at_top,#f7f9ff_0%,#eef3ff_62%,#e9efff_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
       <Image
-        src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
+        src={photoSrc}
         alt="Car"
-        width={94}
-        height={56}
-        className="h-auto w-[94px] object-contain"
+        width={112}
+        height={112}
+        className="h-full w-full object-cover"
         priority
         unoptimized={true}
       />
@@ -69,6 +103,7 @@ interface Vehicle {
   year: number;
   vin?: string;
   mileage?: number;
+  photos?: string[];
 }
 
 import { getQuoteRequest } from '@/lib/quotes-api';
@@ -106,7 +141,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
           const vehicleStr = typeof window !== 'undefined' ? localStorage.getItem('wrectifai_selected_vehicle') : null;
           const parsedVehicle = vehicleStr ? JSON.parse(vehicleStr) : null;
           setSelectedVehicle(parsedVehicle);
-          
+
           const selectedIssueIds = (issues || 'wheel-balance,wheel-alignment')
             .split(',')
             .map((item) => item.trim())
@@ -131,7 +166,9 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
 
         const qr = await getQuoteRequest(requestId);
         if (qr) {
-          setSelectedVehicle(qr.vehicle ? { id: qr.vehicleId, ...qr.vehicle } : null);
+          const vehicleStr = typeof window !== 'undefined' ? localStorage.getItem('wrectifai_selected_vehicle') : null;
+          const parsedVehicle = vehicleStr ? JSON.parse(vehicleStr) : null;
+          setSelectedVehicle(qr.vehicle ? { photos: parsedVehicle?.photos, id: qr.vehicleId, ...qr.vehicle } : parsedVehicle);
 
           if (qr.diagnosisRequestId) {
             try {
@@ -162,7 +199,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                     badge,
                     badgeClass,
                     description: `Diagnosed issue: ${issue.name || issue.title}. Requires parts: ${issue.requiredParts?.join(', ') || 'None specified'}.`,
-                    imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
+                    imageSrc: issue.imageSrc || ''
                   };
                 });
                 setSelectedIssues(mapped);
@@ -186,7 +223,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                 badgeClass: 'text-[#e27622] bg-[#fdf5ed]',
                 description: `Requested issue: ${name.trim()}`,
                 match: 85,
-                imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
+                imageSrc: ''
               };
             });
             setSelectedIssues(summaryIssues);
@@ -263,7 +300,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
 
             <div>
               <h1 className="text-[15.5px] font-semibold tracking-[-0.03em] text-[#238453]">
-                Thank you.
+                Request Sent Successfully!
               </h1>
               <p className="mt-1 text-[12px] text-[#5f7099] dark:text-slate-400">
                 Your request has been sent to all available garages. You will start receiving quotations shortly.
@@ -349,6 +386,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                         key={issue.id}
                         issueTitle={issue.title}
                         selectedVehicle={selectedVehicle}
+                        imageSrc={issue.imageSrc}
                       />
                     </div>
 
@@ -411,7 +449,7 @@ export function RequestAentPage({ issues, requestId }: { issues?: string; reques
                 >
                   <div className="flex items-center justify-center md:justify-start">
                     <Image
-                      src={garage.image}
+                      src={garage.image || '/assets/garage_1_1778071156220.png'}
                       alt={garage.name}
                       width={96}
                       height={56}

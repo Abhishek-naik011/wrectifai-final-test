@@ -157,7 +157,7 @@ export function WalletPaymentsPage() {
         ['Description', tx.desc || 'N/A'],
         ['Booking ID', tx.subdesc || 'N/A'],
         ['Type', tx.type || 'N/A'],
-        ['Amount', `${tx.type === 'Credit' ? '+' : '-'} $${tx.amount?.toFixed(2) || '0.00'}`],
+        ['Amount', `${tx.type === 'Credit' ? '+' : '-'} ₹${tx.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`],
         ['Status', tx.status || 'N/A'],
         ['Customer', tx.customer || 'N/A'],
         ['Garage', tx.garage || 'N/A'],
@@ -226,7 +226,7 @@ export function WalletPaymentsPage() {
             <Card className="flex-1 p-6 relative overflow-hidden bg-gradient-to-r from-blue-50 to-white dark:from-[#1A2233] dark:to-[#1A2233] shadow-sm rounded-[24px]">
               <div className="relative z-10 w-2/3">
                 <h3 className="text-slate-900 dark:text-white font-bold mb-1 text-sm">Wallet Balance</h3>
-                <p className="text-4xl font-extrabold text-slate-900 dark:text-white mb-1">${balance.toFixed(2)}</p>
+                <p className="text-4xl font-extrabold text-slate-900 dark:text-white mb-1">₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 <p className="text-slate-500 dark:text-slate-400 text-xs mb-6">Total Balance</p>
                 <Button onClick={() => setIsAddMoneyOpen(true)} className="bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-sm"><Plus className="w-4 h-4 mr-2"/> Add Money</Button>
               </div>
@@ -241,15 +241,15 @@ export function WalletPaymentsPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Main Balance</span>
-                    <span className="font-bold text-slate-900 dark:text-white">${(balance - 50).toFixed(2)}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">₹{(balance - 50).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Bonus Balance</span>
-                    <span className="font-bold text-green-600">$50.00</span>
+                    <span className="font-bold text-green-600">₹50.00</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600 dark:text-slate-400">Pending Refunds</span>
-                    <span className="font-bold text-orange-500">$0.00</span>
+                    <span className="font-bold text-orange-500">₹0.00</span>
                   </div>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export function WalletPaymentsPage() {
                        </td>
                        <td className="px-6 py-4">
                          <p className={cn("font-bold", tx.type === 'Credit' ? 'text-green-600' : 'text-slate-900 dark:text-white')}>
-                           {tx.type === 'Credit' ? '+' : '-'} ${tx.amount.toFixed(2)}
+                           {tx.type === 'Credit' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                          </p>
                        </td>
                        <td className="px-6 py-4 text-center">
@@ -439,7 +439,7 @@ export function WalletPaymentsPage() {
       <Modal isOpen={isAddMoneyOpen} onClose={() => setIsAddMoneyOpen(false)} title="Add Money to Wallet">
         <div className="space-y-4 py-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Enter Amount ($)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Enter Amount (₹)</label>
             <input type="number" className="w-full border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-lg font-bold focus:outline-none focus:border-blue-500" placeholder="100.00" value={addMoneyAmount} onChange={(e) => setAddMoneyAmount(e.target.value)} />
           </div>
           <Button className="w-full bg-blue-600 text-white" onClick={handleAddMoney}>Confirm & Add</Button>
@@ -491,7 +491,7 @@ export function WalletPaymentsPage() {
               <div className={cn("w-16 h-16 rounded-full flex items-center justify-center mb-4", selectedTransaction.bg, selectedTransaction.color)}>
                  <selectedTransaction.icon className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedTransaction.type === 'Credit' ? '+' : '-'} ${selectedTransaction.amount.toFixed(2)}</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedTransaction.type === 'Credit' ? '+' : '-'}₹{selectedTransaction.amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
               <p className="text-slate-500 dark:text-slate-400">{selectedTransaction.status}</p>
             </div>
             

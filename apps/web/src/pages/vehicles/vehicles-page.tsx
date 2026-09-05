@@ -294,34 +294,68 @@ export function VehiclesPage() {
     e.preventDefault();
     setFormError(null);
 
-    if (!make.trim() || !model.trim() || !year) {
-      setFormError('Make, model, and year are required.');
+    if (!photos || photos.length === 0) {
+      setFormError('Please upload at least one vehicle photo.');
       return;
     }
-    
-    if (vin.trim() && vin.trim().length !== 17) {
-      setFormError('VIN must be exactly 17 characters if provided.');
+    if (!make.trim()) {
+      setFormError('Please enter the make.');
       return;
     }
-    
-    if (mileage !== '' && Number(mileage) < 0) {
+    if (!model.trim()) {
+      setFormError('Please enter the model.');
+      return;
+    }
+    if (!year) {
+      setFormError('Please enter the year.');
+      return;
+    }
+    if (mileage === '' || mileage === null || mileage === undefined) {
+      setFormError('Please enter the mileage.');
+      return;
+    }
+    if (Number(mileage) < 0) {
       setFormError('Mileage cannot be negative.');
+      return;
+    }
+    if (!vin.trim()) {
+      setFormError('Please enter the VIN.');
+      return;
+    }
+    if (vin.trim().length !== 17) {
+      setFormError('VIN must be exactly 17 characters.');
+      return;
+    }
+    if (!licensePlate.trim()) {
+      setFormError('Please enter the license plate.');
+      return;
+    }
+    if (!fuelType || fuelType === '') {
+      setFormError('Please select the fuel type.');
+      return;
+    }
+    if (!transmission || transmission === '') {
+      setFormError('Please select the transmission.');
+      return;
+    }
+    if (!color.trim()) {
+      setFormError('Please enter the color.');
       return;
     }
 
     setSubmitting(true);
     try {
       await apiClient.post('/vehicles', {
-        make,
-        model,
+        make: make.trim(),
+        model: model.trim(),
         year: Number(year),
-        vin: vin.trim() || undefined,
-        mileage: mileage !== '' ? Number(mileage) : undefined,
-        plateNumber: licensePlate.trim() || undefined,
-        fuelType: fuelType || undefined,
-        transmission: transmission || undefined,
-        color: color.trim() || undefined,
-        isPrimary,
+        vin: vin.trim(),
+        mileage: Number(mileage),
+        plateNumber: licensePlate.trim(),
+        fuelType,
+        transmission,
+        color: color.trim(),
+        isPrimary: true,
         photos,
       });
       setIsAddOpen(false);
@@ -384,7 +418,7 @@ export function VehiclesPage() {
         fuelType: fuelType || undefined,
         transmission: transmission || undefined,
         color: color.trim() || undefined,
-        isPrimary,
+        isPrimary: true,
         photos,
       });
       setIsEditOpen(false);
@@ -483,12 +517,6 @@ export function VehiclesPage() {
                         <h3 className="text-lg font-bold text-[#17307a] dark:text-white leading-tight">
                           {vehicle.year} {vehicle.make} {vehicle.model}
                         </h3>
-                        {vehicle.isPrimary && (
-                          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                            PRIMARY
-                          </span>
-                        )}
                       </div>
                       <p className="mt-1 text-[13px] font-medium text-[#7a8ab4] uppercase tracking-wider">
                         {vehicle.plateNumber ? `PLATE: ${vehicle.plateNumber}` : `ID: ${vehicle.id.slice(0, 8)}`}
@@ -579,7 +607,7 @@ export function VehiclesPage() {
                 )}
 
                 <div className="mb-4">
-                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
+                   <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">Vehicle Photos * <span className="text-slate-400 font-normal lowercase">(up to 5)</span></label>
                    <div className="border border-slate-200 dark:border-slate-700 border-dashed rounded-[14px] p-4 bg-slate-50 dark:bg-[#121826] flex flex-col items-center justify-center text-center">
                      <UploadCloud className="w-8 h-8 text-[#a3b8e8] mb-2" />
                      <p className="text-sm font-medium text-slate-700 mb-1">Click to upload photos</p>
@@ -631,35 +659,36 @@ export function VehiclesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Mileage (miles)
+                      Mileage (miles) *
                     </label>
-                    <Input type="number" placeholder="e.g. 45000" value={mileage} onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} />
+                    <Input type="number" placeholder="e.g. 45000" value={mileage} onChange={(e) => setMileage(e.target.value !== '' ? Number(e.target.value) : '')} required />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      VIN (17 characters)
+                      VIN (17 characters) *
                     </label>
-                    <Input placeholder="Enter 17-digit VIN" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} />
+                    <Input placeholder="Enter 17-digit VIN" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} required />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      License Plate
+                      License Plate *
                     </label>
-                    <Input placeholder="e.g. ABC-1234" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value.toUpperCase())} />
+                    <Input placeholder="e.g. ABC-1234" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value.toUpperCase())} required />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Fuel Type
+                      Fuel Type *
                     </label>
                     <select 
                       value={fuelType} 
                       onChange={(e) => setFuelType(e.target.value)}
+                      required
                       className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
@@ -671,11 +700,12 @@ export function VehiclesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Transmission
+                      Transmission *
                     </label>
                     <select 
                       value={transmission} 
                       onChange={(e) => setTransmission(e.target.value)}
+                      required
                       className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
                     >
                       <option value="">Select</option>
@@ -686,26 +716,11 @@ export function VehiclesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Color
+                      Color *
                     </label>
-                    <Input placeholder="e.g. Black" value={color} onChange={(e) => setColor(e.target.value)} />
+                    <Input placeholder="e.g. Black" value={color} onChange={(e) => setColor(e.target.value)} required />
                   </div>
                 </div>
-
-                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f8faff]">
-                  <input 
-                    type="checkbox" 
-                    id="isPrimary-add" 
-                    checked={isPrimary} 
-                    onChange={(e) => setIsPrimary(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
-                  />
-                  <label htmlFor="isPrimary-add" className="text-sm font-medium text-[#17307a] dark:text-white cursor-pointer select-none flex-1">
-                    Set as Primary Vehicle
-                  </label>
-                  {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
-                </div>
-
                 </div>
                 
                 <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
@@ -759,11 +774,6 @@ export function VehiclesPage() {
                        {photos.map((photo: string, index: number) => (
                          <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm group">
                            <img src={photo} alt={`Vehicle ${index}`} className="w-full h-full object-cover" />
-                           {index === 0 && (
-                             <div className="absolute bottom-0 inset-x-0 bg-blue-600/90 text-white text-[9px] font-bold py-0.5 text-center">
-                               PRIMARY
-                             </div>
-                           )}
                            <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-white dark:bg-[#1A2233] rounded-full p-1 shadow-sm hover:bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                              <X className="w-3 h-3" />
                            </button>
@@ -776,24 +786,24 @@ export function VehiclesPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Make *
+                      Make
                     </label>
-                    <Input placeholder="e.g. Honda" value={make} onChange={(e) => setMake(e.target.value)} required />
+                    <Input placeholder="e.g. Honda" value={make} disabled readOnly className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Model *
+                      Model
                     </label>
-                    <Input placeholder="e.g. Accord" value={model} onChange={(e) => setModel(e.target.value)} required />
+                    <Input placeholder="e.g. Accord" value={model} disabled readOnly className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
-                      Year *
+                      Year
                     </label>
-                    <Input type="number" min={1900} max={new Date().getFullYear() + 1} value={year} onChange={(e) => setYear(Number(e.target.value))} required />
+                    <Input type="number" min={1900} max={new Date().getFullYear() + 1} value={year} disabled readOnly className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
@@ -808,13 +818,13 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       VIN (17 characters)
                     </label>
-                    <Input placeholder="Enter 17-digit VIN" value={vin} onChange={(e) => setVin(e.target.value.toUpperCase())} maxLength={17} />
+                    <Input placeholder="Enter 17-digit VIN" value={vin} disabled readOnly maxLength={17} className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       License Plate
                     </label>
-                    <Input placeholder="e.g. ABC-1234" value={licensePlate} onChange={(e) => setLicensePlate(e.target.value.toUpperCase())} />
+                    <Input placeholder="e.g. ABC-1234" value={licensePlate} disabled readOnly className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
                   </div>
                 </div>
 
@@ -825,8 +835,8 @@ export function VehiclesPage() {
                     </label>
                     <select 
                       value={fuelType} 
-                      onChange={(e) => setFuelType(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      disabled
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-slate-100 dark:bg-slate-800/60 px-3 text-[14px] text-slate-500 outline-none cursor-not-allowed opacity-80"
                     >
                       <option value="">Select</option>
                       <option value="Petrol">Petrol</option>
@@ -841,8 +851,8 @@ export function VehiclesPage() {
                     </label>
                     <select 
                       value={transmission} 
-                      onChange={(e) => setTransmission(e.target.value)}
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-white dark:bg-[#1A2233] px-3 text-[14px] text-[#17307a] dark:text-white outline-none placeholder:text-[#a3b8e8] focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]"
+                      disabled
+                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-slate-100 dark:bg-slate-800/60 px-3 text-[14px] text-slate-500 outline-none cursor-not-allowed opacity-80"
                     >
                       <option value="">Select</option>
                       <option value="Automatic">Automatic</option>
@@ -858,19 +868,7 @@ export function VehiclesPage() {
                   </div>
                 </div>
 
-                <div className="mt-2 flex items-center gap-3 p-3 rounded-[12px] border border-[#dbe6ff] dark:border-[#2A3446] bg-[#f8faff]">
-                  <input 
-                    type="checkbox" 
-                    id="isPrimary-edit" 
-                    checked={isPrimary} 
-                    onChange={(e) => setIsPrimary(e.target.checked)}
-                    className="w-4 h-4 rounded border-[#a3b8e8] text-[#1a56db] focus:ring-[#1a56db]"
-                  />
-                  <label htmlFor="isPrimary-edit" className="text-sm font-medium text-[#17307a] dark:text-white cursor-pointer select-none flex-1">
-                    Set as Primary Vehicle
-                  </label>
-                  {isPrimary && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
-                </div>
+
 
                 </div>
                 

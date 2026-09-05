@@ -12,15 +12,15 @@ import { DashboardShell } from '@/components/home/dashboard-shell';
 import { TopNavbar } from '@/components/home/top-navbar';
 
 export const initialMockServices = [
-  { id: 1, name: 'Oil Change', category: 'Maintenance', desc: 'Engine oil replacement with premium quality oil for better performance.', price: '$10 onwards', img: '/assets/engine_oil_bottle.png' },
-  { id: 2, name: 'Brake Service', category: 'Repairs', desc: 'Complete brake inspection and maintenance for your safety.', price: '$20 onwards', img: '/assets/brake_disc_1778070670609.png' },
-  { id: 3, name: 'Tyre Services', category: 'Maintenance', desc: 'Tyre rotation, balancing and alignment for smooth driving.', price: '$15 onwards', img: '/assets/clean_tire.png' },
-  { id: 4, name: 'AC Service', category: 'Maintenance', desc: 'AC gas refill and system check for a cool and comfortable ride.', price: '$25 onwards', img: '/assets/ac_vent_1778070688367.png' },
-  { id: 5, name: 'Diagnostics Only', category: 'Diagnostics', desc: 'Advanced scanning to detect and fix problems accurately.', price: '$30 onwards', img: '/assets/Robo_icon.png' },
-  { id: 6, name: 'Battery Replacement', category: 'Repairs', desc: 'High-performance batteries for a reliable start every time.', price: '$80 onwards', img: '/assets/car_battery.png' },
-  { id: 7, name: 'Wiper Replacement', category: 'Other Services', desc: 'Clear visibility in all weather conditions with new wipers.', price: '$15 onwards', img: '/assets/wiper_blade_1778070781712.png' },
-  { id: 8, name: 'Coolant Flush', category: 'Maintenance', desc: 'Keep your engine cool and protected with coolant replacement.', price: '$20 onwards', img: '/assets/oil_pour_1778070767058.png' },
-  { id: 9, name: 'Suspension Check', category: 'Repairs', desc: 'Ensure a smooth and safe driving experience.', price: '$40 onwards', img: '/assets/Electrical.png' },
+  { id: 1, name: 'Oil Change', category: 'Maintenance', desc: 'Engine oil replacement with premium quality oil for better performance.', price: '₹10 onwards', img: '/assets/engine_oil_bottle.png' },
+  { id: 2, name: 'Brake Service', category: 'Repairs', desc: 'Complete brake inspection and maintenance for your safety.', price: '₹20 onwards', img: '/assets/brake_disc_1778070670609.png' },
+  { id: 3, name: 'Tyre Services', category: 'Maintenance', desc: 'Tyre rotation, balancing and alignment for smooth driving.', price: '₹15 onwards', img: '/assets/clean_tire.png' },
+  { id: 4, name: 'AC Service', category: 'Maintenance', desc: 'AC gas refill and system check for a cool and comfortable ride.', price: '₹25 onwards', img: '/assets/ac_vent_1778070688367.png' },
+  { id: 5, name: 'Diagnostics Only', category: 'Diagnostics', desc: 'Advanced scanning to detect and fix problems accurately.', price: '₹30 onwards', img: '/assets/Robo_icon.png' },
+  { id: 6, name: 'Battery Replacement', category: 'Repairs', desc: 'High-performance batteries for a reliable start every time.', price: '₹80 onwards', img: '/assets/car_battery.png' },
+  { id: 7, name: 'Wiper Replacement', category: 'Other Services', desc: 'Clear visibility in all weather conditions with new wipers.', price: '₹15 onwards', img: '/assets/wiper_blade_1778070781712.png' },
+  { id: 8, name: 'Coolant Flush', category: 'Maintenance', desc: 'Keep your engine cool and protected with coolant replacement.', price: '₹20 onwards', img: '/assets/oil_pour_1778070767058.png' },
+  { id: 9, name: 'Suspension Check', category: 'Repairs', desc: 'Ensure a smooth and safe driving experience.', price: '₹40 onwards', img: '/assets/Electrical.png' },
 ];
 
 const mockGarages = [
@@ -141,7 +141,7 @@ export function ServicesPage() {
                     <h3 className="font-bold text-slate-900 dark:text-white mb-1">{service.name}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 flex-1">{service.desc}</p>
                     <div className="flex items-center justify-between mt-auto">
-                      <span className="font-bold text-slate-900 dark:text-white text-sm">{service.price}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{service.price?.replace('$', '₹')}</span>
                       <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-[#121826] flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                         <ChevronRight className="w-4 h-4" />
                       </div>

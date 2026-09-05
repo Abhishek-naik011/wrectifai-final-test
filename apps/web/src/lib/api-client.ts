@@ -112,6 +112,10 @@ export async function apiClient<T = unknown>(path: string, options: RequestOptio
             localStorage.removeItem('user');
             refreshPromise = null;
             window.dispatchEvent(new CustomEvent('auth-logout'));
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+              return new Promise<string>(() => {}); // Never resolve to prevent React crashes/overlays during redirect
+            }
             throw new ApiError('Session expired. Please log in again.', 401, 'UNAUTHORIZED_EXPIRED');
           }
         })();
@@ -127,8 +131,23 @@ export async function apiClient<T = unknown>(path: string, options: RequestOptio
       }
       
       const retryRes = await fetch(url, { ...config, headers: retryHeaders });
+      
+      if (retryRes.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.dispatchEvent(new CustomEvent('auth-logout'));
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+          return new Promise<T>(() => {}); // Never resolve
+        }
+        throw new ApiError('Session expired. Please log in again.', 401, 'UNAUTHORIZED_EXPIRED');
+      }
+
       return handleResponse<T>(retryRes);
     }
+
   }
 
   return handleResponse<T>(response);

@@ -22,6 +22,7 @@ interface Vehicle {
   year: number;
   vin?: string;
   mileage?: number;
+  photos?: string[];
 }
 
 export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: string; diagnosisRequestId?: string }) {
@@ -76,7 +77,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
                 badgeClass,
                 description: `Diagnosed issue: ${issue.name || issue.title}. Requires parts: ${issue.requiredParts?.join(', ') || 'None specified'}.`,
                 match,
-                imageSrc: getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)
+                imageSrc: issue.imageSrc || ''
               };
             });
             setCustomIssues(mapped);
@@ -135,6 +136,7 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
         hasSubmitted.current = true;
         const vehicleId = selectedVehicle?.id || '00000000-0000-0000-0000-000000000002';
         const issueSummary = chosenIssues.map((i) => i.title).join(', ');
+        
         console.log('[FindingQuotes] Submitting quote request payload:', { vehicleId, issueSummary, diagnosisRequestId });
         const response = await createQuoteRequest({
           vehicleId,
@@ -295,9 +297,20 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
           <Card className="rounded-[22px] border-[#e7edfd] bg-white dark:bg-[#1A2233] px-5 py-5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
             <h3 className="text-[15.5px] font-semibold text-[#183db1]">Your Vehicle</h3>
             <div className="mt-10 flex flex-col items-center text-center">
-              <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                <CarFront className="h-11 w-11" />
-              </span>
+              {selectedVehicle?.photos?.[0] ? (
+                <Image
+                  src={selectedVehicle.photos[0]}
+                  alt="Vehicle"
+                  width={180}
+                  height={100}
+                  className="h-auto w-[160px] object-contain my-2"
+                  unoptimized={true}
+                />
+              ) : (
+                <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#edf2ff_100%)] text-[#244fe5] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                  <CarFront className="h-11 w-11" />
+                </span>
+              )}
               <div className="mt-8 text-[15.5px] font-semibold tracking-[-0.03em] text-[#193daa]">
                 {selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model} ${selectedVehicle.vin ? `(${selectedVehicle.vin.slice(-6)})` : ''}` : 'Honda City (TS07 AB 1234)'}
               </div>
@@ -323,15 +336,21 @@ export function FindingQuotesPage({ issues, diagnosisRequestId }: { issues?: str
               {chosenIssues.map((issue, index) => (
                 <div key={issue.id} className="grid gap-4 py-5 md:grid-cols-[76px_minmax(0,1fr)_92px] md:items-center">
                   <div className="flex justify-center md:justify-start">
-                    <Image
-                      src={getVehicleImage(selectedVehicle?.make, selectedVehicle?.model, selectedVehicle?.year)}
-                      alt={issue.title}
-                      width={72}
-                      height={72}
-                      className="h-[66px] w-[66px] object-contain"
-                      style={{ width: '66px', height: '66px' }}
-                      unoptimized={true}
-                    />
+                    {issue.imageSrc ? (
+                      <Image
+                        src={issue.imageSrc}
+                        alt={issue.title}
+                        width={72}
+                        height={72}
+                        className="h-[66px] w-[66px] object-contain"
+                        style={{ width: '66px', height: '66px' }}
+                        unoptimized={true}
+                      />
+                    ) : (
+                      <div className="flex h-[66px] w-[66px] items-center justify-center rounded-[16px] border border-[#e8eefc] bg-[#f4f8ff] text-[#1a56db]">
+                        <CarFront className="h-7 w-7" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-3">

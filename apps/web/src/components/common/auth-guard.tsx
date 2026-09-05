@@ -17,7 +17,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicPath = pathname === '/login' || pathname?.startsWith('/signup');
+  const isPublicPath = pathname === '/' || pathname === '/login' || pathname?.startsWith('/signup');
 
   useEffect(() => {
     if (isLoading) return;
@@ -56,7 +56,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           router.replace('/garage/dashboard');
           return;
         }
-        router.replace('/');
+        router.replace('/dashboard');
         return;
       }
 
@@ -99,6 +99,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           router.replace('/garage/dashboard');
           return;
         }
+        router.replace('/dashboard');
+        return;
       }
     }
   }, [isLoading, isAuthenticated, user, isPublicPath, router, pathname]);
