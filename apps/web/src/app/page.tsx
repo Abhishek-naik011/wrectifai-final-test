@@ -15,16 +15,18 @@ function PublicNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <div className="relative h-[40px] w-[112px] md:h-[50px] md:w-[140px] overflow-hidden">
-              <Image
-                src="/fin_logo.png"
-                alt="WrectifAI"
-                width={1024}
-                height={1024}
-                priority
-                className="absolute left-0 top-[-28px] md:top-[-35px] h-[96px] md:h-[120px] w-full object-contain object-left"
-              />
-            </div>
+            <Link href="/" className="flex items-center">
+              <div className="relative h-[40px] w-[112px] md:h-[50px] md:w-[140px] overflow-hidden">
+                <Image
+                  src="/fin_logo.png"
+                  alt="WrectifAI"
+                  width={1024}
+                  height={1024}
+                  priority
+                  className="absolute left-0 top-[-28px] md:top-[-35px] h-[96px] md:h-[120px] w-full object-contain object-left"
+                />
+              </div>
+            </Link>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
