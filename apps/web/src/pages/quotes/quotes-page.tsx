@@ -248,7 +248,7 @@ export function QuotesPage() {
           </p>
         </div>
 
-        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_250px] 2xl:items-start">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_250px] xl:items-start">
           <div className="space-y-5">
             <div className="flex flex-col gap-4 border-b border-[#e9eefb] pb-0 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex flex-wrap items-center gap-10">
@@ -432,10 +432,10 @@ export function QuotesPage() {
 
                   <div
                     className={cn(
-                      'grid gap-4 pt-1 2xl:items-center',
+                      'grid gap-4 pt-1 xl:items-center',
                       compareMode
-                        ? '2xl:grid-cols-[36px_minmax(320px,1.25fr)_144px_312px]'
-                        : '2xl:grid-cols-[minmax(320px,1.25fr)_144px_312px]'
+                        ? 'xl:grid-cols-[36px_minmax(320px,1.25fr)_144px_312px]'
+                        : 'xl:grid-cols-[minmax(320px,1.25fr)_144px_312px]'
                     )}
                   >
                     {compareMode ? (
@@ -680,7 +680,7 @@ export function QuotesPage() {
             </div>
           </div>
 
-          <div className="space-y-4 2xl:pt-[76px]">
+          <div className="space-y-4 xl:pt-[76px]">
             {quotes.length > 0 && quotes[0] && (
               <Card className="rounded-[18px] border-[#e6ecfb] bg-white px-4 py-3.5 shadow-[0_12px_30px_rgba(37,73,153,0.04)]">
                 <div className="flex items-center gap-3">
