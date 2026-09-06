@@ -57,7 +57,7 @@ export function Sidebar({
         )}
       >
         <Link
-          href="/"
+          href="/dashboard"
           className={cn(
             'transition-all',
             collapsed
@@ -102,8 +102,8 @@ export function Sidebar({
       <nav className="mt-0.5 flex flex-col gap-[3px] overflow-x-hidden overflow-y-auto pr-0.5 pb-0.5 [scrollbar-width:thin] [scrollbar-color:#e4ecff_transparent] [&::-webkit-scrollbar]:w-[4px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#e4ecff] hover:[&::-webkit-scrollbar-thumb]:bg-[#cbd5e1] [&::-webkit-scrollbar-track]:bg-transparent">
         {(customNavItems || navItems).map(({ label, icon: Icon, href, chevron }) => {
           const active = pathname
-            ? href === '/'
-              ? pathname === '/' || pathname.startsWith('/deals')
+            ? href === '/dashboard'
+              ? pathname === '/dashboard' || pathname.startsWith('/deals')
               : href === '/ai-diagnose'
               ? pathname.startsWith('/ai-diagnose') ||
                 pathname.startsWith('/ai-diagnose-results') ||

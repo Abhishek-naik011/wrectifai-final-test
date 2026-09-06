@@ -524,7 +524,7 @@ export function VehiclesPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-[#17307a] dark:text-white leading-tight">
-                          {vehicle.year} {vehicle.make} {vehicle.model}
+                          {[vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'Vehicle'}
                         </h3>
                       </div>
                       <p className="mt-1 text-[13px] font-medium text-[#7a8ab4] uppercase tracking-wider">
@@ -534,36 +534,28 @@ export function VehiclesPage() {
                   </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-[13px]">
-                  {vehicle.vin && (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">VIN</span>
-                      <span className="font-mono text-[#17307a] dark:text-white tracking-tight">{vehicle.vin}</span>
-                    </div>
-                  )}
-                  {vehicle.mileage !== undefined && vehicle.mileage !== null && (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Mileage</span>
-                      <span className="text-[#17307a] dark:text-white font-semibold">{vehicle.mileage.toLocaleString()} mi</span>
-                    </div>
-                  )}
-                  {vehicle.fuelType && (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Fuel</span>
-                      <span className="text-[#17307a] dark:text-white">{vehicle.fuelType}</span>
-                    </div>
-                  )}
-                  {vehicle.transmission && (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Transmission</span>
-                      <span className="text-[#17307a] dark:text-white">{vehicle.transmission}</span>
-                    </div>
-                  )}
-                  {vehicle.color && (
-                    <div className="flex flex-col">
-                      <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Color</span>
-                      <span className="text-[#17307a] dark:text-white">{vehicle.color}</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">VIN</span>
+                    <span className="font-mono text-[#17307a] dark:text-white tracking-tight">{vehicle.vin || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Mileage</span>
+                    <span className="text-[#17307a] dark:text-white font-semibold">
+                      {typeof vehicle.mileage === 'number' ? `${vehicle.mileage.toLocaleString()} mi` : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Fuel</span>
+                    <span className="text-[#17307a] dark:text-white">{vehicle.fuelType || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Transmission</span>
+                    <span className="text-[#17307a] dark:text-white">{vehicle.transmission || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-[#7a8ab4] text-[11px] uppercase tracking-wider">Color</span>
+                    <span className="text-[#17307a] dark:text-white">{vehicle.color || 'N/A'}</span>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex justify-end gap-2 pt-1 border-t border-transparent">
@@ -827,7 +819,19 @@ export function VehiclesPage() {
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">
                       VIN (17 characters)
                     </label>
-                    <Input placeholder="Enter 17-digit VIN" value={vin} disabled readOnly maxLength={17} className="bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed" />
+                    <Input 
+                      placeholder="Enter 17-digit VIN" 
+                      value={vin} 
+                      onChange={(e) => setVin(e.target.value.toUpperCase())}
+                      disabled={Boolean(selectedVehicle?.vin && selectedVehicle.vin.trim())} 
+                      readOnly={Boolean(selectedVehicle?.vin && selectedVehicle.vin.trim())} 
+                      maxLength={17} 
+                      className={
+                        Boolean(selectedVehicle?.vin && selectedVehicle.vin.trim())
+                          ? "bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed"
+                          : ""
+                      }
+                    />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#5d6f9f] uppercase tracking-wider mb-1.5">

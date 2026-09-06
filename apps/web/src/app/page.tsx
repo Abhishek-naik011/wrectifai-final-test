@@ -340,7 +340,7 @@ export default function PublicLandingPage() {
             "Receive instant potential fault results",
             "Generate accurate Quote requests directly from results"
           ]}
-          imageSrc="/images/ai-diagnosis.jpg"
+          imageSrc="/assets/ai-diagnosis.jpg"
           reversed={true}
         />
 

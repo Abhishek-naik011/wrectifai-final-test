@@ -87,7 +87,7 @@ export default function CustomersPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
-    vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', fuelType: '', year: '', status: 'active'
+    vehicleNumber: '', vehicleModel: '', vehicleBrand: '', mileage: '', fuelType: '', year: '', status: 'active'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,7 +123,12 @@ export default function CustomersPage() {
     if (!formData.vehicleNumber?.trim()) errors.vehicleNumber = 'Vehicle Number is required.';
     if (!formData.vehicleBrand?.trim()) errors.vehicleBrand = 'Vehicle Brand is required.';
     if (!formData.vehicleModel?.trim()) errors.vehicleModel = 'Vehicle Model is required.';
-    if (!formData.vehicleType?.trim()) errors.vehicleType = 'Vehicle Type is required.';
+    
+    const mileageNum = formData.mileage !== undefined && formData.mileage !== null && String(formData.mileage).trim() !== '' ? Number(formData.mileage) : NaN;
+    if (formData.mileage === undefined || formData.mileage === null || String(formData.mileage).trim() === '' || isNaN(mileageNum) || mileageNum < 0 || !Number.isInteger(mileageNum)) {
+      errors.mileage = 'Please enter a valid mileage.';
+    }
+
     if (!formData.fuelType?.trim()) errors.fuelType = 'Fuel Type is required.';
     if (!formData.year?.trim()) errors.year = 'Year is required.';
     
@@ -141,7 +146,7 @@ export default function CustomersPage() {
       loadData();
       setFormData({
         name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
-        vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', fuelType: '', year: '', status: 'active'
+        vehicleNumber: '', vehicleModel: '', vehicleBrand: '', mileage: '', fuelType: '', year: '', status: 'active'
       });
       setFormErrors({});
       setToastMessage({ type: 'success', text: 'Customer created successfully.' });
@@ -412,9 +417,9 @@ export default function CustomersPage() {
                {formErrors.vehicleModel && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleModel}</p>}
              </div>
              <div>
-               <label className="block text-xs font-semibold mb-1">Vehicle Type <span className="text-red-500">*</span></label>
-               <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleType ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleType} onChange={e => { setFormData({...formData, vehicleType: e.target.value}); if (formErrors.vehicleType) setFormErrors({...formErrors, vehicleType: ''}); }} />
-               {formErrors.vehicleType && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleType}</p>}
+               <label className="block text-xs font-semibold mb-1">Mileage (miles) <span className="text-red-500">*</span></label>
+               <input type="number" placeholder="e.g. 45000" className={`w-full border rounded p-2 text-sm ${formErrors.mileage ? 'border-red-500 bg-red-50' : ''}`} value={formData.mileage} onChange={e => { setFormData({...formData, mileage: e.target.value}); if (formErrors.mileage) setFormErrors({...formErrors, mileage: ''}); }} />
+               {formErrors.mileage && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.mileage}</p>}
              </div>
              <div>
                <label className="block text-xs font-semibold mb-1">Fuel Type <span className="text-red-500">*</span></label>

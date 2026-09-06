@@ -400,7 +400,8 @@ adminRouter.get('/users', async (req, res) => {
            'vehicleModel', v.model,
            'vehicleType', v.trim,
            'fuelType', v.fuel_type,
-           'year', v.year
+           'year', v.year,
+           'mileage', v.mileage
          ))
          FROM vehicles v WHERE v.customer_id = u.id
        ) as vehicles_list
@@ -421,7 +422,7 @@ adminRouter.get('/users', async (req, res) => {
 // Add a customer manually
 adminRouter.post('/users', async (req, res) => {
   try {
-    const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, fuelType, year, status } = req.body;
+    const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, mileage, fuelType, year, status } = req.body;
     const phone = req.body.phone?.replace(/\s+/g, '');
     
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -439,7 +440,12 @@ adminRouter.post('/users', async (req, res) => {
     if (!vehicleNumber || typeof vehicleNumber !== 'string' || vehicleNumber.trim() === '') return error(res, 'Vehicle Number is required', 'VALIDATION_ERROR', 400);
     if (!vehicleBrand || typeof vehicleBrand !== 'string' || vehicleBrand.trim() === '') return error(res, 'Vehicle Brand is required', 'VALIDATION_ERROR', 400);
     if (!vehicleModel || typeof vehicleModel !== 'string' || vehicleModel.trim() === '') return error(res, 'Vehicle Model is required', 'VALIDATION_ERROR', 400);
-    if (!vehicleType || typeof vehicleType !== 'string' || vehicleType.trim() === '') return error(res, 'Vehicle Type is required', 'VALIDATION_ERROR', 400);
+    
+    const mileageVal = mileage !== undefined && mileage !== null && String(mileage).trim() !== '' ? Number(mileage) : NaN;
+    if (isNaN(mileageVal) || mileageVal < 0 || !Number.isInteger(mileageVal)) {
+      return error(res, 'Please enter a valid mileage', 'VALIDATION_ERROR', 400);
+    }
+
     if (!fuelType || typeof fuelType !== 'string' || fuelType.trim() === '') return error(res, 'Fuel Type is required', 'VALIDATION_ERROR', 400);
     if (!year || (typeof year !== 'string' && typeof year !== 'number') || String(year).trim() === '') return error(res, 'Year is required', 'VALIDATION_ERROR', 400);
     
@@ -474,9 +480,9 @@ adminRouter.post('/users', async (req, res) => {
       // 4. Insert vehicle if provided
       if (vehicleNumber || vehicleModel || vehicleBrand) {
         await query(
-          `INSERT INTO vehicles (customer_id, plate_number, model, make, trim, fuel_type, year)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, fuelType || null, year ? parseInt(String(year), 10) : null] 
+          `INSERT INTO vehicles (customer_id, plate_number, model, make, trim, fuel_type, year, mileage)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, fuelType || null, year ? parseInt(String(year), 10) : null, mileageVal] 
         );
       }
     } catch (insertErr) {
