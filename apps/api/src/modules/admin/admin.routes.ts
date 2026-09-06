@@ -421,7 +421,7 @@ adminRouter.get('/users', async (req, res) => {
 // Add a customer manually
 adminRouter.post('/users', async (req, res) => {
   try {
-    const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, status } = req.body;
+    const { name, email, address, city, state, pincode, vehicleNumber, vehicleModel, vehicleBrand, vehicleType, fuelType, year, status } = req.body;
     const phone = req.body.phone?.replace(/\s+/g, '');
     
     if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -440,6 +440,8 @@ adminRouter.post('/users', async (req, res) => {
     if (!vehicleBrand || typeof vehicleBrand !== 'string' || vehicleBrand.trim() === '') return error(res, 'Vehicle Brand is required', 'VALIDATION_ERROR', 400);
     if (!vehicleModel || typeof vehicleModel !== 'string' || vehicleModel.trim() === '') return error(res, 'Vehicle Model is required', 'VALIDATION_ERROR', 400);
     if (!vehicleType || typeof vehicleType !== 'string' || vehicleType.trim() === '') return error(res, 'Vehicle Type is required', 'VALIDATION_ERROR', 400);
+    if (!fuelType || typeof fuelType !== 'string' || fuelType.trim() === '') return error(res, 'Fuel Type is required', 'VALIDATION_ERROR', 400);
+    if (!year || (typeof year !== 'string' && typeof year !== 'number') || String(year).trim() === '') return error(res, 'Year is required', 'VALIDATION_ERROR', 400);
     
     // Check if user already exists
     const existing = await query('SELECT id FROM users WHERE email = $1 OR (mobile_number = $2 AND mobile_number IS NOT NULL)', [email, phone || null]);
@@ -474,7 +476,7 @@ adminRouter.post('/users', async (req, res) => {
         await query(
           `INSERT INTO vehicles (customer_id, plate_number, model, make, trim, fuel_type, year)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, 'Petrol', new Date().getFullYear()] 
+          [user.id, vehicleNumber || null, vehicleModel || null, vehicleBrand || null, vehicleType || null, fuelType || null, year ? parseInt(String(year), 10) : null] 
         );
       }
     } catch (insertErr) {

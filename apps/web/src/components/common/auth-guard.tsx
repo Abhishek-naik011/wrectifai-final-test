@@ -88,20 +88,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         else router.replace('/garage/dashboard');
         return;
       }
-
-      // 4. Root Route Redirects
-      if (isRoot) {
-        if (primaryRole === 'admin') {
-          router.replace('/admin/dashboard');
-          return;
-        }
-        if (primaryRole === 'garage') {
-          router.replace('/garage/dashboard');
-          return;
-        }
-        router.replace('/dashboard');
-        return;
-      }
     }
   }, [isLoading, isAuthenticated, user, isPublicPath, router, pathname]);
 

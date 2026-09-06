@@ -342,6 +342,10 @@ export function VehiclesPage() {
       setFormError('Please enter the color.');
       return;
     }
+    if (/^\d+$/.test(color.trim())) {
+      setFormError('Please enter a valid color name.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -403,6 +407,11 @@ export function VehiclesPage() {
 
     if (mileage !== '' && Number(mileage) < 0) {
       setFormError('Mileage cannot be negative.');
+      return;
+    }
+
+    if (color.trim() && /^\d+$/.test(color.trim())) {
+      setFormError('Please enter a valid color name.');
       return;
     }
 
@@ -851,8 +860,13 @@ export function VehiclesPage() {
                     </label>
                     <select 
                       value={transmission} 
-                      disabled
-                      className="w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] bg-slate-100 dark:bg-slate-800/60 px-3 text-[14px] text-slate-500 outline-none cursor-not-allowed opacity-80"
+                      onChange={(e) => setTransmission(e.target.value)}
+                      disabled={Boolean(selectedVehicle?.transmission && selectedVehicle.transmission.trim())}
+                      className={`w-full h-10 rounded-[10px] border border-[#dbe6ff] dark:border-[#2A3446] px-3 text-[14px] outline-none ${
+                        Boolean(selectedVehicle?.transmission && selectedVehicle.transmission.trim())
+                          ? 'bg-slate-100 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed opacity-80'
+                          : 'bg-white dark:bg-[#1A2233] text-[#17307a] dark:text-white focus:border-[#1a56db] focus:ring-1 focus:ring-[#1a56db]'
+                      }`}
                     >
                       <option value="">Select</option>
                       <option value="Automatic">Automatic</option>

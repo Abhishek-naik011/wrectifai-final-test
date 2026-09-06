@@ -87,7 +87,7 @@ export default function CustomersPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
-    vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
+    vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', fuelType: '', year: '', status: 'active'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -124,6 +124,8 @@ export default function CustomersPage() {
     if (!formData.vehicleBrand?.trim()) errors.vehicleBrand = 'Vehicle Brand is required.';
     if (!formData.vehicleModel?.trim()) errors.vehicleModel = 'Vehicle Model is required.';
     if (!formData.vehicleType?.trim()) errors.vehicleType = 'Vehicle Type is required.';
+    if (!formData.fuelType?.trim()) errors.fuelType = 'Fuel Type is required.';
+    if (!formData.year?.trim()) errors.year = 'Year is required.';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -139,7 +141,7 @@ export default function CustomersPage() {
       loadData();
       setFormData({
         name: '', email: '', phone: '', address: '', city: '', state: '', pincode: '',
-        vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', status: 'active'
+        vehicleNumber: '', vehicleModel: '', vehicleBrand: '', vehicleType: '', fuelType: '', year: '', status: 'active'
       });
       setFormErrors({});
       setToastMessage({ type: 'success', text: 'Customer created successfully.' });
@@ -414,6 +416,28 @@ export default function CustomersPage() {
                <input className={`w-full border rounded p-2 text-sm ${formErrors.vehicleType ? 'border-red-500 bg-red-50' : ''}`} value={formData.vehicleType} onChange={e => { setFormData({...formData, vehicleType: e.target.value}); if (formErrors.vehicleType) setFormErrors({...formErrors, vehicleType: ''}); }} />
                {formErrors.vehicleType && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.vehicleType}</p>}
              </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Fuel Type <span className="text-red-500">*</span></label>
+               <select className={`w-full border rounded p-2 text-sm ${formErrors.fuelType ? 'border-red-500 bg-red-50' : ''}`} value={formData.fuelType} onChange={e => { setFormData({...formData, fuelType: e.target.value}); if (formErrors.fuelType) setFormErrors({...formErrors, fuelType: ''}); }}>
+                 <option value="">Select Fuel Type</option>
+                 <option value="Petrol">Petrol</option>
+                 <option value="Diesel">Diesel</option>
+                 <option value="CNG">CNG</option>
+                 <option value="Electric">Electric</option>
+                 <option value="Hybrid">Hybrid</option>
+               </select>
+               {formErrors.fuelType && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.fuelType}</p>}
+             </div>
+             <div>
+               <label className="block text-xs font-semibold mb-1">Year <span className="text-red-500">*</span></label>
+               <select className={`w-full border rounded p-2 text-sm ${formErrors.year ? 'border-red-500 bg-red-50' : ''}`} value={formData.year} onChange={e => { setFormData({...formData, year: e.target.value}); if (formErrors.year) setFormErrors({...formErrors, year: ''}); }}>
+                 <option value="">Select Year</option>
+                 {Array.from({ length: new Date().getFullYear() - 1989 }, (_, i) => (new Date().getFullYear() - i).toString()).map(y => (
+                   <option key={y} value={y}>{y}</option>
+                 ))}
+               </select>
+               {formErrors.year && <p className="text-xs text-red-500 mt-1 font-medium">{formErrors.year}</p>}
+             </div>
            </div>
 
            <h3 className="text-sm font-bold border-b pb-1 mt-4">Documents</h3>
@@ -542,11 +566,11 @@ export default function CustomersPage() {
                             </p>
                           </div>
                         )}
-                        {v.fuelType && (
+                        {(v.fuelType || v.year) && (
                           <div className="col-span-2 sm:col-span-1">
                             <p className="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Fuel / Year</p>
                             <p className="text-xs font-semibold text-slate-900">
-                              {[v.fuelType, v.year].filter(Boolean).join(' - ')}
+                              {[v.fuelType, v.year].filter(Boolean).join(' - ') || 'N/A'}
                             </p>
                           </div>
                         )}

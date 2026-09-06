@@ -32,22 +32,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If token exists and path is root "/", redirect based on role
-  if (token && path === '/') {
-    const decoded = decodeJwt(token);
-    if (decoded && decoded.roles) {
-      if (decoded.roles.includes('admin')) {
-        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-      } else if (decoded.roles.includes('garage')) {
-        return NextResponse.redirect(new URL('/garage/dashboard', request.url));
-      } else {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    }
-    // Fallback if parsing fails
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
   return NextResponse.next();
 }
 
